@@ -27,3 +27,12 @@ data/
 # Go workspace
 go.work
 go.work.sum
+
+# Front-End and Build dependencies
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Internal agent and cli tools
+.agents/
+.antigravitycli/
