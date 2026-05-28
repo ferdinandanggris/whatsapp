@@ -39,4 +39,5 @@ type Conversation struct {
 	LastMessageAt      *time.Time `json:"last_message_at,omitempty"`
 	LastMessagePreview string     `json:"last_message_preview,omitempty"`
 	UnreadCount        int        `json:"unread_count"`
+	DisplayName        string     `json:"display_name"`
 }

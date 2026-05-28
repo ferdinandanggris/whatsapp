@@ -47,6 +47,18 @@ func (r *ContactRepository) FindOrCreate(ctx context.Context, waID, phoneNumberI
 	return c, nil
 }
 
+func (r *ContactRepository) EnsureOutboundContact(ctx context.Context, waID, phoneNumberID string) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO contacts (wa_id, phone_number_id)
+		VALUES ($1, $2)
+		ON CONFLICT (wa_id, phone_number_id) DO NOTHING
+	`, waID, phoneNumberID)
+	if err != nil {
+		return fmt.Errorf("ensure outbound contact: %w", err)
+	}
+	return nil
+}
+
 func (r *ContactRepository) GetByID(ctx context.Context, waID, phoneNumberID string) (*model.Contact, error) {
 	c, err := scanContact(r.pool.QueryRow(ctx, `
 		SELECT `+contactCols+` FROM contacts WHERE wa_id = $1 AND phone_number_id = $2

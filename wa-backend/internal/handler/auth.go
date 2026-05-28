@@ -25,8 +25,9 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	AccessToken string       `json:"access_token"`
-	User        *userResponse `json:"user"`
+	AccessToken  string        `json:"access_token"`
+	RefreshToken string        `json:"refresh_token"`
+	User         *userResponse `json:"user"`
 }
 
 type userResponse struct {
@@ -50,7 +51,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, token, err := h.auth.Login(r.Context(), req.Email, req.Password)
+	user, accessToken, refreshToken, err := h.auth.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			writeError(w, http.StatusUnauthorized, "invalid email or password")
@@ -65,7 +66,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := loginResponse{
-		AccessToken: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 		User: &userResponse{
 			ID:          user.ID,
 			Email:       user.Email,
@@ -77,6 +79,39 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, resp)
+}
+
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+type refreshResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	var req refreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.RefreshToken == "" {
+		writeError(w, http.StatusBadRequest, "refresh_token required")
+		return
+	}
+
+	accessToken, refreshToken, err := h.auth.RefreshToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid or expired refresh token")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, refreshResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {

@@ -19,15 +19,20 @@ type WhatsAppService struct {
 	client    wapi.Client
 	msgs      *repository.MessageRepository
 	convRepo  *repository.ConversationRepository
+	contacts  *repository.ContactRepository
 	windowSvc *WindowService
 	hub       *ws.Hub
 }
 
-func NewWhatsAppService(client wapi.Client, msgs *repository.MessageRepository, convRepo *repository.ConversationRepository, windowSvc *WindowService, hub *ws.Hub) *WhatsAppService {
-	return &WhatsAppService{client: client, msgs: msgs, convRepo: convRepo, windowSvc: windowSvc, hub: hub}
+func NewWhatsAppService(client wapi.Client, msgs *repository.MessageRepository, convRepo *repository.ConversationRepository, contacts *repository.ContactRepository, windowSvc *WindowService, hub *ws.Hub) *WhatsAppService {
+	return &WhatsAppService{client: client, msgs: msgs, convRepo: convRepo, contacts: contacts, windowSvc: windowSvc, hub: hub}
 }
 
 func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body, agentID string) (*model.Message, error) {
+	if err := s.contacts.EnsureOutboundContact(ctx, to, phoneNumberID); err != nil {
+		slog.Error("ensure outbound contact failed", "error", err)
+	}
+
 	ok, err := s.windowSvc.CanSendText(ctx, phoneNumberID, to)
 	if err != nil {
 		return nil, fmt.Errorf("send text: check window: %w", err)
@@ -62,6 +67,10 @@ type TemplateButtonSpec struct {
 }
 
 func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, templateName, lang string, params map[string]string, buttons []TemplateButtonSpec, agentID string) (*model.Message, error) {
+	if err := s.contacts.EnsureOutboundContact(ctx, to, phoneNumberID); err != nil {
+		slog.Error("ensure outbound contact failed for template", "error", err)
+	}
+
 	components := buildTemplateComponents(params, buttons)
 
 	msg := &types.Message{
@@ -82,7 +91,28 @@ func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, t
 		return nil, fmt.Errorf("send template: no message id returned")
 	}
 
-	out := s.buildOutbound(resp.Messages[0].ID, phoneNumberID, to, "template", templateName, agentID)
+	content := map[string]interface{}{
+		"name":     templateName,
+		"language": lang,
+	}
+	if len(params) > 0 {
+		content["params"] = params
+	}
+	if len(buttons) > 0 {
+		content["buttons"] = buttons
+	}
+
+	out := &model.Message{
+		WamID:         resp.Messages[0].ID,
+		PhoneNumberID: phoneNumberID,
+		WaID:          to,
+		Direction:     "outbound",
+		Type:          "template",
+		Content:       repository.MustJSON(content),
+		Status:        "sent",
+		Timestamp:     time.Now(),
+		AgentID:       &agentID,
+	}
 	if err := s.msgs.Save(ctx, out); err != nil {
 		slog.Error("save outbound template", "error", err)
 	}
@@ -161,6 +191,10 @@ func sortedKeys(m map[string]string) []string {
 }
 
 func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, mediaType, mediaID, caption, agentID string) (*model.Message, error) {
+	if err := s.contacts.EnsureOutboundContact(ctx, to, phoneNumberID); err != nil {
+		slog.Error("ensure outbound contact failed for media", "error", err)
+	}
+
 	ok, err := s.windowSvc.CanSendText(ctx, phoneNumberID, to)
 	if err != nil {
 		return nil, fmt.Errorf("send media: check window: %w", err)
@@ -191,13 +225,22 @@ func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, medi
 		return nil, fmt.Errorf("send %s: no message id returned", mediaType)
 	}
 
-	preview := previewEmoji(mediaType)
-	out := s.buildOutbound(resp.Messages[0].ID, phoneNumberID, to, mediaType, preview, agentID)
+	out := &model.Message{
+		WamID:         resp.Messages[0].ID,
+		PhoneNumberID: phoneNumberID,
+		WaID:          to,
+		Direction:     "outbound",
+		Type:          mediaType,
+		Content:       repository.MustJSON(map[string]string{"id": mediaID, "caption": caption}),
+		Status:        "sent",
+		Timestamp:     time.Now(),
+		AgentID:       &agentID,
+	}
 	if err := s.msgs.Save(ctx, out); err != nil {
 		slog.Error("save outbound media", "error", err)
 	}
 
-	s.convRepo.Upsert(ctx, phoneNumberID, to, preview)
+	s.convRepo.Upsert(ctx, phoneNumberID, to, previewEmoji(mediaType))
 	s.broadcastSent(phoneNumberID, out)
 	return out, nil
 }

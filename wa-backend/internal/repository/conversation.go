@@ -18,12 +18,12 @@ func NewConversationRepository(pool *pgxpool.Pool) *ConversationRepository {
 	return &ConversationRepository{pool: pool}
 }
 
-const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count`
+const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count, COALESCE(wpn.display_name, '')`
 
 func scanConversation(s pgx.Row) (*model.Conversation, error) {
 	var cv model.Conversation
 	err := s.Scan(&cv.ID, &cv.PhoneNumberID, &cv.WaID, &cv.ProfileName,
-		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount)
+		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount, &cv.DisplayName)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,8 @@ func scanConversation(s pgx.Row) (*model.Conversation, error) {
 }
 
 func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID, preview string) (*model.Conversation, error) {
-	cv, err := scanConversation(r.pool.QueryRow(ctx, `
+	var id string
+	err := r.pool.QueryRow(ctx, `
 		INSERT INTO conversations (phone_number_id, wa_id, last_message_at, last_message_preview, unread_count)
 		VALUES ($1, $2, NOW(), $3, 1)
 		ON CONFLICT (phone_number_id, wa_id)
@@ -39,10 +40,21 @@ func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID
 			last_message_at = NOW(),
 			last_message_preview = $3,
 			unread_count = conversations.unread_count + 1
-		RETURNING `+convCols+`
-	`, phoneNumberID, waID, preview))
+		RETURNING id
+	`, phoneNumberID, waID, preview).Scan(&id)
 	if err != nil {
 		return nil, fmt.Errorf("upsert conversation: %w", err)
+	}
+
+	cv, err := scanConversation(r.pool.QueryRow(ctx, `
+		SELECT `+convCols+`
+		FROM conversations c
+		LEFT JOIN contacts ct ON c.wa_id = ct.wa_id AND c.phone_number_id = ct.phone_number_id
+		LEFT JOIN wa_phone_numbers wpn ON c.phone_number_id = wpn.phone_number_id
+		WHERE c.id = $1
+	`, id))
+	if err != nil {
+		return nil, fmt.Errorf("upsert conversation: select: %w", err)
 	}
 	return cv, nil
 }
@@ -52,6 +64,7 @@ func (r *ConversationRepository) GetByID(ctx context.Context, id string) (*model
 		SELECT `+convCols+`
 		FROM conversations c
 		LEFT JOIN contacts ct ON c.wa_id = ct.wa_id AND c.phone_number_id = ct.phone_number_id
+		LEFT JOIN wa_phone_numbers wpn ON c.phone_number_id = wpn.phone_number_id
 		WHERE c.id = $1
 	`, id))
 	if err == pgx.ErrNoRows {
@@ -63,16 +76,24 @@ func (r *ConversationRepository) GetByID(ctx context.Context, id string) (*model
 	return cv, nil
 }
 
-func (r *ConversationRepository) List(ctx context.Context, companyID *int64, filter string, page, limit int) ([]*model.Conversation, int, error) {
+func (r *ConversationRepository) List(ctx context.Context, companyID *int64, phoneNumberID, filter string, page, limit int) ([]*model.Conversation, int, error) {
 	offset := (page - 1) * limit
-	join := `FROM conversations c LEFT JOIN contacts ct ON c.wa_id = ct.wa_id AND c.phone_number_id = ct.phone_number_id`
+	join := `FROM conversations c LEFT JOIN contacts ct ON c.wa_id = ct.wa_id AND c.phone_number_id = ct.phone_number_id LEFT JOIN wa_phone_numbers wpn ON c.phone_number_id = wpn.phone_number_id`
 	where := ""
 	args := []interface{}{}
 
 	if companyID != nil {
 		where = ` WHERE wpn.company_id = $1`
 		args = append(args, *companyID)
-		join += ` JOIN wa_phone_numbers wpn ON c.phone_number_id = wpn.phone_number_id`
+	}
+	if phoneNumberID != "" {
+		pn := fmt.Sprintf(`$%d`, len(args)+1)
+		if where == "" {
+			where = ` WHERE c.phone_number_id = ` + pn
+		} else {
+			where += ` AND c.phone_number_id = ` + pn
+		}
+		args = append(args, phoneNumberID)
 	}
 
 	switch filter {

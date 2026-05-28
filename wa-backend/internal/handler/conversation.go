@@ -37,6 +37,7 @@ func (h *ConversationHandler) List(w http.ResponseWriter, r *http.Request) {
 	if filter != "unread" && filter != "read" {
 		filter = ""
 	}
+	phoneNumberID := r.URL.Query().Get("phone_number_id")
 
 	var companyID *int64
 	if claims.Role != "super_admin" {
@@ -47,7 +48,7 @@ func (h *ConversationHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	convs, total, err := h.convs.List(r.Context(), companyID, filter, page, limit)
+	convs, total, err := h.convs.List(r.Context(), companyID, phoneNumberID, filter, page, limit)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list conversations")
 		return

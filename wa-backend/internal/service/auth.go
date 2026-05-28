@@ -40,28 +40,28 @@ func NewAuthService(users *repository.UserRepository, cfg *config.Config) *AuthS
 	}
 }
 
-func (s *AuthService) Login(ctx context.Context, email, password string) (*model.User, string, error) {
+func (s *AuthService) Login(ctx context.Context, email, password string) (*model.User, string, string, error) {
 	user, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, "", fmt.Errorf("login: %w", err)
+		return nil, "", "", fmt.Errorf("login: %w", err)
 	}
 	if user == nil {
-		return nil, "", ErrInvalidCredentials
+		return nil, "", "", ErrInvalidCredentials
 	}
 	if !user.IsActive {
-		return nil, "", ErrUserInactive
+		return nil, "", "", ErrUserInactive
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, "", ErrInvalidCredentials
+		return nil, "", "", ErrInvalidCredentials
 	}
 
-	token, err := s.generateToken(user)
+	accessToken, refreshToken, err := s.generateTokens(user)
 	if err != nil {
-		return nil, "", fmt.Errorf("generate token: %w", err)
+		return nil, "", "", fmt.Errorf("generate tokens: %w", err)
 	}
 
-	return user, token, nil
+	return user, accessToken, refreshToken, nil
 }
 
 func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
@@ -83,8 +83,36 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-func (s *AuthService) generateToken(user *model.User) (string, error) {
-	claims := &Claims{
+func (s *AuthService) RefreshToken(ctx context.Context, refreshTokenString string) (string, string, error) {
+	token, err := jwt.ParseWithClaims(refreshTokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return []byte(s.secret), nil
+	})
+	if err != nil {
+		return "", "", fmt.Errorf("parse refresh token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid || claims.Issuer != "wa-center-refresh" {
+		return "", "", ErrNotAuthenticated
+	}
+
+	user, err := s.users.FindByID(ctx, claims.UserID)
+	if err != nil || user == nil {
+		return "", "", ErrNotAuthenticated
+	}
+	if !user.IsActive {
+		return "", "", ErrUserInactive
+	}
+
+	return s.generateTokens(user)
+}
+
+func (s *AuthService) generateTokens(user *model.User) (string, string, error) {
+	// Access Token (15 minutes)
+	accessClaims := &Claims{
 		UserID:    user.ID,
 		Email:     user.Email,
 		Role:      user.Role,
@@ -95,9 +123,29 @@ func (s *AuthService) generateToken(user *model.User) (string, error) {
 			Issuer:    "wa-center",
 		},
 	}
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(s.secret))
+	if err != nil {
+		return "", "", err
+	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.secret))
+	// Refresh Token (7 days)
+	refreshClaims := &Claims{
+		UserID:    user.ID,
+		Email:     user.Email,
+		Role:      user.Role,
+		CompanyID: user.CompanyID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "wa-center-refresh",
+		},
+	}
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(s.secret))
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func HashPassword(password string) (string, error) {

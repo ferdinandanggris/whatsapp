@@ -58,7 +58,7 @@ func main() {
 	wapiClient := wapicloud.New(wapicloud.WithAccessToken(cfg.WABAToken))
 
 	windowSvc := service.NewWindowService(contactRepo)
-	whatsappSvc := service.NewWhatsAppService(wapiClient, msgRepo, convRepo, windowSvc, hub)
+	whatsappSvc := service.NewWhatsAppService(wapiClient, msgRepo, convRepo, contactRepo, windowSvc, hub)
 	tplSvc := service.NewTemplateService(tplRepo, wapiClient, cfg.WABAToken, cfg.WABAID)
 	mediaSvc := service.NewMediaService(mediaRepo, wapiClient, cfg.WABAToken, cfg.MediaDir)
 
@@ -70,6 +70,7 @@ func main() {
 	tplHandler := handler.NewTemplateHandler(tplSvc, tplRepo, cfg.WABAID)
 	mediaHandler := handler.NewMediaHandler(mediaSvc)
 	contactHandler := handler.NewContactHandler(contactRepo)
+	phoneHandler := handler.NewPhoneHandler(repository.NewPhoneRepository(pool))
 
 	wh := &webhook.Handler{
 		VerifyToken: cfg.WebhookVerifyToken,
@@ -97,7 +98,9 @@ func main() {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/login", authHandler.Login)
+		r.Post("/auth/refresh", authHandler.Refresh)
 		r.Post("/auth/setup", authHandler.Setup)
+		r.Get("/media/{mediaID}", mediaHandler.Serve)
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(authSvc))
@@ -110,7 +113,7 @@ func main() {
 			r.Get("/templates", tplHandler.List)
 			r.Get("/templates/{id}", tplHandler.GetByID)
 			r.Post("/media/upload", mediaHandler.Upload)
-			r.Get("/media/{mediaID}", mediaHandler.Serve)
+			r.Get("/phone-numbers", phoneHandler.List)
 			r.Get("/contacts", contactHandler.List)
 			r.Get("/contacts/{waID}", contactHandler.Get)
 			r.Patch("/contacts/{waID}", contactHandler.Update)
