@@ -18,6 +18,9 @@ import (
 	"github.com/ferdinandanggris/wa-backend/internal/middleware"
 	"github.com/ferdinandanggris/wa-backend/internal/repository"
 	"github.com/ferdinandanggris/wa-backend/internal/service"
+	"github.com/ferdinandanggris/wa-backend/internal/webhook"
+	"github.com/ferdinandanggris/wa-backend/internal/ws"
+	wapicloud "github.com/ferdinandanggris/wapi/cloud"
 )
 
 func main() {
@@ -42,10 +45,40 @@ func main() {
 	slog.Info("migrations complete")
 
 	userRepo := repository.NewUserRepository(pool)
+	contactRepo := repository.NewContactRepository(pool)
+	msgRepo := repository.NewMessageRepository(pool)
+	convRepo := repository.NewConversationRepository(pool)
+	tplRepo := repository.NewTemplateRepository(pool)
+	mediaRepo := repository.NewMediaRepository(pool)
 	authSvc := service.NewAuthService(userRepo, cfg)
+
+	hub := ws.NewHub()
+	go hub.Run()
+
+	wapiClient := wapicloud.New(wapicloud.WithAccessToken(cfg.WABAToken))
+
+	windowSvc := service.NewWindowService(contactRepo)
+	whatsappSvc := service.NewWhatsAppService(wapiClient, msgRepo, convRepo, windowSvc, hub)
+	tplSvc := service.NewTemplateService(tplRepo, wapiClient, cfg.WABAToken, cfg.WABAID)
+	mediaSvc := service.NewMediaService(mediaRepo, wapiClient, cfg.WABAToken, cfg.MediaDir)
 
 	authHandler := handler.NewAuthHandler(authSvc, userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
+	convHandler := handler.NewConversationHandler(convRepo, msgRepo)
+	wsHandler := handler.NewWSHandler(hub, authSvc)
+	msgHandler := handler.NewMessageHandler(whatsappSvc, msgRepo)
+	tplHandler := handler.NewTemplateHandler(tplSvc, tplRepo, cfg.WABAID)
+	mediaHandler := handler.NewMediaHandler(mediaSvc)
+	contactHandler := handler.NewContactHandler(contactRepo)
+
+	wh := &webhook.Handler{
+		VerifyToken: cfg.WebhookVerifyToken,
+		AppSecret:   cfg.AppSecret,
+		Contacts:    contactRepo,
+		Messages:    msgRepo,
+		Convs:       convRepo,
+		Hub:         hub,
+	}
 
 	r := chi.NewRouter()
 	r.Use(chimw.RequestID)
@@ -59,6 +92,9 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	r.Handle("/webhook", wh)
+	r.Get("/ws", wsHandler.ServeHTTP)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/login", authHandler.Login)
 		r.Post("/auth/setup", authHandler.Setup)
@@ -66,12 +102,30 @@ func main() {
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(authSvc))
 			r.Get("/auth/me", authHandler.Me)
+			r.Get("/conversations", convHandler.List)
+			r.Get("/conversations/{id}", convHandler.GetByID)
+			r.Get("/conversations/{id}/messages", convHandler.ListMessages)
+			r.Post("/messages", msgHandler.Send)
+			r.Get("/messages/{wamid}", msgHandler.GetByWAMID)
+			r.Get("/templates", tplHandler.List)
+			r.Get("/templates/{id}", tplHandler.GetByID)
+			r.Post("/media/upload", mediaHandler.Upload)
+			r.Get("/media/{mediaID}", mediaHandler.Serve)
+			r.Get("/contacts", contactHandler.List)
+			r.Get("/contacts/{waID}", contactHandler.Get)
+			r.Patch("/contacts/{waID}", contactHandler.Update)
+			r.Post("/contacts/{waID}/block", contactHandler.Block)
+			r.Post("/contacts/{waID}/unblock", contactHandler.Unblock)
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("super_admin", "company_admin"))
 				r.Get("/users", userHandler.List)
 				r.Post("/users", userHandler.Create)
 				r.Patch("/users/{id}/deactivate", userHandler.Deactivate)
+				r.Post("/templates/sync", tplHandler.Sync)
+				r.Post("/templates", tplHandler.Create)
+				r.Put("/templates/{id}", tplHandler.Update)
+				r.Delete("/templates/{id}", tplHandler.Delete)
 			})
 		})
 	})
