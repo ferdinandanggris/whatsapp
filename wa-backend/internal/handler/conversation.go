@@ -1,21 +1,123 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/ferdinandanggris/wa-backend/internal/middleware"
 	"github.com/ferdinandanggris/wa-backend/internal/model"
 	"github.com/ferdinandanggris/wa-backend/internal/repository"
+	"github.com/ferdinandanggris/wa-backend/internal/service"
 )
 
 type ConversationHandler struct {
 	convs *repository.ConversationRepository
 	msgs  *repository.MessageRepository
+	svc   *service.WhatsAppService
 }
 
-func NewConversationHandler(convs *repository.ConversationRepository, msgs *repository.MessageRepository) *ConversationHandler {
-	return &ConversationHandler{convs: convs, msgs: msgs}
+// contextRef extracts the replied-to wamid from raw Meta message content.
+func contextRef(content json.RawMessage) string {
+	var c struct {
+		Context *struct {
+			ID        string `json:"id"`
+			MessageID string `json:"message_id"`
+		} `json:"context"`
+	}
+	if json.Unmarshal(content, &c) == nil && c.Context != nil {
+		if c.Context.ID != "" {
+			return c.Context.ID
+		}
+		return c.Context.MessageID
+	}
+	return ""
+}
+
+func enrichReplies(ctx context.Context, h *ConversationHandler, msgs []*model.Message) {
+	var replyIDs []string
+	for _, m := range msgs {
+		if id := contextRef(m.Content); id != "" {
+			replyIDs = append(replyIDs, id)
+		}
+	}
+	if len(replyIDs) == 0 {
+		return
+	}
+
+	originals, err := h.msgs.GetByWamIDs(ctx, replyIDs)
+	if err != nil || len(originals) == 0 {
+		return
+	}
+
+	for _, m := range msgs {
+		refID := contextRef(m.Content)
+		if refID == "" {
+			continue
+		}
+		orig, ok := originals[refID]
+		if !ok {
+			continue
+		}
+
+		m.ReplyWamID = refID
+		m.ReplyText = previewOrig(orig)
+		if orig.Direction == "inbound" {
+			m.ReplyName = orig.WaID
+		} else {
+			m.ReplyName = "Agent"
+		}
+	}
+}
+
+func previewOrig(m *model.Message) string {
+	switch m.Type {
+	case "text":
+		var t struct {
+			Text *struct{ Body string `json:"body"` } `json:"text"`
+		}
+		if json.Unmarshal(m.Content, &t) == nil && t.Text != nil {
+			return truncateStr(t.Text.Body, 100)
+		}
+	case "image":
+		return "📷 Photo"
+	case "video":
+		return "🎥 Video"
+	case "audio":
+		return "🎵 Audio"
+	case "document":
+		return "📄 Document"
+	case "location":
+		return "📍 Location"
+	case "interactive":
+		return "🔄 Reply button"
+	case "template":
+		return "📋 Template"
+	case "reaction":
+		var r struct {
+			Reaction *struct{ Emoji string `json:"emoji"` } `json:"reaction"`
+		}
+		if json.Unmarshal(m.Content, &r) == nil && r.Reaction != nil && r.Reaction.Emoji != "" {
+			return r.Reaction.Emoji
+		}
+		return "👍 Reaction"
+	case "order":
+		return "🛒 Order"
+	}
+	return "[message]"
+}
+
+func truncateStr(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n]) + "..."
+}
+
+func NewConversationHandler(convs *repository.ConversationRepository, msgs *repository.MessageRepository, svc *service.WhatsAppService) *ConversationHandler {
+	return &ConversationHandler{convs: convs, msgs: msgs, svc: svc}
 }
 
 func (h *ConversationHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -106,5 +208,23 @@ func (h *ConversationHandler) ListMessages(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Enrich reply info from context
+	enrichReplies(r.Context(), h, msgs)
+
 	writeJSON(w, http.StatusOK, msgs)
+}
+
+func (h *ConversationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "conversation id required")
+		return
+	}
+
+	if err := h.svc.MarkConversationRead(r.Context(), id); err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{"status": true, "message": "conversation marked as read"})
 }

@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ferdinandanggris/wa-backend/internal/service"
 )
@@ -92,8 +94,11 @@ func (h *MediaHandler) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Serve(r.Context(), w, r, mediaID); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
+	if err := h.svc.Serve(ctx, w, r.WithContext(ctx), mediaID); err != nil {
+		writeError(w, http.StatusNotFound, "media not found")
 		return
 	}
 }

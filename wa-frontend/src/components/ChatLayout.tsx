@@ -93,7 +93,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, setApplications
     });
 
-    const { messages, processedMessages, setMessages, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
+    const { messages, processedMessages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
         activeConversation, debouncedMessageSearchTerm, connection, setConversations, setActiveConversation
     });
 
@@ -416,6 +416,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 processedMessages={processedMessages}
                 hasMore={hasMoreMsg}
                 isFetchingMore={isFetchingMoreMsg}
+                isLoading={isLoading}
                 handleLoadMore={handleLoadMore}
                 handleSend={() => onSend(inputText, replyingTo, () => setInputText(''))}
                 inputText={inputText}

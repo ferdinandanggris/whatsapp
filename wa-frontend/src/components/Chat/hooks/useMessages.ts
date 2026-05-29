@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { getMessages, markAsRead } from '../../../services/chatService';
+import { markAsRead } from '../../../services/chatService';
+import { useMessagesInfiniteQuery, flattenMessages, updateMessageInCache, prependMessageToCache } from '../../../api/queries';
 import type { ChatMessage, Conversation } from '../../../types/chat';
 
 interface UseMessagesProps {
@@ -21,11 +21,62 @@ export const useMessages = ({
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
-    const [nextCursorId, setNextCursorId] = useState<string | number | null>(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
 
     const activeConversationRef = useRef(activeConversation);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
+
+    const prevConvIdRef = useRef(activeConversation?.id);
+    const prevPagesLenRef = useRef(0);
+
+    const query = useMessagesInfiniteQuery(
+        debouncedMessageSearchTerm ? null : activeConversation?.id,
+    );
+
+    useEffect(() => {
+        if (!activeConversation || activeConversation.id === 0) {
+            setMessages([]);
+            setHasMore(false);
+            return;
+        }
+        if (activeConversation.unread_count > 0) {
+            markAsRead(activeConversation.id).catch(() => {});
+            setConversations(prev => prev.map(c =>
+                c.id === activeConversation.id ? { ...c, unread_count: 0 } : c
+            ));
+            setActiveConversation(prev => prev ? { ...prev, unread_count: 0 } : null);
+        }
+    }, [activeConversation?.id]);
+
+    useEffect(() => {
+        if (!query.data || !activeConversation || activeConversation.id === 0) return;
+        const pages = query.data.pages;
+        if (pages.length === 0) return;
+
+        const convChanged = prevConvIdRef.current !== activeConversation.id;
+        const pagesLoaded = pages.length > prevPagesLenRef.current;
+
+        if (convChanged) {
+            prevConvIdRef.current = activeConversation.id;
+            prevPagesLenRef.current = pages.length;
+            setMessages(flattenMessages(pages));
+            setHasMore(pages[pages.length - 1]?.hasMore ?? false);
+            setIsLoading(false);
+        } else if (pagesLoaded) {
+            const newPages = pages.slice(prevPagesLenRef.current);
+            const olderMsgs = newPages.flatMap(p => [...p.items].reverse());
+            prevPagesLenRef.current = pages.length;
+            setMessages(prev => [...olderMsgs, ...prev]);
+            setHasMore(pages[pages.length - 1]?.hasMore ?? false);
+            setIsFetchingMore(false);
+        }
+    }, [query.data, activeConversation?.id]);
+
+    useEffect(() => {
+        if (activeConversation?.id && activeConversation.id !== 0) {
+            setIsLoading(query.isLoading);
+        }
+    }, [query.isLoading, activeConversation?.id]);
 
     const processedMessages = useMemo(() => {
         const reactionsMap: Record<string, Record<string, string>> = {};
@@ -48,6 +99,10 @@ export const useMessages = ({
                 const activeReactions = Object.values(senderMap);
                 const uniqueEmojis = Array.from(new Set(activeReactions));
 
+                if (activeReactions.length === 0 && !msg.reactionData) {
+                    return msg;
+                }
+
                 return {
                     ...msg,
                     reactions: activeReactions,
@@ -59,62 +114,18 @@ export const useMessages = ({
             });
     }, [messages]);
 
-    useEffect(() => {
-        if (!activeConversation) return;
-        if (activeConversation.id === 0) {
-            setMessages([]);
-            setHasMore(false);
-            setNextCursorId(null);
-            return;
-        }
-
-        const fetchMessages = async () => {
-            setIsLoading(true);
-            setMessages([]);
-            try {
-                const response = await getMessages(activeConversation.id, 30, undefined, debouncedMessageSearchTerm || undefined);
-                if (response.status) {
-                    setMessages(response.data.items.reverse());
-                    setHasMore(response.data.has_more);
-                    setNextCursorId(response.data.next_cursor_id || null);
-                }
-            } catch (error) {
-                console.error("Failed to fetch messages", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchMessages();
-
-        if (activeConversation.unread_count > 0) {
-            markAsRead(activeConversation.id).catch(err => console.error("Failed to mark as read", err));
-            setConversations(prev => prev.map(c =>
-                c.id === activeConversation.id ? { ...c, unread_count: 0 } : c
-            ));
-            setActiveConversation(prev => prev ? { ...prev, unread_count: 0 } : null);
-        }
-    }, [activeConversation?.id, debouncedMessageSearchTerm]);
-
     const handleLoadMore = async (scrollViewport: HTMLDivElement | null) => {
-        if (!activeConversation || !hasMore || isFetchingMore || !nextCursorId) return;
-
+        if (!activeConversation || !hasMore || isFetchingMore || !query.hasNextPage) return;
         const convIdAtStart = activeConversation.id;
         setIsFetchingMore(true);
         try {
             const previousScrollHeight = scrollViewport?.scrollHeight || 0;
-            const response = await getMessages(convIdAtStart, 30, nextCursorId);
-
-            if (response.status && activeConversationRef.current?.id === convIdAtStart) {
-                const newMessages = response.data.items.reverse();
-                setMessages(prev => [...newMessages, ...prev]);
-                setHasMore(response.data.has_more);
-                setNextCursorId(response.data.next_cursor_id || null);
-
-                if (scrollViewport) {
-                    setTimeout(() => {
-                        scrollViewport.scrollTop = scrollViewport.scrollHeight - previousScrollHeight;
-                    }, 0);
-                }
+            await query.fetchNextPage();
+            if (activeConversationRef.current?.id !== convIdAtStart) return;
+            if (scrollViewport) {
+                setTimeout(() => {
+                    scrollViewport.scrollTop = scrollViewport.scrollHeight - previousScrollHeight;
+                }, 0);
             }
         } catch (error) {
             console.error("Failed to fetch older messages", error);
@@ -128,38 +139,80 @@ export const useMessages = ({
 
         const handleReceiveMessage = (message: any) => {
             const chatMsg = message as ChatMessage;
-            if (activeConversationRef.current && chatMsg.conversation_id === activeConversationRef.current.id) {
-                setMessages(prev => {
-                    if (prev.some(m => m.wa_message_id === chatMsg.wa_message_id)) {
-                        return prev.map(m => m.wa_message_id === chatMsg.wa_message_id ? { ...m, ...chatMsg } : m);
-                    }
-                    return [...prev, chatMsg].sort((a, b) => (a.message_timestamp ?? 0) - (b.message_timestamp ?? 0));
-                });
-            }
+            const conv = activeConversationRef.current;
+            const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
+            if (!conv || (chatMsg.conversation_id !== conv.id && chatMsg.conversation_id !== compositeId)) return;
+
+            console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
+            const convId = conv.id;
+            const tempMatch = (m: ChatMessage) =>
+                typeof m.wa_message_id === 'string' &&
+                m.wa_message_id.startsWith('temp_') &&
+                (String(m.conversation_id) === String(convId) || String(m.conversation_id) === compositeId);
+
+            setMessages(prev => {
+                const existing = prev.find(m => m.wa_message_id === chatMsg.wa_message_id);
+                if (existing) {
+                    const updated = {
+                        ...existing, ...chatMsg,
+                        sender_name: existing.sender_name,
+                        reply_wamid: chatMsg.reply_wamid || existing.reply_wamid,
+                        reply_text: chatMsg.reply_text || existing.reply_text,
+                        reply_name: chatMsg.reply_name || existing.reply_name,
+                        emoji: chatMsg.emoji || existing.emoji,
+                        file_path: chatMsg.file_path || existing.file_path,
+                    };
+                    updateMessageInCache(convId, m => m.wa_message_id === chatMsg.wa_message_id, () => updated);
+                    return prev.map(m => m.wa_message_id === chatMsg.wa_message_id ? updated : m);
+                }
+
+                const hasPending = prev.some(tempMatch);
+                if (hasPending) {
+                    updateMessageInCache(convId, tempMatch, m => ({ ...m, status: chatMsg.status || m.status }));
+                    return prev.map(m => tempMatch(m) ? { ...m, status: chatMsg.status || m.status } : m);
+                }
+
+                // New inbound message: update local state + RQ cache
+                prependMessageToCache(convId, chatMsg);
+                return [...prev, chatMsg].sort((a, b) => (a.message_timestamp ?? 0) - (b.message_timestamp ?? 0));
+            });
         };
 
         const handleMessageStatusUpdated = (waMessageId: string, status: string, oldId?: string) => {
-            setMessages(prev => prev.map(m => {
-                if (m.wa_message_id === waMessageId) return { ...m, status };
-                if (oldId && m.wa_message_id === oldId) return { ...m, wa_message_id: waMessageId, status };
-                return m;
-            }));
+            const conv = activeConversationRef.current;
+            if (!conv) return;
+            setMessages(prev => {
+                const result = prev.map(m => {
+                    if (m.wa_message_id === waMessageId) return { ...m, status };
+                    if (oldId && m.wa_message_id === oldId) return { ...m, wa_message_id: waMessageId, status };
+                    return m;
+                });
+                updateMessageInCache(conv.id, m => m.wa_message_id === waMessageId || (!!oldId && m.wa_message_id === oldId), m => ({
+                    ...m, status, ...(m.wa_message_id === oldId ? { wa_message_id: waMessageId } : {})
+                }));
+                return result;
+            });
         };
 
         const handleMessageStatusFailed = (waMessageId: string, raw_payload: any) => {
-            const rawPayload = raw_payload as string;
-            const parsedPayload = JSON.parse(rawPayload || '{}');
+            const conv = activeConversationRef.current;
+            if (!conv) return;
+            const parsedPayload = JSON.parse((raw_payload as string) || '{}');
             const errorDetails = parsedPayload?.error_details;
-            setMessages(prev => prev.map(m => {
-                if (m.wa_message_id === waMessageId) {
-                    const oldRawPayload = m.raw_payload;
-                    const oldParsedPayload = JSON.parse(oldRawPayload || '{}');
-
-                    m.raw_payload = JSON.stringify({ ...oldParsedPayload, error_details: errorDetails });
-                    return { ...m, raw_payload: m.raw_payload, status: 'failed' };
-                }
-                return m;
-            }));
+            setMessages(prev => {
+                const result = prev.map(m => {
+                    if (m.wa_message_id === waMessageId) {
+                        const oldParsedPayload = JSON.parse(m.raw_payload || '{}');
+                        const rawPayload = JSON.stringify({ ...oldParsedPayload, error_details: errorDetails });
+                        return { ...m, raw_payload: rawPayload, status: 'failed' };
+                    }
+                    return m;
+                });
+                updateMessageInCache(conv.id, m => m.wa_message_id === waMessageId, m => ({
+                    ...m, status: 'failed'
+                }));
+                return result;
+            });
         }
 
         connection.on("ReceiveMessage", handleReceiveMessage);

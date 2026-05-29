@@ -17,6 +17,7 @@ interface ChatWindowProps {
     processedMessages: ChatMessage[];
     hasMore: boolean;
     isFetchingMore: boolean;
+    isLoading: boolean;
     handleLoadMore: (viewport: HTMLDivElement | null) => void;
     handleSend: () => void;
     inputText: string;
@@ -54,6 +55,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     processedMessages,
     hasMore,
     isFetchingMore,
+    isLoading,
     handleLoadMore,
     handleSend,
     inputText,
@@ -202,6 +204,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <div className="flex-1 relative overflow-hidden bg-slate-50/30">
                 <ScrollArea className="h-full w-full [&>div>div]:!block" ref={scrollRef}>
                     <div className="flex flex-col py-4 w-full min-w-0">
+                        {isLoading && !processedMessages.length && (
+                            <div className="flex items-center justify-center py-16">
+                                <RefreshCw className="w-6 h-6 text-[#00a884] animate-spin" />
+                            </div>
+                        )}
                         {isFetchingMore && (
                             <div className="flex justify-center py-4">
                                 <RefreshCw className="w-4 h-4 text-slate-400 animate-spin" />

@@ -64,13 +64,15 @@ func main() {
 
 	authHandler := handler.NewAuthHandler(authSvc, userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
-	convHandler := handler.NewConversationHandler(convRepo, msgRepo)
+	convHandler := handler.NewConversationHandler(convRepo, msgRepo, whatsappSvc)
 	wsHandler := handler.NewWSHandler(hub, authSvc)
 	msgHandler := handler.NewMessageHandler(whatsappSvc, msgRepo)
 	tplHandler := handler.NewTemplateHandler(tplSvc, tplRepo, cfg.WABAID)
 	mediaHandler := handler.NewMediaHandler(mediaSvc)
 	contactHandler := handler.NewContactHandler(contactRepo)
 	phoneHandler := handler.NewPhoneHandler(repository.NewPhoneRepository(pool))
+	typingHandler := handler.NewTypingHandler(hub)
+	webhookOverrideHandler := handler.NewWebhookOverrideHandler(wapiClient, cfg.WABAID, cfg.WebhookVerifyToken)
 
 	wh := &webhook.Handler{
 		VerifyToken: cfg.WebhookVerifyToken,
@@ -107,8 +109,10 @@ func main() {
 			r.Get("/auth/me", authHandler.Me)
 			r.Get("/conversations", convHandler.List)
 			r.Get("/conversations/{id}", convHandler.GetByID)
+			r.Patch("/conversations/{id}/read", convHandler.MarkRead)
 			r.Get("/conversations/{id}/messages", convHandler.ListMessages)
 			r.Post("/messages", msgHandler.Send)
+			r.Post("/messages/reaction", msgHandler.SendReaction)
 			r.Get("/messages/{wamid}", msgHandler.GetByWAMID)
 			r.Get("/templates", tplHandler.List)
 			r.Get("/templates/{id}", tplHandler.GetByID)
@@ -119,6 +123,7 @@ func main() {
 			r.Patch("/contacts/{waID}", contactHandler.Update)
 			r.Post("/contacts/{waID}/block", contactHandler.Block)
 			r.Post("/contacts/{waID}/unblock", contactHandler.Unblock)
+			r.Post("/typing", typingHandler.Send)
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("super_admin", "company_admin"))
@@ -129,6 +134,13 @@ func main() {
 				r.Post("/templates", tplHandler.Create)
 				r.Put("/templates/{id}", tplHandler.Update)
 				r.Delete("/templates/{id}", tplHandler.Delete)
+			})
+
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireRole("super_admin"))
+				r.Get("/webhook/override", webhookOverrideHandler.Get)
+				r.Post("/webhook/override", webhookOverrideHandler.Set)
+				r.Delete("/webhook/override", webhookOverrideHandler.Remove)
 			})
 		})
 	})

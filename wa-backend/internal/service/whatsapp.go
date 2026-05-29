@@ -28,7 +28,7 @@ func NewWhatsAppService(client wapi.Client, msgs *repository.MessageRepository, 
 	return &WhatsAppService{client: client, msgs: msgs, convRepo: convRepo, contacts: contacts, windowSvc: windowSvc, hub: hub}
 }
 
-func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body, agentID string) (*model.Message, error) {
+func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body, agentID, contextMessageID string) (*model.Message, error) {
 	if err := s.contacts.EnsureOutboundContact(ctx, to, phoneNumberID); err != nil {
 		slog.Error("ensure outbound contact failed", "error", err)
 	}
@@ -42,6 +42,9 @@ func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body,
 	}
 
 	msg := types.NewTextMessage(to, body, false)
+	if contextMessageID != "" {
+		msg.Context = &types.Context{MessageID: contextMessageID}
+	}
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
 		return nil, fmt.Errorf("send text: %w", err)
@@ -50,14 +53,7 @@ func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body,
 		return nil, fmt.Errorf("send text: no message id returned")
 	}
 
-	out := s.buildOutbound(resp.Messages[0].ID, phoneNumberID, to, "text", body, agentID)
-	if err := s.msgs.Save(ctx, out); err != nil {
-		slog.Error("save outbound message", "error", err)
-	}
-
-	s.convRepo.Upsert(ctx, phoneNumberID, to, truncateStr(body, 100))
-
-	s.broadcastSent(phoneNumberID, out)
+	out := s.storeOutboundMessage(ctx, msg, resp.Messages[0].ID, phoneNumberID, to, agentID)
 	return out, nil
 }
 
@@ -91,50 +87,52 @@ func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, t
 		return nil, fmt.Errorf("send template: no message id returned")
 	}
 
-	content := map[string]interface{}{
-		"name":     templateName,
-		"language": lang,
-	}
-	if len(params) > 0 {
-		content["params"] = params
-	}
-	if len(buttons) > 0 {
-		content["buttons"] = buttons
-	}
-
-	out := &model.Message{
-		WamID:         resp.Messages[0].ID,
-		PhoneNumberID: phoneNumberID,
-		WaID:          to,
-		Direction:     "outbound",
-		Type:          "template",
-		Content:       repository.MustJSON(content),
-		Status:        "sent",
-		Timestamp:     time.Now(),
-		AgentID:       &agentID,
-	}
-	if err := s.msgs.Save(ctx, out); err != nil {
-		slog.Error("save outbound template", "error", err)
-	}
-
-	s.convRepo.Upsert(ctx, phoneNumberID, to, "📋 "+templateName)
-
-	s.broadcastSent(phoneNumberID, out)
+	out := s.storeOutboundMessage(ctx, msg, resp.Messages[0].ID, phoneNumberID, to, agentID)
 	return out, nil
 }
 
-func (s *WhatsAppService) buildOutbound(wamid, phoneNumberID, to, msgType, content, agentID string) *model.Message {
-	return &model.Message{
+func (s *WhatsAppService) storeOutboundMessage(ctx context.Context, msg *types.Message, wamid, phoneNumberID, to, agentID string) *model.Message {
+	out := &model.Message{
 		WamID:         wamid,
 		PhoneNumberID: phoneNumberID,
 		WaID:          to,
 		Direction:     "outbound",
-		Type:          msgType,
-		Content:       repository.MustJSON(map[string]string{"body": content}),
+		Type:          msg.Type,
+		Content:       repository.MustJSON(msg),
 		Status:        "sent",
 		Timestamp:     time.Now(),
-		AgentID:       &agentID,
 	}
+	if agentID != "" {
+		out.AgentID = &agentID
+	}
+	if err := s.msgs.Save(ctx, out); err != nil {
+		slog.Error("save outbound message", "error", err)
+	}
+	s.convRepo.Upsert(ctx, phoneNumberID, to, previewForType(msg, phoneNumberID, to))
+	s.broadcastSent(phoneNumberID, out)
+	return out
+}
+
+func previewForType(msg *types.Message, phoneNumberID, to string) string {
+	switch msg.Type {
+	case "text":
+		if msg.Text != nil {
+			return truncateStr(msg.Text.Body, 100)
+		}
+	case "image":
+		return "📷 Photo"
+	case "video":
+		return "🎥 Video"
+	case "audio":
+		return "🎵 Audio"
+	case "document":
+		return "📄 Document"
+	case "template":
+		if msg.Template != nil {
+			return "📋 " + msg.Template.Name
+		}
+	}
+	return "[message]"
 }
 
 func (s *WhatsAppService) broadcastSent(phoneNumberID string, msg *model.Message) {
@@ -190,7 +188,7 @@ func sortedKeys(m map[string]string) []string {
 	return keys
 }
 
-func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, mediaType, mediaID, caption, agentID string) (*model.Message, error) {
+func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, mediaType, mediaID, caption, agentID, contextMessageID string) (*model.Message, error) {
 	if err := s.contacts.EnsureOutboundContact(ctx, to, phoneNumberID); err != nil {
 		slog.Error("ensure outbound contact failed for media", "error", err)
 	}
@@ -217,6 +215,10 @@ func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, medi
 		return nil, fmt.Errorf("unsupported media type: %s", mediaType)
 	}
 
+	if contextMessageID != "" {
+		msg.Context = &types.Context{MessageID: contextMessageID}
+	}
+
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
 		return nil, fmt.Errorf("send %s: %w", mediaType, err)
@@ -225,38 +227,53 @@ func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, medi
 		return nil, fmt.Errorf("send %s: no message id returned", mediaType)
 	}
 
-	out := &model.Message{
-		WamID:         resp.Messages[0].ID,
-		PhoneNumberID: phoneNumberID,
-		WaID:          to,
-		Direction:     "outbound",
-		Type:          mediaType,
-		Content:       repository.MustJSON(map[string]string{"id": mediaID, "caption": caption}),
-		Status:        "sent",
-		Timestamp:     time.Now(),
-		AgentID:       &agentID,
-	}
-	if err := s.msgs.Save(ctx, out); err != nil {
-		slog.Error("save outbound media", "error", err)
-	}
-
-	s.convRepo.Upsert(ctx, phoneNumberID, to, previewEmoji(mediaType))
-	s.broadcastSent(phoneNumberID, out)
+	out := s.storeOutboundMessage(ctx, msg, resp.Messages[0].ID, phoneNumberID, to, agentID)
 	return out, nil
 }
 
-func previewEmoji(t string) string {
-	switch t {
-	case "image":
-		return "📷 Photo"
-	case "video":
-		return "🎥 Video"
-	case "audio":
-		return "🎵 Audio"
-	case "document":
-		return "📄 Document"
+func (s *WhatsAppService) MarkConversationRead(ctx context.Context, convID string) error {
+	conv, err := s.convRepo.GetByID(ctx, convID)
+	if err != nil {
+		return fmt.Errorf("get conversation: %w", err)
 	}
-	return "📎 Media"
+	if conv == nil {
+		return fmt.Errorf("conversation not found")
+	}
+
+	if err := s.convRepo.ResetUnread(ctx, convID); err != nil {
+		return fmt.Errorf("reset unread: %w", err)
+	}
+
+	msg, err := s.msgs.GetLatestInboundByConversation(ctx, conv.PhoneNumberID, conv.WaID)
+	if err == nil && msg != nil {
+		if err := s.client.MarkAsRead(ctx, conv.PhoneNumberID, msg.WamID); err != nil {
+			slog.Warn("mark as read (non-fatal)", "error", err)
+		}
+	}
+
+	if s.hub != nil {
+		conv.UnreadCount = 0
+		s.hub.BroadcastEventToAll(ws.Event{
+			Type: "UpdateConversation",
+			Data: conv,
+		})
+	}
+
+	return nil
+}
+
+func (s *WhatsAppService) SendReaction(ctx context.Context, phoneNumberID, to, messageID, emoji string) (*model.Message, error) {
+	msg := types.NewReactionMessage(to, messageID, emoji)
+	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
+	if err != nil {
+		return nil, fmt.Errorf("send reaction: %w", err)
+	}
+	if len(resp.Messages) == 0 {
+		return nil, fmt.Errorf("send reaction: no message id returned")
+	}
+
+	out := s.storeOutboundMessage(ctx, msg, resp.Messages[0].ID, phoneNumberID, to, "")
+	return out, nil
 }
 
 func truncateStr(s string, n int) string {

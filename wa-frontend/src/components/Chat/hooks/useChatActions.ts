@@ -1,6 +1,7 @@
 
 import { useRef } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
+import { updateMessageInCache } from '../../../api/queries';
 import type { Conversation, ChatMessage } from '../../../types/chat';
 
 interface UseChatActionsProps {
@@ -81,12 +82,15 @@ export const useChatActions = ({
             sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, text, "text", undefined, undefined, user?.display_name, tempId, context_id)
                 .then((res: any) => {
                     if (res.status) {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
+                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name }));
                     } else {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     }
                 }).catch(() => {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                    updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                 });
         }
     };
@@ -148,11 +152,14 @@ export const useChatActions = ({
                 .then((res: any) => {
                     if (res.status) {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data }));
                     } else {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     }
                 }).catch(() => {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                    updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                 });
         }
     };
@@ -160,7 +167,7 @@ export const useChatActions = ({
     const handleSendMedia = async (file: File, previewUrl: string, type: 'image' | 'video' | 'audio' | 'document', caption: string, replyingTo: ChatMessage | null) => {
         if (!activeConversation) return;
         const currentConv = activeConversation;
-        const tempId = `out_${Date.now()}`;
+        const tempId = `temp_${Date.now()}`;
         const context_id = replyingTo?.wa_message_id;
 
         const newMessage: ChatMessage = {
@@ -192,7 +199,6 @@ export const useChatActions = ({
             }
 
             if ((window as any).chrome?.webview) {
-
                 (window as any).chrome.webview.postMessage({
                     type: 'SEND_MESSAGE',
                     conversation_id: currentConv.id,
@@ -212,12 +218,15 @@ export const useChatActions = ({
                 sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
                     .then((res: any) => {
                         if (res.status) {
-                            setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
+                            setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name }));
                         } else {
                             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                            updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                         }
                     }).catch(() => {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     });
             }
         } catch (error) {

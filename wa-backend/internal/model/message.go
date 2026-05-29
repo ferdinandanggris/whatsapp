@@ -27,6 +27,14 @@ type Message struct {
 	Timestamp     time.Time       `json:"timestamp"`
 	ErrorCode     *int            `json:"error_code,omitempty"`
 	AgentID       *string         `json:"agent_id,omitempty"`
+
+	// Reply enrichment (not stored in DB, populated at query time)
+	ReplyWamID string `json:"reply_wamid,omitempty"`
+	ReplyText  string `json:"reply_text,omitempty"`
+	ReplyName  string `json:"reply_name,omitempty"`
+
+	// Agent name enrichment (JOINed from users table at query time)
+	AgentName string `json:"agent_name,omitempty"`
 }
 
 type Conversation struct {

@@ -192,66 +192,17 @@ func (h *Handler) processStatus(r *http.Request, status *types.StatusUpdate, met
 }
 
 func inboundContent(msg *types.IncomingMsg) (string, json.RawMessage) {
-	switch msg.Type {
-	case "text":
-		if msg.Text != nil {
-			return "text", repository.MustJSON(map[string]string{"body": msg.Text.Body})
-		}
-	case "image":
-		if msg.Image != nil {
-			return "image", repository.MustJSON(map[string]string{
-				"id": msg.Image.ID, "caption": msg.Image.Caption, "mime_type": msg.Image.MimeType,
-			})
-		}
-	case "video":
-		if msg.Video != nil {
-			return "video", repository.MustJSON(map[string]string{
-				"id": msg.Video.ID, "caption": msg.Video.Caption,
-			})
-		}
-	case "audio":
-		if msg.Audio != nil {
-			return "audio", repository.MustJSON(map[string]string{
-				"id": msg.Audio.ID, "mime_type": msg.Audio.MimeType,
-			})
-		}
-	case "document":
-		if msg.Document != nil {
-			return "document", repository.MustJSON(map[string]string{
-				"id": msg.Document.ID, "filename": msg.Document.Filename,
-				"caption": msg.Document.Caption, "mime_type": msg.Document.MimeType,
-			})
-		}
-	case "location":
-		if msg.Location != nil {
-			return "location", repository.MustJSON(map[string]interface{}{
-				"latitude": msg.Location.Latitude, "longitude": msg.Location.Longitude,
-				"name": msg.Location.Name, "address": msg.Location.Address,
-			})
-		}
-	case "interactive":
-		if msg.Interactive != nil && msg.Interactive.InButtonReply != nil {
-			return "interactive", repository.MustJSON(map[string]string{
-				"type": "button_reply", "id": msg.Interactive.InButtonReply.ID,
-				"title": msg.Interactive.InButtonReply.Title,
-			})
-		}
-		if msg.Interactive != nil && msg.Interactive.InListReply != nil {
-			return "interactive", repository.MustJSON(map[string]string{
-				"type": "list_reply", "id": msg.Interactive.InListReply.ID,
-				"title": msg.Interactive.InListReply.Title,
-			})
-		}
-	}
-	return "text", repository.MustJSON(map[string]string{"body": "[unsupported type]"})
+	return msg.Type, repository.MustJSON(msg)
 }
 
 func previewText(msgType string, content json.RawMessage) string {
 	switch msgType {
 	case "text":
-		var t struct{ Body string `json:"body"` }
-		if json.Unmarshal(content, &t) == nil && t.Body != "" {
-			return truncate(t.Body, 100)
+		var t struct {
+			Text *struct{ Body string `json:"body"` } `json:"text"`
+		}
+		if json.Unmarshal(content, &t) == nil && t.Text != nil && t.Text.Body != "" {
+			return truncate(t.Text.Body, 100)
 		}
 	case "image":
 		return "📷 Photo"
@@ -265,6 +216,17 @@ func previewText(msgType string, content json.RawMessage) string {
 		return "📍 Location"
 	case "interactive":
 		return "🔄 Reply"
+	case "reaction":
+		var r struct {
+			Reaction *struct{ Emoji string `json:"emoji"` } `json:"reaction"`
+		}
+		if json.Unmarshal(content, &r) == nil && r.Reaction != nil {
+			if r.Reaction.Emoji != "" {
+				return r.Reaction.Emoji
+			}
+			return "❌ Reaksi dihapus"
+		}
+		return "👍 Reaction"
 	}
 	return "[unknown]"
 }

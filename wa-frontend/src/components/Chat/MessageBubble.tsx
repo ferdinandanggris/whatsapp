@@ -20,7 +20,7 @@ interface MessageBubbleProps {
     conversation: Conversation;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({
+const MessageBubble = React.memo(function MessageBubble({
     msg,
     prevMsg,
     onReply,
@@ -30,7 +30,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     renderMessageContent,
     handleContextMenuImage,
     conversation,
-}) => {
+}: MessageBubbleProps) {
     const [showErrorInfo, setShowErrorInfo] = React.useState(false);
     const isOutbound = msg.direction === 'OUTBOUND';
     const isFailed = msg.status === 'failed';
@@ -191,6 +191,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
         </div>
     );
-};
+});
 
 export default MessageBubble;

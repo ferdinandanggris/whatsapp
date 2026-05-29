@@ -20,16 +20,17 @@ func NewMessageHandler(svc *service.WhatsAppService, msgs *repository.MessageRep
 }
 
 type sendRequest struct {
-	To              string                       `json:"to"`
-	PhoneNumberID   string                       `json:"phone_number_id"`
-	Type            string                       `json:"type"`
-	Body            string                       `json:"body,omitempty"`
-	TemplateName    string                       `json:"template_name,omitempty"`
-	TemplateLang    string                       `json:"template_lang,omitempty"`
-	TemplateParams  map[string]string            `json:"template_params,omitempty"`
-	TemplateButtons []service.TemplateButtonSpec `json:"template_buttons,omitempty"`
-	MediaID         string                       `json:"media_id,omitempty"`
-	Caption         string                       `json:"caption,omitempty"`
+	To               string                       `json:"to"`
+	PhoneNumberID    string                       `json:"phone_number_id"`
+	Type             string                       `json:"type"`
+	Body             string                       `json:"body,omitempty"`
+	TemplateName     string                       `json:"template_name,omitempty"`
+	TemplateLang     string                       `json:"template_lang,omitempty"`
+	TemplateParams   map[string]string            `json:"template_params,omitempty"`
+	TemplateButtons  []service.TemplateButtonSpec `json:"template_buttons,omitempty"`
+	MediaID          string                       `json:"media_id,omitempty"`
+	Caption          string                       `json:"caption,omitempty"`
+	ContextMessageID string                       `json:"context_message_id,omitempty"`
 }
 
 func (h *MessageHandler) Send(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +60,7 @@ func (h *MessageHandler) Send(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "body required for text messages")
 			return
 		}
-		msg, err = h.svc.SendText(r.Context(), req.PhoneNumberID, req.To, req.Body, claims.UserID)
+		msg, err = h.svc.SendText(r.Context(), req.PhoneNumberID, req.To, req.Body, claims.UserID, req.ContextMessageID)
 	case "template":
 		if req.TemplateName == "" {
 			writeError(w, http.StatusBadRequest, "template_name required for template messages")
@@ -75,12 +76,38 @@ func (h *MessageHandler) Send(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "media_id required for "+req.Type+" messages")
 			return
 		}
-		msg, err = h.svc.SendMedia(r.Context(), req.PhoneNumberID, req.To, req.Type, req.MediaID, req.Caption, claims.UserID)
+		msg, err = h.svc.SendMedia(r.Context(), req.PhoneNumberID, req.To, req.Type, req.MediaID, req.Caption, claims.UserID, req.ContextMessageID)
 	default:
 		writeError(w, http.StatusBadRequest, "unsupported message type: "+req.Type)
 		return
 	}
 
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, msg)
+}
+
+func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		PhoneNumberID string `json:"phone_number_id"`
+		To            string `json:"to"`
+		MessageID     string `json:"message_id"`
+		Emoji         string `json:"emoji"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if req.To == "" || req.PhoneNumberID == "" || req.MessageID == "" {
+		writeError(w, http.StatusBadRequest, "to, phone_number_id, message_id required")
+		return
+	}
+
+	msg, err := h.svc.SendReaction(r.Context(), req.PhoneNumberID, req.To, req.MessageID, req.Emoji)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return

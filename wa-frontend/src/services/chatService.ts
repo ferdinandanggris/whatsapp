@@ -57,24 +57,61 @@ const mapMessage = (m: any): ChatMessage => {
     let mediaId = '';
     let caption = '';
     let filename = '';
+    let contextMessageId = '';
+    let emoji = '';
 
     const content = typeof m.content === 'string' ? JSON.parse(m.content || '{}') : (m.content || {});
 
+    // Raw Meta format (inbound): content.text, content.image, content.video, etc.
+    // Old format (outbound): content.body, content.id, content.caption, etc.
     if (m.type === 'text') {
-        text = content.body || '';
-    } else {
-        mediaId = content.id || '';
-        caption = content.caption || '';
-        filename = content.filename || 'file';
+        text = content.text?.body || content.body || '';
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'image') {
+        const img = content.image || content;
+        mediaId = img.id || '';
+        caption = img.caption || '';
         text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'video') {
+        const vid = content.video || content;
+        mediaId = vid.id || '';
+        caption = vid.caption || '';
+        text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'audio') {
+        const aud = content.audio || content;
+        mediaId = aud.id || '';
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'document') {
+        const doc = content.document || content;
+        mediaId = doc.id || '';
+        caption = doc.caption || '';
+        filename = doc.filename || 'file';
+        text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'location') {
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'reaction') {
+        const react = content.reaction || content;
+        emoji = react.emoji || '';
+        contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
+        text = emoji ? `Reacted ${emoji}` : 'Reaction removed';
+    } else {
+        text = content.text?.body || content.body || '';
+        mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
+        caption = content.image?.caption || content.video?.caption || content.document?.caption || content.caption || '';
+        filename = content.document?.filename || content.filename || 'file';
+        text = text || caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
     }
 
     return {
         id: m.wamid,
-        conversation_id: m.phone_number_id + '_' + m.wa_id, // Virtual ID matching Go ws structure or simple link
+        conversation_id: m.phone_number_id + '_' + m.wa_id,
         app_id: m.phone_number_id,
         wa_message_id: m.wamid,
-        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_id ? 'Agent' : 'System'),
+        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
         message_text: text,
         message_type: m.type,
         media_id: mediaId,
@@ -84,6 +121,12 @@ const mapMessage = (m: any): ChatMessage => {
         direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
         status: m.status,
         platform: 'whatsapp',
+        raw_payload: JSON.stringify(content),
+        context_message_id: contextMessageId || undefined,
+        reply_wamid: m.reply_wamid || undefined,
+        reply_text: m.reply_text || undefined,
+        reply_name: m.reply_name || undefined,
+        emoji: emoji || undefined,
         created_at: m.timestamp,
         message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000)
     };
@@ -302,14 +345,17 @@ export const ensureConversation = async (
 };
 
 export const markAsRead = async (conversationId: string | number): Promise<ApiResponse<any>> => {
-    // In our Go backend, we have no specific read API, but we can reset unread locally or send request
-    // We can call /api/v1/conversations/{id} or similar if implemented, or just return success
-    return {
-        status_code: 200,
-        status: true,
-        message: 'Success',
-        data: null
-    };
+    try {
+        const response = await apiClient.patch(`/api/v1/conversations/${conversationId}/read`);
+        return response.data;
+    } catch (error: any) {
+        return {
+            status_code: error.response?.status || 500,
+            status: true,
+            message: error.message || 'Gagal mark as read',
+            data: null as any
+        };
+    }
 };
 
 export const uploadMedia = async (
@@ -373,6 +419,8 @@ export const sendMessage = async (
             payload.media_id = media_id;
             payload.caption = text;
         }
+
+        if (context_message_id) payload.context_message_id = context_message_id;
 
         const response = await apiClient.post<any>('/api/v1/messages', payload);
         return {
@@ -452,15 +500,29 @@ export const sendReaction = async (
     message_id: string,
     sender_name?: string
 ): Promise<ApiResponse<any>> => {
-    // Go backend does not natively support reaction messages inside MessageHandler yet.
-    // We can just return success or make the request.
-    // If backend doesn't support it, we mock it.
-    return {
-        status_code: 200,
-        status: true,
-        message: 'Reaksi berhasil dikirim (mock)',
-        data: null
-    };
+    try {
+        const payload = {
+            to: target,
+            phone_number_id: String(wa_channel_id),
+            message_id,
+            emoji
+        };
+        const response = await apiClient.post<any>('/api/v1/messages/reaction', payload);
+        return {
+            status_code: 201,
+            status: true,
+            message: 'Reaksi berhasil dikirim',
+            data: mapMessage(response.data)
+        };
+    } catch (error: any) {
+        const errMsg = error.response?.data?.error || error.message || 'Gagal mengirim reaksi';
+        return {
+            status_code: error.response?.status || 500,
+            status: false,
+            message: errMsg,
+            data: null
+        };
+    }
 };
 
 export const updateConversationName = async (
@@ -500,11 +562,19 @@ export const sendTypingIndicator = async (
     target: string,
     sender_name: string
 ): Promise<ApiResponse<any>> => {
-    // Go backend has no typing indicator REST API. We can just return success.
-    return {
-        status_code: 200,
-        status: true,
-        message: 'Success',
-        data: null
-    };
+    try {
+        const response = await apiClient.post('/api/v1/typing', {
+            conversation_id,
+            target,
+            sender_name
+        });
+        return response.data;
+    } catch (error: any) {
+        return {
+            status_code: 500,
+            status: false,
+            message: error.message || 'Failed to send typing indicator',
+            data: null
+        };
+    }
 };

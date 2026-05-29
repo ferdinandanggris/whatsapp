@@ -58,8 +58,10 @@ export interface ChatMessage {
     platform: string;
     raw_payload?: string;
     context_message_id?: string;
-    reply_name? : string;
-    reply_text? : string;
+    reply_wamid?: string;
+    reply_name?: string;
+    reply_text?: string;
+    emoji?: string;
     message_timestamp?: number;
     created_at: string;
     reactions?: string[];

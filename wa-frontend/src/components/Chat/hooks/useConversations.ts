@@ -132,7 +132,10 @@ export const useConversations = ({
             if (activeAppIdRef.current !== null && chatMsg.app_id !== activeAppIdRef.current) return;
 
             setConversations(prev => {
-                const index = prev.findIndex(c => c.id === chatMsg.conversation_id);
+                const index = prev.findIndex(c =>
+                    c.id === chatMsg.conversation_id ||
+                    `${c.wa_channel_id}_${c.customer_wa_id}` === chatMsg.conversation_id
+                );
                 if (index !== -1) {
 
                     // check convFilter
@@ -157,7 +160,6 @@ export const useConversations = ({
                     conv.updated_at = chatMsg.created_at;
 
                     if (chatMsg.direction === 'INBOUND') {
-                        // if (chatMsg.direction === 'INBOUND' && activeConversationRef.current?.id !== chatMsg.conversation_id) {
                         conv.unread_count++;
 
                         // Bridge to WinForms for desktop notification
@@ -168,12 +170,21 @@ export const useConversations = ({
                                 message: preview
                             });
                         }
+
+                        // Refresh app badges in sidebar
+                        getApplicationSummary().then(res => {
+                            if (res.status) setApplications(res.data);
+                        });
                     }
 
-                    if (activeConversationRef.current && activeConversationRef.current.id === chatMsg.conversation_id) {
+                    const activeConv = activeConversationRef.current;
+                    const activeComposite = activeConv
+                        ? `${activeConv.wa_channel_id}_${activeConv.customer_wa_id}`
+                        : '';
+                    if (activeConv && (activeConv.id === chatMsg.conversation_id || activeComposite === chatMsg.conversation_id)) {
                         setActiveConversation({
-                            ...activeConversationRef.current,
-                            unread_count: activeConversationRef.current.unread_count + 1
+                            ...activeConv,
+                            unread_count: activeConv.unread_count + 1
                         });
                     }
 

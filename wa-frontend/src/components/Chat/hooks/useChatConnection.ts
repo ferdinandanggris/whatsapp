@@ -67,16 +67,51 @@ const mapMessage = (m: any) => {
     let mediaId = '';
     let caption = '';
     let filename = '';
+    let contextMessageId = '';
+    let emoji = '';
 
     const content = typeof m.content === 'string' ? JSON.parse(m.content || '{}') : (m.content || {});
 
     if (m.type === 'text') {
-        text = content.body || '';
-    } else {
-        mediaId = content.id || '';
-        caption = content.caption || '';
-        filename = content.filename || 'file';
+        text = content.text?.body || content.body || '';
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'image') {
+        const img = content.image || content;
+        mediaId = img.id || '';
+        caption = img.caption || '';
         text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'video') {
+        const vid = content.video || content;
+        mediaId = vid.id || '';
+        caption = vid.caption || '';
+        text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'audio') {
+        const aud = content.audio || content;
+        mediaId = aud.id || '';
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'document') {
+        const doc = content.document || content;
+        mediaId = doc.id || '';
+        caption = doc.caption || '';
+        filename = doc.filename || 'file';
+        text = caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'location') {
+        contextMessageId = content.context?.id || content.context?.message_id || '';
+    } else if (m.type === 'reaction') {
+        const react = content.reaction || content;
+        emoji = react.emoji || '';
+        contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
+        text = emoji ? `${emoji}` : '';
+    } else {
+        text = content.text?.body || content.body || '';
+        mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
+        caption = content.image?.caption || content.video?.caption || content.document?.caption || content.caption || '';
+        filename = content.document?.filename || content.filename || 'file';
+        text = text || caption;
+        contextMessageId = content.context?.id || content.context?.message_id || '';
     }
 
     return {
@@ -84,7 +119,7 @@ const mapMessage = (m: any) => {
         conversation_id: m.phone_number_id + '_' + m.wa_id,
         app_id: m.phone_number_id,
         wa_message_id: m.wamid,
-        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_id ? 'Agent' : 'System'),
+        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
         message_text: text,
         message_type: m.type,
         media_id: mediaId,
@@ -94,6 +129,12 @@ const mapMessage = (m: any) => {
         direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
         status: m.status,
         platform: 'whatsapp',
+        raw_payload: JSON.stringify(content),
+        context_message_id: contextMessageId || undefined,
+        reply_wamid: m.reply_wamid || undefined,
+        reply_text: m.reply_text || undefined,
+        reply_name: m.reply_name || undefined,
+        emoji: emoji || undefined,
         created_at: m.timestamp,
         message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000)
     };

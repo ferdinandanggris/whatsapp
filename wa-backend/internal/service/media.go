@@ -159,6 +159,7 @@ func serveFile(w http.ResponseWriter, r *http.Request, path, mimeType string) er
 	}
 
 	w.Header().Set("Content-Type", mimeType)
+	w.Header().Set("Cache-Control", "public, max-age=86400")
 	http.ServeContent(w, r, "", stat.ModTime(), f)
 	return nil
 }
