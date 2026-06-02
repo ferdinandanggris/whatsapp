@@ -1,0 +1,35 @@
+{
+  "recommended": [
+    {
+      "name": "playwright-mcp",
+      "reason": "E2E testing untuk semua critical user flows di SPA",
+      "install": "npm install -D @playwright/mcp",
+      "config": {
+        "type": "local",
+        "command": ["npx", "@playwright/mcp"],
+        "enabled": false,
+        "timeout": 10000
+      }
+    },
+    {
+      "name": "chrome-devtools-mcp",
+      "reason": "Debug rendering, profiling, dan inspect React component tree",
+      "config": {
+        "type": "local",
+        "command": ["npx", "@opencode/mcp-chrome-devtools"],
+        "enabled": false,
+        "timeout": 10000
+      }
+    },
+    {
+      "name": "github-mcp",
+      "reason": "Git workflow: PR, commit management, code review",
+      "config": {
+        "type": "local",
+        "command": ["npx", "@opencode/mcp-github"],
+        "enabled": false,
+        "timeout": 30000
+      }
+    }
+  ]
+}

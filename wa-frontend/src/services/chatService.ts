@@ -19,6 +19,59 @@ apiClient.interceptors.request.use((config) => {
     return config;
 });
 
+// Auto-refresh token on 401 (mirrors client.ts logic)
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+apiClient.interceptors.response.use(
+    (res) => res,
+    async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status !== 401 || originalRequest._retry) {
+            return Promise.reject(error);
+        }
+        if (originalRequest.url?.includes('/auth/refresh')) {
+            return Promise.reject(error);
+        }
+
+        if (isRefreshing) {
+            return new Promise((resolve) => {
+                refreshSubscribers.push((token: string) => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    resolve(apiClient(originalRequest));
+                });
+            });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) throw new Error('no refresh token');
+            const res = await axios.post('/api/v1/auth/refresh', { refresh_token: refreshToken });
+            const { access_token, refresh_token } = res.data;
+            localStorage.setItem('token', access_token);
+            localStorage.setItem('refresh_token', refresh_token);
+
+            refreshSubscribers.forEach((cb) => cb(access_token));
+            refreshSubscribers = [];
+
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+            return apiClient(originalRequest);
+        } catch (refreshError) {
+            console.error('[auth] refresh failed, clearing session', refreshError);
+            refreshSubscribers = [];
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+        } finally {
+            isRefreshing = false;
+        }
+    },
+);
+
 // Helper to convert Go conversation model to WaMeta UI model
 const mapConversation = (c: any): Conversation => {
     // Determine template requirement: if last_message_at is older than 24h
@@ -38,7 +91,7 @@ const mapConversation = (c: any): Conversation => {
         customer_name: c.company_custom_name || c.profile_name || c.wa_id,
         kode_reseller: '',
         nama_reseller: '',
-        display_number: c.wa_id,
+        display_phone_number: c.display_phone_number || String(c.phone_number_id),
         app_name: c.display_name || 'WA Number',
         wa_channel_display_name: c.display_name || 'WA Number',
         is_template_required: isTemplateRequired,
@@ -96,7 +149,7 @@ const mapMessage = (m: any): ChatMessage => {
         const react = content.reaction || content;
         emoji = react.emoji || '';
         contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
-        text = emoji ? `Reacted ${emoji}` : 'Reaction removed';
+        text = emoji ? `${emoji}` : '';
     } else {
         text = content.text?.body || content.body || '';
         mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
@@ -221,7 +274,7 @@ export const getChannels = async (): Promise<ApiResponse<WaChannel[]>> => {
             phone_number_id: p.phone_number_id,
             waba_id: '',
             display_name: p.display_name || p.display_phone_number || 'WA Number',
-            display_number: p.display_phone_number || '',
+            display_phone_number: p.display_phone_number || '',
             is_active: true,
             type: 'CENTER'
         }));
@@ -245,20 +298,28 @@ export const getChannels = async (): Promise<ApiResponse<WaChannel[]>> => {
 export const getMessages = async (
     conversation_id: string | number,
     limit = 30,
+    cursor_ts?: string,
     cursor_id?: string | number,
-    search?: string
+    search?: string,
+    message_type?: string,
+    direction?: string
 ): Promise<ApiResponse<PagedResponse<ChatMessage>>> => {
     try {
-        const offset = cursor_id ? Number(cursor_id) : 0;
-        const response = await apiClient.get<any[]>(`/api/v1/conversations/${conversation_id}/messages`, {
-            params: { limit, offset }
-        });
+        const params: Record<string, string | number> = { limit };
+        if (cursor_ts) params.cursor_ts = cursor_ts;
+        if (cursor_id !== undefined && cursor_id !== null) {
+            params.cursor_id = Number(cursor_id);
+        }
+        if (search) params.q = search;
+        if (message_type) params.type = message_type;
+        if (direction) params.direction = direction;
+        const response = await apiClient.get<any>(`/api/v1/conversations/${conversation_id}/messages`, { params });
 
-        // The messages from backend are returned newest first.
-        // We will map them and return them as they are.
-        const rawMessages = response.data || [];
+        // Backend returns { data: [], has_more: bool, next_cursor_ts, next_cursor_id }
+        const body = response.data || {};
+        const rawMessages: any[] = body.data || [];
         const items = rawMessages.map(mapMessage);
-        const hasMore = rawMessages.length >= limit;
+        const hasMore = body.has_more ?? false;
 
         return {
             status_code: 200,
@@ -267,7 +328,8 @@ export const getMessages = async (
             data: {
                 items,
                 limit,
-                next_cursor_id: hasMore ? offset + rawMessages.length : undefined,
+                next_cursor_ts: body.next_cursor_ts ?? undefined,
+                next_cursor_id: body.next_cursor_id ?? undefined,
                 has_more: hasMore
             }
         };
@@ -282,6 +344,7 @@ export const getMessages = async (
 };
 
 export const ensureConversation = async (
+    display_phone_number: string,
     wa_channel_id: string | number,
     customer_wa_id: string,
     customer_name?: string
@@ -302,7 +365,7 @@ export const ensureConversation = async (
             customer_name: customer_name || contactResponse?.data?.company_custom_name || contactResponse?.data?.profile_name || customer_wa_id,
             kode_reseller: '',
             nama_reseller: '',
-            display_number: String(wa_channel_id),
+            display_phone_number: display_phone_number,
             is_template_required: true, // assume template required for new chats
             platform: 'whatsapp',
             last_message_preview: '',

@@ -10,6 +10,7 @@ export interface PagedResponse<T> {
     limit: number;
     next_cursor_updated_at?: string;
     next_cursor_id?: string | number;
+    next_cursor_ts?: string;
     has_more: boolean;
 }
 
@@ -22,7 +23,7 @@ export interface Conversation {
     customer_name: string;
     kode_reseller: string;
     nama_reseller: string;
-    display_number?: string;
+    display_phone_number?: string;
     app_name?: string;
     wa_channel_display_name?: string;
     is_template_required: boolean;
@@ -81,7 +82,7 @@ export interface WaChannel {
     phone_number_id: string;
     waba_id: string;
     display_name: string;
-    display_number: string;
+    display_phone_number: string;
     is_active: boolean;
     type: 'CENTER' | 'CS';
 }

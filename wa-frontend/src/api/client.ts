@@ -33,6 +33,7 @@ async function handleTokenRefresh(): Promise<string | null> {
     localStorage.setItem("refresh_token", data.refresh_token)
     return data.access_token
   } catch (err) {
+    console.error("[auth] refresh call failed", err)
     localStorage.removeItem("token")
     localStorage.removeItem("refresh_token")
     return null
@@ -92,6 +93,8 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
       }
       return retryRes.json()
     } else {
+      console.error("[auth] refresh failed, clearing session")
+      refreshSubscribers = []
       localStorage.removeItem("token")
       localStorage.removeItem("refresh_token")
       window.location.href = "/login"

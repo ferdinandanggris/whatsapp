@@ -1,7 +1,6 @@
 
 import { useRef } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
-import { updateMessageInCache } from '../../../api/queries';
 import type { Conversation, ChatMessage } from '../../../types/chat';
 
 interface UseChatActionsProps {
@@ -32,7 +31,7 @@ export const useChatActions = ({
         let currentConv = activeConversation;
         if (currentConv.id === 0) {
             try {
-                const response = await ensureConversation(currentConv.wa_channel_id, currentConv.customer_wa_id, currentConv.customer_name);
+                const response = await ensureConversation(currentConv.display_phone_number,currentConv.wa_channel_id, currentConv.customer_wa_id, currentConv.customer_name);
                 if (response.status) {
                     currentConv = response.data;
                     setActiveConversation(currentConv);
@@ -83,14 +82,11 @@ export const useChatActions = ({
                 .then((res: any) => {
                     if (res.status) {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name }));
                     } else {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     }
                 }).catch(() => {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                    updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                 });
         }
     };
@@ -101,7 +97,7 @@ export const useChatActions = ({
 
         if (currentConv.id === 0) {
             try {
-                const response = await ensureConversation(currentConv.wa_channel_id, currentConv.customer_wa_id, currentConv.customer_name);
+                const response = await ensureConversation(currentConv.display_phone_number, currentConv.wa_channel_id, currentConv.customer_wa_id, currentConv.customer_name);
                 if (response.status) {
                     currentConv = response.data;
                     setActiveConversation(currentConv);
@@ -152,14 +148,11 @@ export const useChatActions = ({
                 .then((res: any) => {
                     if (res.status) {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data }));
                     } else {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     }
                 }).catch(() => {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                    updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                 });
         }
     };
@@ -215,18 +208,15 @@ export const useChatActions = ({
                     context_message_id: context_id
                 });
             } else {
-                sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
+                    sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
                     .then((res: any) => {
                         if (res.status) {
                             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name }));
                         } else {
                             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                            updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                         }
                     }).catch(() => {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                        updateMessageInCache(currentConv.id, m => m.wa_message_id === tempId, m => ({ ...m, status: 'failed' }));
                     });
             }
         } catch (error) {

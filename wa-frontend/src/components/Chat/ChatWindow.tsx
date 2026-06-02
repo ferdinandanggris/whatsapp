@@ -217,6 +217,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         {processedMessages.map((msg, idx) => (
                             <MessageBubble
                                 key={msg.id || msg.wa_message_id}
+                                isTemplateRequired={isTemplateRequired}
                                 msg={msg}
                                 conversation={activeConversation}
                                 prevMsg={idx > 0 ? processedMessages[idx - 1] : undefined}

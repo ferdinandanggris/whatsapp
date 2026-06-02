@@ -262,8 +262,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     };
 
     const handleEmojiClick = (emojiData: EmojiClickData) => {
-
-        setInputText(prev => prev + emojiData.emoji);
+        if (emojiTarget === 'input') {
+            setInputText(prev => prev + emojiData.emoji);
+        }
         if (emojiTarget === 'reaction' && reactionTargetMsg) {
             handleSendReaction(emojiData.emoji, reactionTargetMsg);
             setShowEmojiPicker(false);
@@ -491,7 +492,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                             waba_id: selectedChannel?.waba_id || '',
                             customer_wa_id: normalizedWaId,
                             customer_name: name || normalizedWaId,
-                            kode_reseller: '', nama_reseller: '', display_number: selectedChannel?.display_number || '',
+                            kode_reseller: '', nama_reseller: '', display_phone_number: selectedChannel?.display_phone_number || '',
                             last_message_preview: '', unread_count: 0, status: 'NEW', is_template_required: true, platform: 'whatsapp',
                             updated_at: new Date().toISOString()
                         };

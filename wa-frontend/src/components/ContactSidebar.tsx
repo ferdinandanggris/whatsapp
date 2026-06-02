@@ -187,7 +187,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                     {/* Channel */}
                     <div className="space-y-1">
                         <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Nomor Layanan (Channel)</span>
-                        <p className="text-xs font-semibold text-slate-700">{conversation.app_name} ({conversation.display_number})</p>
+                        <p className="text-xs font-semibold text-slate-700">{conversation.app_name} ({conversation.display_phone_number})</p>
                     </div>
                 </div>
 

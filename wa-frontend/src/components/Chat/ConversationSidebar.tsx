@@ -131,9 +131,9 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                                         {conv.app_name}
                                     </span>
                                 )}
-                                {conv.display_number && (
+                                {conv.display_phone_number && (
                                     <span className="text-[9px] px-1.5 py-0 bg-slate-100 text-slate-500 rounded-md font-medium border border-slate-200 capitalize">
-                                        To: {conv.display_number}
+                                        To: {conv.display_phone_number}
                                     </span>
                                 )}
                             </div>

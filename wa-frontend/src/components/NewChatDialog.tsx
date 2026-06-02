@@ -65,7 +65,7 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange, onSta
                                     {channels
                                         .map(ch => (
                                             <option key={ch.id} value={ch.id}>
-                                                {ch.display_name} ({ch.display_number})
+                                                {ch.display_name} ({ch.display_phone_number})
                                             </option>
                                         ))}
                                 </Select>

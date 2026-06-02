@@ -18,6 +18,7 @@ interface MessageBubbleProps {
     renderMessageContent: (msg: ChatMessage, handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void) => React.ReactNode;
     handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void;
     conversation: Conversation;
+    isTemplateRequired: boolean;
 }
 
 const MessageBubble = React.memo(function MessageBubble({
@@ -29,6 +30,7 @@ const MessageBubble = React.memo(function MessageBubble({
     renderTemplateMessage,
     renderMessageContent,
     handleContextMenuImage,
+    isTemplateRequired,
     conversation,
 }: MessageBubbleProps) {
     const [showErrorInfo, setShowErrorInfo] = React.useState(false);
@@ -118,7 +120,7 @@ const MessageBubble = React.memo(function MessageBubble({
                         </div>
                     </div>
 
-                    {msg.reactionData && (
+                    {msg.reactionData && (() => {console.log(`Log Message Reactions: ${JSON.stringify(msg.reactionData)}`); return true;}) && (
                         <div className={cn(
                             "absolute -bottom-2 flex items-center bg-white border border-slate-100 rounded-full px-1.5 py-0.5 shadow-md scale-90 origin-center transition-transform hover:scale-100 select-none z-20",
                             isOutbound ? "right-2" : "left-2"
@@ -146,6 +148,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                     className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors"
                                     onClick={() => onReply({...msg, reply_name: conversation?.customer_name || msg.sender_name || 'Contact'})}
                                     title="Balas"
+                                    disabled={isTemplateRequired}
                                 >
                                     <Reply className="w-3.5 h-3.5 text-slate-500" />
                                 </Button>
@@ -154,6 +157,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                     size="icon"
                                     className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors"
                                     onClick={() => onReaction(msg)}
+                                    disabled={isTemplateRequired}
                                     title="Reaksi"
                                 >
                                     <Smile className="w-3.5 h-3.5 text-slate-500" />

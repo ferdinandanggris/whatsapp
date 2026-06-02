@@ -124,14 +124,14 @@ export const renderMessageContent = (msg: ChatMessage, handleContextMenuImage: (
                 <div className="space-y-2 max-w-[330px] ">
                     {renderQuotedMessage(msg.context_message_id)}
                     <div
-                        className="relative group/img overflow-hidden rounded-lg shadow-sm border border-black/5 cursor-pointer"
+                        className="relative group/img overflow-hidden rounded-lg shadow-sm cursor-pointer"
                         onContextMenu={(e) => handleContextMenuImage(e, msg)}
                         onClick={() => onImageClick?.(msg)}
                     >
                         <img
                             src={msg.file_path || ''}
                             alt="Media"
-                            className="mx-auto max-w-full min-w-[300px] min-h-[200px] max-h-[400px] rounded-lg transition-transform duration-500 group-hover/img:scale-105 object-cover"
+                            className="mx-auto max-w-full min-w-[300px] min-h-[100px] max-h-[400px] rounded-lg transition-transform duration-500 group-hover/img:scale-105 object-cover"
                             loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center p-4">
