@@ -1,7 +1,7 @@
 {
   "version": 1,
   "skills": {
-    "front-end-developer": {
+      "front-end-developer": {
       "source": "mindrally/skills",
       "sourceType": "github",
       "skillPath": "front-end-developer/SKILL.md",
