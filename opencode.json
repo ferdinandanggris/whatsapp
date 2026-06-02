@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "backend": {
+      "description": "Go backend specialist — wa-backend/",
+      "mode": "primary",
+      "prompt": "{file:.opencode/prompts/backend.txt}",
+      "color": "primary",
+      "permission": { "edit": "ask" }
+    },
+    "frontend": {
+      "description": "React frontend specialist — wa-frontend/",
+      "mode": "primary",
+      "prompt": "{file:.opencode/prompts/frontend.txt}",
+      "color": "secondary",
+      "permission": { "edit": "ask" }
+    },
+    "desktop": {
+      "description": "WinForms MVP (.NET 4.7.2) — wa-desktop/",
+      "mode": "primary",
+      "prompt": "{file:.opencode/prompts/desktop.txt}",
+      "color": "tertiary",
+      "permission": { "edit": "ask" }
+    }
+  }
+}
