@@ -3,8 +3,10 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/ferdinandanggris/wa-backend/internal/middleware"
 	"github.com/ferdinandanggris/wa-backend/internal/model"
@@ -13,9 +15,10 @@ import (
 )
 
 type ConversationHandler struct {
-	convs *repository.ConversationRepository
-	msgs  *repository.MessageRepository
-	svc   *service.WhatsAppService
+	convs    *repository.ConversationRepository
+	msgs     *repository.MessageRepository
+	contacts *repository.ContactRepository
+	svc      *service.WhatsAppService
 }
 
 // contextRef extracts the replied-to wamid from raw Meta message content.
@@ -61,54 +64,91 @@ func enrichReplies(ctx context.Context, h *ConversationHandler, msgs []*model.Me
 			continue
 		}
 
+		contact, _ := h.contacts.GetByID(ctx, orig.WaID, orig.PhoneNumberID)
+
 		m.ReplyWamID = refID
-		m.ReplyText = previewOrig(orig)
+		m.ReplyText = previewOrig(contact, orig)
 		if orig.Direction == "inbound" {
-			m.ReplyName = orig.WaID
+			m.ReplyName = orig.CustomerName
 		} else {
-			m.ReplyName = "Agent"
+			m.ReplyName = orig.AgentName
 		}
 	}
 }
 
-func previewOrig(m *model.Message) string {
+func previewOrig(contact *model.Contact, m *model.Message) string {
 	switch m.Type {
 	case "text":
 		var t struct {
-			Text *struct{ Body string `json:"body"` } `json:"text"`
+			Text *struct {
+				Body string `json:"body"`
+			} `json:"text"`
 		}
-		if json.Unmarshal(m.Content, &t) == nil && t.Text != nil {
-			return truncateStr(t.Text.Body, 100)
+		if json.Unmarshal(m.Content, &t) == nil && t.Text != nil && t.Text.Body != "" {
+			return truncate(t.Text.Body, 100)
 		}
 	case "image":
+		var i struct {
+			Image *struct {
+				Caption string `json:"caption"`
+			} `json:"image"`
+		}
+		if json.Unmarshal(m.Content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
+			return "📷 " + truncate(i.Image.Caption, 100)
+		}
 		return "📷 Photo"
 	case "video":
+		var v struct {
+			Video *struct {
+				Caption string `json:"caption"`
+			} `json:"video"`
+		}
+		if json.Unmarshal(m.Content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
+			return "🎥 " + truncate(v.Video.Caption, 100)
+		}
 		return "🎥 Video"
 	case "audio":
+		var a struct {
+			Audio *struct {
+				Caption string `json:"caption"`
+			} `json:"audio"`
+		}
+		if json.Unmarshal(m.Content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
+			return "🎵 " + truncate(a.Audio.Caption, 100)
+		}
 		return "🎵 Audio"
 	case "document":
+		var d struct {
+			Document *struct {
+				Filename string `json:"filename"`
+			} `json:"document"`
+		}
+		if json.Unmarshal(m.Content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
+			return "📄 " + truncate(d.Document.Filename, 100)
+		}
 		return "📄 Document"
 	case "location":
 		return "📍 Location"
 	case "interactive":
-		return "🔄 Reply button"
-	case "template":
-		return "📋 Template"
+		return "🔄 Reply"
 	case "reaction":
 		var r struct {
-			Reaction *struct{ Emoji string `json:"emoji"` } `json:"reaction"`
+			Reaction *struct {
+				Emoji string `json:"emoji"`
+			} `json:"reaction"`
 		}
-		if json.Unmarshal(m.Content, &r) == nil && r.Reaction != nil && r.Reaction.Emoji != "" {
-			return r.Reaction.Emoji
+		if json.Unmarshal(m.Content, &r) == nil && r.Reaction != nil {
+			if r.Reaction.Emoji != "" {
+				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
+			}
+			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
 		}
 		return "👍 Reaction"
-	case "order":
-		return "🛒 Order"
 	}
-	return "[message]"
+	return "[unknown]"
 }
 
-func truncateStr(s string, n int) string {
+func truncate(s string, n int) string {
 	runes := []rune(s)
 	if len(runes) <= n {
 		return s
@@ -116,8 +156,8 @@ func truncateStr(s string, n int) string {
 	return string(runes[:n]) + "..."
 }
 
-func NewConversationHandler(convs *repository.ConversationRepository, msgs *repository.MessageRepository, svc *service.WhatsAppService) *ConversationHandler {
-	return &ConversationHandler{convs: convs, msgs: msgs, svc: svc}
+func NewConversationHandler(contacts *repository.ContactRepository, convs *repository.ConversationRepository, msgs *repository.MessageRepository, svc *service.WhatsAppService) *ConversationHandler {
+	return &ConversationHandler{contacts: contacts, convs: convs, msgs: msgs, svc: svc}
 }
 
 func (h *ConversationHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -200,9 +240,27 @@ func (h *ConversationHandler) ListMessages(w http.ResponseWriter, r *http.Reques
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	msgs, err := h.msgs.ListByConversation(r.Context(), conv.PhoneNumberID, conv.WaID, limit, offset)
+	var cursorTs *time.Time
+	var cursorID *int64
+	if ct := r.URL.Query().Get("cursor_ts"); ct != "" {
+		if t, err := time.Parse(time.RFC3339Nano, ct); err == nil {
+			cursorTs = &t
+		}
+	}
+	if ci := r.URL.Query().Get("cursor_id"); ci != "" {
+		if v, err := strconv.ParseInt(ci, 10, 64); err == nil {
+			cursorID = &v
+		}
+	}
+
+	filter := &repository.MessageFilter{
+		Q:         r.URL.Query().Get("q"),
+		Type:      r.URL.Query().Get("type"),
+		Direction: r.URL.Query().Get("direction"),
+	}
+
+	msgs, hasMore, nextCursorTs, nextCursorID, err := h.msgs.ListByConversation(r.Context(), conv.PhoneNumberID, conv.WaID, limit, cursorTs, cursorID, filter)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list messages")
 		return
@@ -211,7 +269,16 @@ func (h *ConversationHandler) ListMessages(w http.ResponseWriter, r *http.Reques
 	// Enrich reply info from context
 	enrichReplies(r.Context(), h, msgs)
 
-	writeJSON(w, http.StatusOK, msgs)
+	resp := map[string]interface{}{
+		"data":     msgs,
+		"has_more": hasMore,
+	}
+	if nextCursorTs != nil && nextCursorID != nil {
+		resp["next_cursor_ts"] = nextCursorTs.Format(time.RFC3339Nano)
+		resp["next_cursor_id"] = *nextCursorID
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *ConversationHandler) MarkRead(w http.ResponseWriter, r *http.Request) {

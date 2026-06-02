@@ -18,19 +18,19 @@ func NewConversationRepository(pool *pgxpool.Pool) *ConversationRepository {
 	return &ConversationRepository{pool: pool}
 }
 
-const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count, COALESCE(wpn.display_name, '')`
+const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count, COALESCE(wpn.display_name, ''), COALESCE(wpn.display_phone_number, '')`
 
 func scanConversation(s pgx.Row) (*model.Conversation, error) {
 	var cv model.Conversation
 	err := s.Scan(&cv.ID, &cv.PhoneNumberID, &cv.WaID, &cv.ProfileName,
-		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount, &cv.DisplayName)
+		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount, &cv.DisplayName, &cv.DisplayPhoneNumber)
 	if err != nil {
 		return nil, err
 	}
 	return &cv, nil
 }
 
-func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID, preview string) (*model.Conversation, error) {
+func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID, preview string, incrementUnread bool) (*model.Conversation, error) {
 	var id string
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO conversations (phone_number_id, wa_id, last_message_at, last_message_preview, unread_count)
@@ -39,9 +39,9 @@ func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID
 		DO UPDATE SET
 			last_message_at = NOW(),
 			last_message_preview = $3,
-			unread_count = conversations.unread_count + 1
+			unread_count = conversations.unread_count + (CASE WHEN $4 THEN 1 ELSE 0 END)
 		RETURNING id
-	`, phoneNumberID, waID, preview).Scan(&id)
+	`, phoneNumberID, waID, preview, incrementUnread).Scan(&id)
 	if err != nil {
 		return nil, fmt.Errorf("upsert conversation: %w", err)
 	}

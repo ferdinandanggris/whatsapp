@@ -10,13 +10,13 @@ type Contact struct {
 	PhoneNumberID         string     `json:"phone_number_id"`
 	ProfileName           string     `json:"profile_name"`
 	CompanyCustomName     *string    `json:"company_custom_name,omitempty"`
-	AssignedAgentID       *string    `json:"assigned_agent_id,omitempty"`
 	IsBlocked             bool       `json:"is_blocked"`
 	BlockedAt             *time.Time `json:"blocked_at,omitempty"`
 	LastCustomerMessageAt *time.Time `json:"last_customer_message_at,omitempty"`
 }
 
 type Message struct {
+	ID            int64           `json:"id"`
 	WamID         string          `json:"wamid"`
 	PhoneNumberID string          `json:"phone_number_id"`
 	WaID          string          `json:"wa_id"`
@@ -34,7 +34,8 @@ type Message struct {
 	ReplyName  string `json:"reply_name,omitempty"`
 
 	// Agent name enrichment (JOINed from users table at query time)
-	AgentName string `json:"agent_name,omitempty"`
+	AgentName    string `json:"agent_name,omitempty"`
+	CustomerName string `json:"customer_name,omitempty"`
 }
 
 type Conversation struct {
@@ -48,4 +49,5 @@ type Conversation struct {
 	LastMessagePreview string     `json:"last_message_preview,omitempty"`
 	UnreadCount        int        `json:"unread_count"`
 	DisplayName        string     `json:"display_name"`
+	DisplayPhoneNumber string     `json:"display_phone_number,omitempty"`
 }

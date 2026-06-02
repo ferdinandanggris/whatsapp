@@ -1,0 +1,26 @@
+{
+  "recommended": [
+    {
+      "name": "dbhub",
+      "reason": "PostgreSQL inspection, query analysis, and migration review untuk backend database",
+      "install": "npm install -D @bytebase/dbhub",
+      "config": {
+        "type": "local",
+        "command": ["npx", "@bytebase/dbhub"],
+        "environment": { "DATABASE_URL": "${DATABASE_URL}" },
+        "enabled": false,
+        "timeout": 10000
+      }
+    },
+    {
+      "name": "github-mcp",
+      "reason": "Git workflow: PR, commit management, code review",
+      "config": {
+        "type": "local",
+        "command": ["npx", "@opencode/mcp-github"],
+        "enabled": false,
+        "timeout": 30000
+      }
+    }
+  ]
+}

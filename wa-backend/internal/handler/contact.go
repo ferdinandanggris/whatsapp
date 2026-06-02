@@ -81,7 +81,6 @@ func (h *ContactHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 type updateContactRequest struct {
 	CompanyCustomName *string `json:"company_custom_name,omitempty"`
-	AssignedAgentID   *string `json:"assigned_agent_id,omitempty"`
 }
 
 func (h *ContactHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +103,7 @@ func (h *ContactHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contact, err := h.repo.Update(r.Context(), waID, phoneNumberID, req.CompanyCustomName, req.AssignedAgentID)
+	contact, err := h.repo.Update(r.Context(), waID, phoneNumberID, req.CompanyCustomName)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

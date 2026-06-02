@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -136,8 +137,8 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 		return
 	}
 
-	preview := previewText(msgType, content)
-	conv, err := h.Convs.Upsert(r.Context(), phoneNumberID, waID, preview)
+	preview := previewText(msgType, contact, content)
+	conv, err := h.Convs.Upsert(r.Context(), phoneNumberID, waID, preview, true)
 	if err != nil {
 		slog.Error("webhook: upsert conversation", "error", err)
 		return
@@ -195,22 +196,56 @@ func inboundContent(msg *types.IncomingMsg) (string, json.RawMessage) {
 	return msg.Type, repository.MustJSON(msg)
 }
 
-func previewText(msgType string, content json.RawMessage) string {
+func previewText(msgType string, contact *model.Contact, content json.RawMessage) string {
 	switch msgType {
 	case "text":
 		var t struct {
-			Text *struct{ Body string `json:"body"` } `json:"text"`
+			Text *struct {
+				Body string `json:"body"`
+			} `json:"text"`
 		}
 		if json.Unmarshal(content, &t) == nil && t.Text != nil && t.Text.Body != "" {
 			return truncate(t.Text.Body, 100)
 		}
 	case "image":
+		var i struct {
+			Image *struct {
+				Caption string `json:"caption"`
+			} `json:"image"`
+		}
+		if json.Unmarshal(content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
+			return "📷 " + truncate(i.Image.Caption, 100)
+		}
 		return "📷 Photo"
 	case "video":
+		var v struct {
+			Video *struct {
+				Caption string `json:"caption"`
+			} `json:"video"`
+		}
+		if json.Unmarshal(content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
+			return "🎥 " + truncate(v.Video.Caption, 100)
+		}
 		return "🎥 Video"
 	case "audio":
+		var a struct {
+			Audio *struct {
+				Caption string `json:"caption"`
+			} `json:"audio"`
+		}
+		if json.Unmarshal(content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
+			return "🎵 " + truncate(a.Audio.Caption, 100)
+		}
 		return "🎵 Audio"
 	case "document":
+		var d struct {
+			Document *struct {
+				Filename string `json:"filename"`
+			} `json:"document"`
+		}
+		if json.Unmarshal(content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
+			return "📄 " + truncate(d.Document.Filename, 100)
+		}
 		return "📄 Document"
 	case "location":
 		return "📍 Location"
@@ -218,13 +253,15 @@ func previewText(msgType string, content json.RawMessage) string {
 		return "🔄 Reply"
 	case "reaction":
 		var r struct {
-			Reaction *struct{ Emoji string `json:"emoji"` } `json:"reaction"`
+			Reaction *struct {
+				Emoji string `json:"emoji"`
+			} `json:"reaction"`
 		}
 		if json.Unmarshal(content, &r) == nil && r.Reaction != nil {
 			if r.Reaction.Emoji != "" {
-				return r.Reaction.Emoji
+				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
 			}
-			return "❌ Reaksi dihapus"
+			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
 		}
 		return "👍 Reaction"
 	}

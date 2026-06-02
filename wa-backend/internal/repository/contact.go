@@ -19,12 +19,12 @@ func NewContactRepository(pool *pgxpool.Pool) *ContactRepository {
 	return &ContactRepository{pool: pool}
 }
 
-const contactCols = `wa_id, phone_number_id, profile_name, company_custom_name, assigned_agent_id, is_blocked, blocked_at, last_customer_message_at`
+const contactCols = `wa_id, phone_number_id, profile_name, company_custom_name, is_blocked, blocked_at, last_customer_message_at`
 
 func scanContact(s pgx.Row) (*model.Contact, error) {
 	var c model.Contact
 	err := s.Scan(&c.WaID, &c.PhoneNumberID, &c.ProfileName,
-		&c.CompanyCustomName, &c.AssignedAgentID, &c.IsBlocked, &c.BlockedAt, &c.LastCustomerMessageAt)
+		&c.CompanyCustomName, &c.IsBlocked, &c.BlockedAt, &c.LastCustomerMessageAt)
 	if err != nil {
 		return nil, err
 	}
@@ -131,14 +131,13 @@ func (r *ContactRepository) List(ctx context.Context, companyID *int64, q string
 	return contacts, total, nil
 }
 
-func (r *ContactRepository) Update(ctx context.Context, waID, phoneNumberID string, customName *string, agentID *string) (*model.Contact, error) {
+func (r *ContactRepository) Update(ctx context.Context, waID, phoneNumberID string, customName *string) (*model.Contact, error) {
 	c, err := scanContact(r.pool.QueryRow(ctx, `
 		UPDATE contacts SET
-			company_custom_name = COALESCE($3, company_custom_name),
-			assigned_agent_id = COALESCE($4, assigned_agent_id)
+			company_custom_name = COALESCE($3, company_custom_name)
 		WHERE wa_id = $1 AND phone_number_id = $2
 		RETURNING `+contactCols+`
-	`, waID, phoneNumberID, customName, agentID))
+	`, waID, phoneNumberID, customName))
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}

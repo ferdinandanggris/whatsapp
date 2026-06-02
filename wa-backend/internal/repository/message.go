@@ -4,12 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ferdinandanggris/wa-backend/internal/model"
 )
+
+type MessageFilter struct {
+	Q         string // text search (ILIKE on content::text)
+	Type      string // message type (text, image, etc.)
+	Direction string // inbound / outbound
+}
 
 type MessageRepository struct {
 	pool *pgxpool.Pool
@@ -34,12 +41,12 @@ func (r *MessageRepository) Save(ctx context.Context, m *model.Message) error {
 func (r *MessageRepository) GetByWamID(ctx context.Context, wamid string) (*model.Message, error) {
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
-		SELECT m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
 		       COALESCE(u.display_name, '')
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
 		WHERE m.wamid = $1
-	`, wamid).Scan(&m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
+	`, wamid).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
 		&m.AgentName)
 	if err == pgx.ErrNoRows {
@@ -61,32 +68,75 @@ func (r *MessageRepository) UpdateStatus(ctx context.Context, wamid, status stri
 	return nil
 }
 
-func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberID, waID string, limit, offset int) ([]*model.Message, error) {
+func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberID, waID string, limit int, cursorTs *time.Time, cursorID *int64, filter *MessageFilter) ([]*model.Message, bool, *time.Time, *int64, error) {
+	// Query limit+1 to detect has_more
+	qlimit := limit + 1
+	cond := `WHERE m.phone_number_id = $1 AND m.wa_id = $2`
+	args := []interface{}{phoneNumberID, waID}
+	p := 3 // next param index
+
+	if cursorTs != nil && cursorID != nil {
+		cond += fmt.Sprintf(` AND (m.timestamp, m.id) < ($%d, $%d)`, p, p+1)
+		args = append(args, *cursorTs, *cursorID)
+		p += 2
+	}
+
+	if filter != nil {
+		if filter.Type != "" {
+			cond += fmt.Sprintf(` AND m.type = $%d`, p)
+			args = append(args, filter.Type)
+			p++
+		}
+		if filter.Direction != "" {
+			cond += fmt.Sprintf(` AND m.direction = $%d`, p)
+			args = append(args, filter.Direction)
+			p++
+		}
+		if filter.Q != "" {
+			cond += fmt.Sprintf(` AND m.content::text ILIKE $%d`, p)
+			args = append(args, "%"+filter.Q+"%")
+			p++
+		}
+	}
+
+	args = append(args, qlimit)
+
 	rows, err := r.pool.Query(ctx, `
-		SELECT m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
 		       COALESCE(u.display_name, '')
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
-		WHERE m.phone_number_id = $1 AND m.wa_id = $2
-		ORDER BY m.timestamp DESC
-		LIMIT $3 OFFSET $4
-	`, phoneNumberID, waID, limit, offset)
+		`+cond+`
+		ORDER BY m.timestamp DESC, m.id DESC
+		LIMIT $`+fmt.Sprintf("%d", p), args...)
 	if err != nil {
-		return nil, fmt.Errorf("list messages: %w", err)
+		return nil, false, nil, nil, fmt.Errorf("list messages: %w", err)
 	}
 	defer rows.Close()
 
 	var msgs []*model.Message
 	for rows.Next() {
 		var m model.Message
-		if err := rows.Scan(&m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
+		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
 			&m.AgentName); err != nil {
-			return nil, fmt.Errorf("scan message: %w", err)
+			return nil, false, nil, nil, fmt.Errorf("scan message: %w", err)
 		}
 		msgs = append(msgs, &m)
 	}
-	return msgs, nil
+
+	hasMore := len(msgs) > limit
+	if hasMore {
+		msgs = msgs[:limit]
+	}
+	var nextCursorTs *time.Time
+	var nextCursorID *int64
+	if hasMore && len(msgs) > 0 {
+		last := msgs[len(msgs)-1]
+		nextCursorTs = &last.Timestamp
+		nextCursorID = &last.ID
+	}
+	return msgs, hasMore, nextCursorTs, nextCursorID, nil
 }
 
 func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (map[string]*model.Message, error) {
@@ -94,9 +144,10 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 		return nil, nil
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
-		       COALESCE(u.display_name, '')
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		       COALESCE(u.display_name, ''), COALESCE(c.company_custom_name, '')
 		FROM messages m
+		LEFT JOIN contacts c ON m.phone_number_id = c.phone_number_id
 		LEFT JOIN users u ON m.agent_id = u.id
 		WHERE m.wamid = ANY($1)
 	`, wamids)
@@ -108,9 +159,9 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 	result := make(map[string]*model.Message, len(wamids))
 	for rows.Next() {
 		var m model.Message
-		if err := rows.Scan(&m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
+		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
-			&m.AgentName); err != nil {
+			&m.AgentName, &m.CustomerName); err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
 		result[m.WamID] = &m
@@ -121,14 +172,14 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 func (r *MessageRepository) GetLatestInboundByConversation(ctx context.Context, phoneNumberID, waID string) (*model.Message, error) {
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
-		SELECT m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
 		       COALESCE(u.display_name, '')
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
 		WHERE m.phone_number_id = $1 AND m.wa_id = $2 AND m.direction = 'inbound'
 		ORDER BY m.timestamp DESC
 		LIMIT 1
-	`, phoneNumberID, waID).Scan(&m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
+	`, phoneNumberID, waID).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
 		&m.AgentName)
 	if err == pgx.ErrNoRows {

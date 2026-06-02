@@ -64,7 +64,7 @@ func main() {
 
 	authHandler := handler.NewAuthHandler(authSvc, userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
-	convHandler := handler.NewConversationHandler(convRepo, msgRepo, whatsappSvc)
+	convHandler := handler.NewConversationHandler(contactRepo, convRepo, msgRepo, whatsappSvc)
 	wsHandler := handler.NewWSHandler(hub, authSvc)
 	msgHandler := handler.NewMessageHandler(whatsappSvc, msgRepo)
 	tplHandler := handler.NewTemplateHandler(tplSvc, tplRepo, cfg.WABAID)
