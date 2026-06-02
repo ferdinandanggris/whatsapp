@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C3D4E5F6-A7B8-9012-CDEF-123456789012}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>WaDesktop.Client</RootNamespace>
+    <AssemblyName>WaDesktop</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1518.46" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WaDesktop.Domain\WaDesktop.Domain.csproj">
+      <Project>{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}</Project>
+      <Name>WaDesktop.Domain</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WaDesktop.Infrastructure\WaDesktop.Infrastructure.csproj">
+      <Project>{B2C3D4E5-F6A7-8901-BCDE-F12345678901}</Project>
+      <Name>WaDesktop.Infrastructure</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Extensions\ControlExtensions.cs" />
+    <Compile Include="Views\LoginView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\LoginView.Designer.cs">
+      <DependentUpon>LoginView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ShellView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Views\ShellView.Designer.cs">
+      <DependentUpon>ShellView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SidebarView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\SidebarView.Designer.cs">
+      <DependentUpon>SidebarView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DashboardView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\DashboardView.Designer.cs">
+      <DependentUpon>DashboardView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ManagementViews\CompanyView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ManagementViews\CompanyView.Designer.cs">
+      <DependentUpon>CompanyView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ManagementViews\UsersView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ManagementViews\UsersView.Designer.cs">
+      <DependentUpon>UsersView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ManagementViews\TemplatesView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ManagementViews\TemplatesView.Designer.cs">
+      <DependentUpon>TemplatesView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ManagementViews\AppSettingsView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ManagementViews\AppSettingsView.Designer.cs">
+      <DependentUpon>AppSettingsView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Presenters\LoginPresenter.cs" />
+    <Compile Include="Presenters\ShellPresenter.cs" />
+    <Compile Include="Presenters\SidebarPresenter.cs" />
+    <Compile Include="Presenters\DashboardPresenter.cs" />
+    <Compile Include="Presenters\CompanyPresenter.cs" />
+    <Compile Include="Presenters\UsersPresenter.cs" />
+    <Compile Include="Presenters\TemplatesPresenter.cs" />
+    <Compile Include="Presenters\AppSettingsPresenter.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

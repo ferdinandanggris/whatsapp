@@ -19,7 +19,7 @@
       "description": "WinForms MVP (.NET 4.7.2) — wa-desktop/",
       "mode": "primary",
       "prompt": "{file:.opencode/prompts/desktop.txt}",
-      "color": "tertiary",
+      "color": "accent",
       "permission": { "edit": "ask" }
     }
   }

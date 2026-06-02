@@ -1,0 +1,10 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+packages/
+packages.config
+.vs/
