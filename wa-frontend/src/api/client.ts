@@ -1,3 +1,8 @@
+import { isDesktop, initDesktopToken, postToDesktop } from "./desktopBridge"
+
+// Sync token from desktop bridge on first load
+initDesktopToken()
+
 function getBase(): string {
   if (typeof window !== "undefined" && (window as any).__API_BASE__) {
     return (window as any).__API_BASE__
@@ -97,7 +102,11 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
       refreshSubscribers = []
       localStorage.removeItem("token")
       localStorage.removeItem("refresh_token")
-      window.location.href = "/login"
+      if (isDesktop()) {
+        postToDesktop({ type: "token_expired" })
+      } else {
+        window.location.href = "/login"
+      }
       throw new Error("unauthorized")
     }
   }

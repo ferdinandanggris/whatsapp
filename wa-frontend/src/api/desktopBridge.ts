@@ -1,0 +1,22 @@
+/** Check if running inside WinForms WebView2 with __DESKTOP_BRIDGE__ */
+export function isDesktop(): boolean {
+  return typeof window !== "undefined" && !!(window as any).__DESKTOP_BRIDGE__
+}
+
+/** Sync token from desktop bridge into localStorage (call once on startup) */
+export function initDesktopToken(): void {
+  if (!isDesktop()) return
+  const bridge = (window as any).__DESKTOP_BRIDGE__
+  if (bridge?.token) {
+    localStorage.setItem("token", bridge.token)
+  }
+}
+
+/** Send a message back to the WinForms host */
+export function postToDesktop(msg: Record<string, unknown>): void {
+  try {
+    ;(window as any).__DESKTOP_BRIDGE__?.postMessage(msg)
+  } catch {
+    /* ignore */
+  }
+}

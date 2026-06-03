@@ -35,4 +35,7 @@ namespace WaDesktop.Domain.Messages
 
     /// <summary>Immutable message: logout.</summary>
     public class LogoutMessage { }
+
+    /// <summary>Immutable message: session expired (401), perlu login ulang.</summary>
+    public class SessionExpiredMessage { }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Domain.Messages;
 using WaDesktop.Domain.State;
@@ -15,6 +16,7 @@ namespace WaDesktop.Client.Presenters
         private readonly IEventAggregator _bus;
         private readonly AppState _state;
         private IDisposable _tabSub;
+        private IDisposable _sessionSub;
         private bool _disposed;
 
         public ShellPresenter(IShellView view, IAuthService auth, IEventAggregator bus, AppState state)
@@ -25,6 +27,7 @@ namespace WaDesktop.Client.Presenters
             _state = state;
 
             _tabSub = bus.Subscribe<RequestOpenTabMessage>(OnRequestOpenTab);
+            _sessionSub = bus.Subscribe<SessionExpiredMessage>(OnSessionExpired);
 
             view.DashboardClicked += (s, e) => OpenDashboard();
             view.CompanyClicked += (s, e) => OpenCompany();
@@ -48,7 +51,7 @@ namespace WaDesktop.Client.Presenters
             {
                 case "dashboard":
                     var dashView = new DashboardView();
-                    var dashPresenter = new DashboardPresenter(dashView, _bus);
+                    var dashPresenter = new DashboardPresenter(dashView, _bus, _auth);
                     ServiceLocator.Register(dashPresenter);
                     return dashView;
 
@@ -91,6 +94,27 @@ namespace WaDesktop.Client.Presenters
         private void OpenTemplates() => OnRequestOpenTab(new RequestOpenTabMessage("templates", "Templates"));
         private void OpenAppSettings() => OnRequestOpenTab(new RequestOpenTabMessage("appsettings", "App Settings"));
 
+        private void OnSessionExpired(SessionExpiredMessage msg)
+        {
+            _view.ClearTabs();
+            _view.StatusText = "Session expired — login ulang";
+
+            var loginView = new LoginView();
+            var loginPresenter = new LoginPresenter(loginView, _auth, _bus);
+            if (loginView.ShowDialog() == DialogResult.OK)
+            {
+                _view.StatusText = $"Logged in as {_auth.DisplayName}";
+                OpenDashboard();
+            }
+            else
+            {
+                _auth.Logout();
+                _bus.Publish(new LogoutMessage());
+                _view.StatusText = "Logged out";
+            }
+            loginPresenter.Dispose();
+        }
+
         private void OnLogout(object sender, EventArgs e)
         {
             _auth.Logout();
@@ -104,6 +128,7 @@ namespace WaDesktop.Client.Presenters
             if (!_disposed)
             {
                 _tabSub?.Dispose();
+                _sessionSub?.Dispose();
                 _disposed = true;
             }
         }

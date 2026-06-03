@@ -318,8 +318,8 @@ func (s *WhatsAppService) MarkConversationRead(ctx context.Context, convID strin
 	if s.hub != nil {
 		conv.UnreadCount = 0
 		s.hub.BroadcastEventToAll(ws.Event{
-			Type: "UpdateConversation",
-			Data: conv,
+			Type: "conversation_updated",
+			Data: map[string]interface{}{"conversation": conv},
 		})
 	}
 

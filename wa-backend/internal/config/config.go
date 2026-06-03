@@ -51,6 +51,30 @@ type Config struct {
 	AppSecret          string
 }
 
+// Override sets a config field from a settings key-value pair.
+// Returns true if the name was recognized.
+func (c *Config) Override(name, value string) bool {
+	if value == "" {
+		return false
+	}
+	switch name {
+	case "api_key":
+		c.WABAToken = value
+		return true
+	case "waba_id":
+		c.WABAID = value
+		return true
+	case "app_secret":
+		c.AppSecret = value
+		return true
+	case "webhook_verify_token":
+		c.WebhookVerifyToken = value
+		return true
+	default:
+		return false
+	}
+}
+
 func Load() *Config {
 	return &Config{
 		DatabaseURL:        getEnv("DATABASE_URL", "postgres://wa_user:wa_pass@localhost:5432/wa_center?sslmode=disable"),

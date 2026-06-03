@@ -13,6 +13,7 @@ namespace WaDesktop.Domain.Interfaces
         event EventHandler RefreshClicked;
 
         void ShowSuccess(string message);
+        void ShowWarning(string message);
         void ShowError(string message);
     }
 }

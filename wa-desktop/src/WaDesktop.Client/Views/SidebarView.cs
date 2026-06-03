@@ -31,27 +31,27 @@ namespace WaDesktop.Client.Views
                 treeView.Nodes.Clear();
                 foreach (var node in nodes)
                 {
-                    var tn = new TreeNode
-                    {
-                        Text = !string.IsNullOrEmpty(node.DisplayName)
-                            ? $"{node.DisplayName} ({node.DisplayPhoneNumber})"
-                            : node.DisplayPhoneNumber,
-                        Tag = node
-                    };
-                    foreach (var child in node.Children)
-                    {
-                        tn.Nodes.Add(new TreeNode
-                        {
-                            Text = !string.IsNullOrEmpty(child.DisplayName)
-                                ? $"{child.DisplayName} ({child.DisplayPhoneNumber})"
-                                : child.DisplayPhoneNumber,
-                            Tag = child
-                        });
-                    }
-                    treeView.Nodes.Add(tn);
+                    treeView.Nodes.Add(BuildTreeNode(node));
                 }
                 treeView.ExpandAll();
             });
+        }
+
+        private static TreeNode BuildTreeNode(PhoneNumberNode node)
+        {
+            var isGroup = string.IsNullOrEmpty(node.PhoneNumberId);
+            var tn = new TreeNode
+            {
+                Text = isGroup
+                    ? node.DisplayName
+                    : !string.IsNullOrEmpty(node.DisplayName)
+                        ? $"{node.DisplayName} ({node.DisplayPhoneNumber})"
+                        : node.DisplayPhoneNumber,
+                Tag = node
+            };
+            foreach (var child in node.Children)
+                tn.Nodes.Add(BuildTreeNode(child));
+            return tn;
         }
 
         private void TreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)

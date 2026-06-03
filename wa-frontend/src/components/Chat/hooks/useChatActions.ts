@@ -1,12 +1,14 @@
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
 import type { Conversation, ChatMessage } from '../../../types/chat';
+import { User } from '@/types';
 
 interface UseChatActionsProps {
-    user: any;
+    user: User;
     enableLogin?: boolean;
     activeConversation: Conversation | null;
+    connection: any;
     setActiveConversation: (conv: Conversation | null) => void;
     setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
@@ -16,12 +18,14 @@ export const useChatActions = ({
     user,
     enableLogin,
     activeConversation,
+    connection,
     setActiveConversation,
     setConversations,
-    setMessages,
+    setMessages,    
 }: UseChatActionsProps) => {
 
-    user.display_name = !enableLogin ? user.pcName : user.display_name;
+    const [typingAgents, setTypingAgents] = useState<Record<string, { name: string; timeout: any }>>({});
+    user.display_name = user.display_name;
 
     const lastTypingSentRef = useRef<Record<string | number, number>>({});
 
@@ -66,29 +70,31 @@ export const useChatActions = ({
         clearInput();
         const context_id = replyingTo?.wa_message_id;
 
-        if ((window as any).chrome?.webview) {
-            (window as any).chrome.webview.postMessage({
-                type: 'SEND_MESSAGE',
-                conversation_id: currentConv.id,
-                wa_channel_id: currentConv.wa_channel_id,
-                target: currentConv.customer_wa_id,
-                sender_name: user?.display_name,
-                text: text,
-                wa_message_id: tempId,
-                context_message_id: context_id
-            });
-        } else {
-            sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, text, "text", undefined, undefined, user?.display_name, tempId, context_id)
-                .then((res: any) => {
-                    if (res.status) {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
-                    } else {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                    }
-                }).catch(() => {
+        sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, text, "text", undefined, undefined, user?.display_name, tempId, context_id)
+            .then((res: any) => {
+                if (res.status) {
+                    setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, sender_name: m.sender_name, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
+                } else {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                });
-        }
+                }
+            }).catch(() => {
+                setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+            });
+
+        // if ((window as any).chrome?.webview) {
+        //     (window as any).chrome.webview.postMessage({
+        //         type: 'SEND_MESSAGE',
+        //         conversation_id: currentConv.id,
+        //         wa_channel_id: currentConv.wa_channel_id,
+        //         target: currentConv.customer_wa_id,
+        //         sender_name: user?.display_name,
+        //         text: text,
+        //         wa_message_id: tempId,
+        //         context_message_id: context_id
+        //     });
+        // } else {
+           
+        // }
     };
 
     const handleSendTemplate = async (template: any, params: { body: string[], buttons: string[], header: string[] }) => {
@@ -272,12 +278,44 @@ export const useChatActions = ({
         }
     };
 
+    
+        const handleAgentTyping = (conversation_id: string | number, sender_name: string) => {
+            if (activeConversation && activeConversation.id === conversation_id) {
+                // Optionally, you can set a "typing" state here to show typing indicators in the UI
+                console.log(`${sender_name} is typing in conversation ${conversation_id}`);
+            }
+
+            if (sender_name === user?.display_name) return;
+            setTypingAgents(prev => {
+                if (prev[conversation_id]) clearTimeout(prev[conversation_id].timeout);
+                const timeout = setTimeout(() => {
+                    setTypingAgents(curr => {
+                        const updated = { ...curr };
+                        delete updated[conversation_id];
+                        return updated;
+                    });
+                }, 10000);
+                return { ...prev, [conversation_id]: { name: sender_name, timeout } };
+            });
+        }
+
+    useEffect(() => {
+        if (!connection) return;
+        connection.on("AgentTyping", handleAgentTyping);
+
+        return () => {
+            connection.off("AgentTyping", handleAgentTyping);
+        };
+    
+    }, [connection]);
+
     return {
         handleSend,
         handleSendTemplate,
         handleSendMedia,
         handleSendReaction,
         handleRenameSubmit,
-        sendTyping
+        sendTyping,
+        typingAgents
     };
 };

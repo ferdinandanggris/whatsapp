@@ -53,6 +53,7 @@ const mapConversation = (c: any) => {
         app_name: c.display_name || 'WA Number',
         wa_channel_display_name: c.display_name || 'WA Number',
         is_template_required: isTemplateRequired,
+        display_phone_number: c.display_phone_number || '',
         platform: 'whatsapp',
         last_message_preview: c.last_message_preview || '',
         unread_count: c.unread_count || 0,
@@ -176,6 +177,16 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
                     if (message) {
                         emitterRef.current.emit('ReceiveMessage', mapMessage(message));
                     }
+                }
+                else if (ev.type === 'conversation_updated') {
+                    const conv = ev.data.conversation;
+                    if (conv) {
+                        emitterRef.current.emit('UpdateConversation', mapConversation(conv));
+                    }
+                }else if(ev.type === 'agent_typing'){
+                    // conversation_id and sender_name
+                    const {conversation_id, sender_name} = ev.data;
+                    emitterRef.current.emit('AgentTyping', conversation_id, sender_name);
                 } else if (ev.type === 'message_sent') {
                     const message = ev.data.message;
                     if (message) {

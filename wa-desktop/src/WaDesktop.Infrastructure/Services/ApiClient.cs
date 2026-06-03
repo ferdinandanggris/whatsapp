@@ -16,6 +16,8 @@ namespace WaDesktop.Infrastructure.Services
         private readonly HttpClient _http;
         private readonly string _baseUrl;
 
+        public event EventHandler SessionExpired;
+
         public ApiClient(string baseUrl = "http://localhost:8080")
         {
             _baseUrl = baseUrl;
@@ -52,13 +54,15 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task<List<PhoneNumberNode>> GetPhoneNumbersAsync()
         {
-            var json = await _http.GetStringAsync($"{_baseUrl}/api/v1/phone-numbers");
+            var json = await GetStringAsync("/api/v1/phone-numbers");
             var items = JsonConvert.DeserializeObject<List<PhoneNumberDto>>(json) ?? new List<PhoneNumberDto>();
             return items.Select(dto => new PhoneNumberNode
             {
                 PhoneNumberId = dto.PhoneNumberId,
                 DisplayName = dto.DisplayName,
                 DisplayPhoneNumber = dto.DisplayPhone,
+                CompanyId = dto.CompanyId,
+                CompanyName = dto.CompanyName,
             }).ToList();
         }
 
@@ -70,6 +74,10 @@ namespace WaDesktop.Infrastructure.Services
             public string DisplayName { get; set; }
             [JsonProperty("display_phone_number")]
             public string DisplayPhone { get; set; }
+            [JsonProperty("company_id")]
+            public long? CompanyId { get; set; }
+            [JsonProperty("company_name")]
+            public string CompanyName { get; set; }
         }
 
         // ── Companies ──
@@ -86,7 +94,7 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task<List<User>> GetUsersAsync(string search = null)
         {
-            var json = await _http.GetStringAsync($"{_baseUrl}/api/v1/users");
+            var json = await GetStringAsync("/api/v1/users");
             var data = JsonConvert.DeserializeObject<List<User>>(json) ?? new List<User>();
             if (!string.IsNullOrEmpty(search))
                 data = data.Where(u => u.DisplayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
@@ -122,7 +130,7 @@ namespace WaDesktop.Infrastructure.Services
             return setting;
         }
 
-        public async Task SaveAppSettingsAsync(AppSetting settings)
+        public async Task<List<string>> SaveAppSettingsAsync(AppSetting settings)
         {
             var payload = new Dictionary<string, string>();
             if (!string.IsNullOrEmpty(settings.WebhookUrl)) payload["webhook_url"] = settings.WebhookUrl;
@@ -132,7 +140,19 @@ namespace WaDesktop.Infrastructure.Services
             var body = JsonConvert.SerializeObject(payload);
             var res = await _http.PutAsync($"{_baseUrl}/api/v1/settings",
                 new StringContent(body, Encoding.UTF8, "application/json"));
+
+            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
             res.EnsureSuccessStatusCode();
+
+            var json = await res.Content.ReadAsStringAsync();
+            var wrapped = JsonConvert.DeserializeObject<SaveSettingsResponse>(json);
+            return wrapped?.Warnings ?? new List<string>();
+        }
+
+        private class SaveSettingsResponse
+        {
+            [JsonProperty("warnings")]
+            public List<string> Warnings { get; set; }
         }
 
         private class SettingItem
@@ -145,11 +165,25 @@ namespace WaDesktop.Infrastructure.Services
 
         // ── Helpers ──
 
+        private async Task<string> GetStringAsync(string path)
+        {
+            var res = await _http.GetAsync($"{_baseUrl}{path}");
+            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            res.EnsureSuccessStatusCode();
+            return await res.Content.ReadAsStringAsync();
+        }
+
         private async Task<List<T>> GetListAsync<T>(string path)
         {
-            var json = await _http.GetStringAsync($"{_baseUrl}{path}");
+            var json = await GetStringAsync(path);
             var wrapped = JsonConvert.DeserializeObject<ApiListResponse<T>>(json);
             return wrapped?.Data ?? new List<T>();
+        }
+
+        private void FireSessionExpired()
+        {
+            SetToken(null);
+            SessionExpired?.Invoke(this, EventArgs.Empty);
         }
 
         private class ApiListResponse<T>

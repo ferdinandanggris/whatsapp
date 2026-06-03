@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { ApiResponse, PagedResponse, Conversation, ChatMessage, ApplicationSummary, WaChannel } from '../types/chat';
+import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
 const getBaseUrl = () => '';
 
@@ -64,7 +65,11 @@ apiClient.interceptors.response.use(
             refreshSubscribers = [];
             localStorage.removeItem('token');
             localStorage.removeItem('refresh_token');
-            window.location.href = '/login';
+            if (isDesktop()) {
+              postToDesktop({ type: 'token_expired' });
+            } else {
+              window.location.href = '/login';
+            }
             return Promise.reject(refreshError);
         } finally {
             isRefreshing = false;

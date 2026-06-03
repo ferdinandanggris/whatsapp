@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
+using WaDesktop.Domain.Messages;
 using WaDesktop.Domain.State;
 using WaDesktop.Infrastructure;
 using WaDesktop.Infrastructure.EventAggregator;
@@ -28,6 +29,9 @@ namespace WaDesktop.Client
             ServiceLocator.Register<IApiClient>(apiClient);
             ServiceLocator.Register<IAuthService>(authService);
             ServiceLocator.Register(appState);
+
+            // ── Session Expired → publish message ──
+            apiClient.SessionExpired += (s, e) => eventAggregator.Publish(new SessionExpiredMessage());
 
             // ── Login ──
             var loginView = new LoginView();

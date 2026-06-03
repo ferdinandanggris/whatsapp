@@ -44,6 +44,12 @@ func main() {
 	}
 	slog.Info("migrations complete")
 
+	settingsRepo := repository.NewSettingsRepository(pool)
+	companyRepo := repository.NewCompanyRepository(pool)
+
+	// Override .env config from DB settings (api_key, waba_id, app_secret, etc.)
+	overrideConfigFromDB(ctx, cfg, settingsRepo)
+
 	userRepo := repository.NewUserRepository(pool)
 	contactRepo := repository.NewContactRepository(pool)
 	msgRepo := repository.NewMessageRepository(pool)
@@ -62,9 +68,6 @@ func main() {
 	tplSvc := service.NewTemplateService(tplRepo, wapiClient, cfg.WABAToken, cfg.WABAID)
 	mediaSvc := service.NewMediaService(mediaRepo, wapiClient, cfg.WABAToken, cfg.MediaDir)
 
-	settingsRepo := repository.NewSettingsRepository(pool)
-	companyRepo := repository.NewCompanyRepository(pool)
-
 	authHandler := handler.NewAuthHandler(authSvc, userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
 	convHandler := handler.NewConversationHandler(contactRepo, convRepo, msgRepo, whatsappSvc)
@@ -76,7 +79,6 @@ func main() {
 	phoneHandler := handler.NewPhoneHandler(repository.NewPhoneRepository(pool))
 	typingHandler := handler.NewTypingHandler(hub)
 	webhookOverrideHandler := handler.NewWebhookOverrideHandler(wapiClient, cfg.WABAID, cfg.WebhookVerifyToken)
-	settingsHandler := handler.NewSettingsHandler(settingsRepo)
 	companyHandler := handler.NewCompanyHandler(companyRepo)
 
 	wh := &webhook.Handler{
@@ -87,6 +89,30 @@ func main() {
 		Convs:       convRepo,
 		Hub:         hub,
 	}
+
+	settingsHandler := handler.NewSettingsHandler(settingsRepo, cfg, func(ctx context.Context, name, value string) error {
+		switch name {
+		case "api_key":
+			wapiClient.SetAccessToken(value)
+			slog.Info("settings runtime reload", "setting", "api_key")
+		case "app_secret":
+			wh.AppSecret = value
+			slog.Info("settings runtime reload", "setting", "app_secret")
+		case "webhook_verify_token":
+			wh.VerifyToken = value
+			slog.Info("settings runtime reload", "setting", "webhook_verify_token")
+		case "webhook_url":
+			subCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+			_, err := wapiClient.SetWebhookOverride(subCtx, cfg.WABAID, value, cfg.WebhookVerifyToken)
+			if err != nil {
+				slog.Error("webhook subscription failed", "url", value, "error", err)
+				return fmt.Errorf("webhook subscription failed: %w", err)
+			}
+			slog.Info("webhook subscription updated", "url", value)
+		}
+		return nil
+	})
 
 	r := chi.NewRouter()
 	r.Use(chimw.RequestID)
@@ -186,6 +212,27 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+func overrideConfigFromDB(ctx context.Context, cfg *config.Config, repo *repository.SettingsRepository) {
+	settings, err := repo.GetAll(ctx)
+	if err != nil {
+		slog.Warn("could not load settings from DB, using .env defaults", "error", err)
+		return
+	}
+
+	overridden := 0
+	for _, s := range settings {
+		if cfg.Override(s.Name, s.Value) {
+			slog.Info("config overridden from DB", "setting", s.Name)
+			overridden++
+		}
+	}
+	if overridden > 0 {
+		slog.Info("config overridden from settings table", "count", overridden)
+	} else {
+		slog.Info("no config overrides from settings table")
+	}
 }
 
 func requestLogger(next http.Handler) http.Handler {

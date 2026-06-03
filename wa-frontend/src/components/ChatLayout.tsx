@@ -31,9 +31,10 @@ import { useConversations } from './Chat/hooks/useConversations';
 import { useMessages } from './Chat/hooks/useMessages';
 import { useChatActions } from './Chat/hooks/useChatActions';
 import { renderMessageContent, renderTemplateMessage } from './Chat/MessageRenderer';
+import { User } from '@/types';
 
 interface ChatLayoutProps {
-    user?: any;
+    user?: User;
     enableLogin?: boolean;
 }
 
@@ -51,7 +52,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [convFilter, setConvFilter] = useState<'all' | 'unread' | 'read'>('all');
     const [inputText, setInputText] = useState('');
-    const [typingAgents, setTypingAgents] = useState<Record<string | number, { name: string, timeout: any }>>({});
 
     // Dialog States
     const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
@@ -103,11 +103,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         handleSendMedia: executeSendMedia,
         handleSendReaction,
         handleRenameSubmit: onRename,
-        sendTyping
+        sendTyping,
+        typingAgents
     } = useChatActions({
         user,
         enableLogin,
         activeConversation,
+        connection,
         setActiveConversation,
         setConversations,
         setMessages
@@ -151,26 +153,26 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // Handle typing indicator from SignalR
     useEffect(() => {
         if (!connection) return;
-        const handleAgentTyping = (data: { conversation_id: number, sender_name: string }) => {
-            if (data.sender_name === user?.display_name) return;
-            setTypingAgents(prev => {
-                if (prev[data.conversation_id]) clearTimeout(prev[data.conversation_id].timeout);
-                const timeout = setTimeout(() => {
-                    setTypingAgents(curr => {
-                        const updated = { ...curr };
-                        delete updated[data.conversation_id];
-                        return updated;
-                    });
-                }, 10000);
-                return { ...prev, [data.conversation_id]: { name: data.sender_name, timeout } };
-            });
-        };
+        // const handleAgentTyping = (data: { conversation_id: number, sender_name: string }) => {
+        //     if (data.sender_name === user?.display_name) return;
+        //     setTypingAgents(prev => {
+        //         if (prev[data.conversation_id]) clearTimeout(prev[data.conversation_id].timeout);
+        //         const timeout = setTimeout(() => {
+        //             setTypingAgents(curr => {
+        //                 const updated = { ...curr };
+        //                 delete updated[data.conversation_id];
+        //                 return updated;
+        //             });
+        //         }, 10000);
+        //         return { ...prev, [data.conversation_id]: { name: data.sender_name, timeout } };
+        //     });
+        // };
         const handleUpdateAllowSendTemplate = (allow: boolean) => setAllowSendTemplate(allow);
 
-        connection.on("AgentTyping", handleAgentTyping);
+        // connection.on("AgentTyping", handleAgentTyping);
         connection.on("UpdateAllowSendTemplate", handleUpdateAllowSendTemplate);
         return () => {
-            connection.off("AgentTyping", handleAgentTyping);
+            // connection.off("AgentTyping", handleAgentTyping);
             connection.off("UpdateAllowSendTemplate", handleUpdateAllowSendTemplate);
         };
     }, [connection, user?.display_name]);

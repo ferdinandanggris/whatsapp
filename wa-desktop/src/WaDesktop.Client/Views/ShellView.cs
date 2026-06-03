@@ -42,6 +42,7 @@ namespace WaDesktop.Client.Views
                 control.Dock = DockStyle.Fill;
                 panelSidebar.Controls.Clear();
                 panelSidebar.Controls.Add(control);
+                control.Dock = DockStyle.Fill;
             });
         }
 

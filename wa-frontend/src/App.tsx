@@ -6,6 +6,11 @@ import TemplateManagement from "./components/TemplateManagement"
 import TemplateCreator from "./components/TemplateCreator"
 import { TooltipProvider } from "./components/ui/tooltip"
 
+function RootRedirect() {
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem("token")
+  return <Navigate to={hasToken ? "/inbox" : "/login"} replace />
+}
+
 export default function App() {
   return (
     <TooltipProvider>
@@ -36,6 +41,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
       </BrowserRouter>

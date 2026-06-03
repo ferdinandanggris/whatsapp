@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Domain.Entities;
@@ -53,8 +54,11 @@ namespace WaDesktop.Client.Presenters
                     ApiKey = _view.ApiKey,
                     WabaId = _view.WabaId
                 };
-                await Task.Run(() => _api.SaveAppSettingsAsync(settings));
-                _view.ShowSuccess("Settings saved.");
+                var warnings = await Task.Run(() => _api.SaveAppSettingsAsync(settings));
+                if (warnings != null && warnings.Any())
+                    _view.ShowWarning(string.Join("\n", warnings));
+                else
+                    _view.ShowSuccess("Settings saved.");
             }
             catch (Exception ex)
             {

@@ -44,77 +44,116 @@ namespace WaDesktop.Client.Views
             this.splitContainer.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.SuspendLayout();
-
+            // 
             // menuStrip
+            // 
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                this.dashboardToolStripMenuItem,
-                this.companyToolStripMenuItem,
-                this.usersToolStripMenuItem,
-                this.templatesToolStripMenuItem,
-                this.appSettingsToolStripMenuItem,
-                this.logoutToolStripMenuItem});
+            this.dashboardToolStripMenuItem,
+            this.companyToolStripMenuItem,
+            this.usersToolStripMenuItem,
+            this.templatesToolStripMenuItem,
+            this.appSettingsToolStripMenuItem,
+            this.logoutToolStripMenuItem});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Size = new System.Drawing.Size(1284, 24);
             this.menuStrip.TabIndex = 0;
             this.menuStrip.Text = "menuStrip";
-
-            // dashboard
+            // 
+            // dashboardToolStripMenuItem
+            // 
+            this.dashboardToolStripMenuItem.Name = "dashboardToolStripMenuItem";
+            this.dashboardToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
             this.dashboardToolStripMenuItem.Text = "Dashboard";
             this.dashboardToolStripMenuItem.Click += new System.EventHandler(this.dashboardToolStripMenuItem_Click);
-            // company
+            // 
+            // companyToolStripMenuItem
+            // 
+            this.companyToolStripMenuItem.Name = "companyToolStripMenuItem";
+            this.companyToolStripMenuItem.Size = new System.Drawing.Size(71, 20);
             this.companyToolStripMenuItem.Text = "Company";
             this.companyToolStripMenuItem.Click += new System.EventHandler(this.companyToolStripMenuItem_Click);
-            // users
+            // 
+            // usersToolStripMenuItem
+            // 
+            this.usersToolStripMenuItem.Name = "usersToolStripMenuItem";
+            this.usersToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.usersToolStripMenuItem.Text = "Users";
             this.usersToolStripMenuItem.Click += new System.EventHandler(this.usersToolStripMenuItem_Click);
-            // templates
+            // 
+            // templatesToolStripMenuItem
+            // 
+            this.templatesToolStripMenuItem.Name = "templatesToolStripMenuItem";
+            this.templatesToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
             this.templatesToolStripMenuItem.Text = "Templates";
             this.templatesToolStripMenuItem.Click += new System.EventHandler(this.templatesToolStripMenuItem_Click);
-            // appSettings
+            // 
+            // appSettingsToolStripMenuItem
+            // 
+            this.appSettingsToolStripMenuItem.Name = "appSettingsToolStripMenuItem";
+            this.appSettingsToolStripMenuItem.Size = new System.Drawing.Size(86, 20);
             this.appSettingsToolStripMenuItem.Text = "App Settings";
-            this.appSettingsToolStripMenuItem.Visible = false; // Super Admin only
+            this.appSettingsToolStripMenuItem.Visible = false;
             this.appSettingsToolStripMenuItem.Click += new System.EventHandler(this.appSettingsToolStripMenuItem_Click);
-            // logout
+            // 
+            // logoutToolStripMenuItem
+            // 
+            this.logoutToolStripMenuItem.Name = "logoutToolStripMenuItem";
+            this.logoutToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
             this.logoutToolStripMenuItem.Text = "Logout";
             this.logoutToolStripMenuItem.Click += new System.EventHandler(this.logoutToolStripMenuItem_Click);
-
+            // 
             // splitContainer
+            // 
             this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer.Location = new System.Drawing.Point(0, 24);
             this.splitContainer.Name = "splitContainer";
-            // Panel1 = Sidebar
+            // 
+            // splitContainer.Panel1
+            // 
             this.splitContainer.Panel1.Controls.Add(this.panelSidebar);
-            this.splitContainer.Panel1MinSize = 200;
-            // Panel2 = Workspace
+            // 
+            // splitContainer.Panel2
+            // 
             this.splitContainer.Panel2.Controls.Add(this.tabWorkspace);
             this.splitContainer.Size = new System.Drawing.Size(1284, 706);
-            this.splitContainer.SplitterDistance = 280;
+            this.splitContainer.SplitterDistance = 204;
             this.splitContainer.TabIndex = 1;
-
+            // 
             // panelSidebar
+            // 
             this.panelSidebar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelSidebar.Location = new System.Drawing.Point(0, 0);
             this.panelSidebar.Name = "panelSidebar";
-            this.panelSidebar.Size = new System.Drawing.Size(280, 706);
-
+            this.panelSidebar.Size = new System.Drawing.Size(204, 706);
+            this.panelSidebar.TabIndex = 0;
+            // 
             // tabWorkspace
+            // 
             this.tabWorkspace.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabWorkspace.Location = new System.Drawing.Point(0, 0);
             this.tabWorkspace.Name = "tabWorkspace";
-            this.tabWorkspace.Size = new System.Drawing.Size(1000, 706);
+            this.tabWorkspace.SelectedIndex = 0;
+            this.tabWorkspace.Size = new System.Drawing.Size(1076, 706);
             this.tabWorkspace.TabIndex = 0;
-
+            // 
             // statusStrip
-            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.toolStripStatusLabel });
+            // 
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel});
             this.statusStrip.Location = new System.Drawing.Point(0, 730);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(1284, 22);
             this.statusStrip.TabIndex = 2;
+            // 
             // toolStripStatusLabel
+            // 
             this.toolStripStatusLabel.Name = "toolStripStatusLabel";
-            this.toolStripStatusLabel.Size = new System.Drawing.Size(1269, 17);
+            this.toolStripStatusLabel.Size = new System.Drawing.Size(39, 17);
             this.toolStripStatusLabel.Text = "Ready";
-
+            // 
             // ShellView
+            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1284, 752);
@@ -130,10 +169,13 @@ namespace WaDesktop.Client.Views
             this.menuStrip.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
+            this.splitContainer.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
     }
 }

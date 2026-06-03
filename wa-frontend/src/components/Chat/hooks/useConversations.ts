@@ -17,7 +17,7 @@ export const useConversations = ({
     activeAppId,
     debouncedSearchTerm,
     convFilter,
-    connection,
+    connection, 
     activeConversation,
     setActiveConversation,
     setApplications,
@@ -160,7 +160,6 @@ export const useConversations = ({
                     conv.updated_at = chatMsg.created_at;
 
                     if (chatMsg.direction === 'INBOUND') {
-                        conv.unread_count++;
 
                         // Bridge to WinForms for desktop notification
                         if ((window as any).chrome?.webview) {
@@ -177,16 +176,16 @@ export const useConversations = ({
                         });
                     }
 
-                    const activeConv = activeConversationRef.current;
-                    const activeComposite = activeConv
-                        ? `${activeConv.wa_channel_id}_${activeConv.customer_wa_id}`
-                        : '';
-                    if (activeConv && (activeConv.id === chatMsg.conversation_id || activeComposite === chatMsg.conversation_id)) {
-                        setActiveConversation({
-                            ...activeConv,
-                            unread_count: activeConv.unread_count + 1
-                        });
-                    }
+                    // const activeConv = activeConversationRef.current;
+                    // const activeComposite = activeConv
+                    //     ? `${activeConv.wa_channel_id}_${activeConv.customer_wa_id}`
+                    //     : '';
+                    // if (activeConv && (activeConv.id === chatMsg.conversation_id || activeComposite === chatMsg.conversation_id)) {
+                    //     setActiveConversation({
+                    //         ...activeConv,
+                    //         unread_count: activeConv.unread_count + 1
+                    //     });
+                    // }
 
                     updated[index] = conv;
                     const item = updated.splice(index, 1)[0];

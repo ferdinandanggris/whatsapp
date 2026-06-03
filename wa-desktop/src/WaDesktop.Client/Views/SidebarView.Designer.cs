@@ -41,7 +41,7 @@ namespace WaDesktop.Client.Views
             this.labelHeader.Padding = new System.Windows.Forms.Padding(12, 10, 12, 6);
             this.labelHeader.Size = new System.Drawing.Size(280, 32);
             this.labelHeader.TabIndex = 1;
-            this.labelHeader.Text = "WA Phone Numbers";
+            this.labelHeader.Text = "Phone Numbers";
             this.labelHeader.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SidebarView

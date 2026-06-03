@@ -26,7 +26,7 @@ func (h *TypingHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.hub.BroadcastEventToAll(ws.Event{
-		Type: "AgentTyping",
+		Type: "agent_typing",
 		Data: req,
 	})
 
