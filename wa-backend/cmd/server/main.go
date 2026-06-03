@@ -62,6 +62,9 @@ func main() {
 	tplSvc := service.NewTemplateService(tplRepo, wapiClient, cfg.WABAToken, cfg.WABAID)
 	mediaSvc := service.NewMediaService(mediaRepo, wapiClient, cfg.WABAToken, cfg.MediaDir)
 
+	settingsRepo := repository.NewSettingsRepository(pool)
+	companyRepo := repository.NewCompanyRepository(pool)
+
 	authHandler := handler.NewAuthHandler(authSvc, userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
 	convHandler := handler.NewConversationHandler(contactRepo, convRepo, msgRepo, whatsappSvc)
@@ -73,6 +76,8 @@ func main() {
 	phoneHandler := handler.NewPhoneHandler(repository.NewPhoneRepository(pool))
 	typingHandler := handler.NewTypingHandler(hub)
 	webhookOverrideHandler := handler.NewWebhookOverrideHandler(wapiClient, cfg.WABAID, cfg.WebhookVerifyToken)
+	settingsHandler := handler.NewSettingsHandler(settingsRepo)
+	companyHandler := handler.NewCompanyHandler(companyRepo)
 
 	wh := &webhook.Handler{
 		VerifyToken: cfg.WebhookVerifyToken,
@@ -141,7 +146,13 @@ func main() {
 				r.Get("/webhook/override", webhookOverrideHandler.Get)
 				r.Post("/webhook/override", webhookOverrideHandler.Set)
 				r.Delete("/webhook/override", webhookOverrideHandler.Remove)
+				r.Get("/settings", settingsHandler.GetSettings)
+				r.Put("/settings", settingsHandler.UpdateSettings)
 			})
+
+			// Companies — super_admin sees all, company_admin sees own
+			r.Get("/companies", companyHandler.List)
+			r.Get("/companies/{id}", companyHandler.GetByID)
 		})
 	})
 

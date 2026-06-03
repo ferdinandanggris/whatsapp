@@ -46,9 +46,7 @@ namespace WaDesktop.Client.Views.ManagementViews
             // Columns
             this.dataGridView.Columns.Add("Id", "ID");
             this.dataGridView.Columns.Add("Name", "Name");
-            this.dataGridView.Columns.Add("Email", "Email");
-            this.dataGridView.Columns.Add("Phone", "Phone");
-            this.dataGridView.Columns.Add("Status", "Status");
+            this.dataGridView.Columns.Add("CreatedAt", "Created At");
 
             // panelToolbar
             this.panelToolbar.Controls.Add(this.btnDelete);

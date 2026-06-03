@@ -32,6 +32,19 @@ namespace WaDesktop.Client.Views
         public event EventHandler AppSettingsClicked;
         public event EventHandler LogoutClicked;
 
+        public void RenderSidebar(IViewBase sidebarContent)
+        {
+            var control = sidebarContent as Control;
+            if (control == null)
+                throw new ArgumentException("sidebarContent must be a WinForms Control");
+            this.InvokeIfRequired(() =>
+            {
+                control.Dock = DockStyle.Fill;
+                panelSidebar.Controls.Clear();
+                panelSidebar.Controls.Add(control);
+            });
+        }
+
         public void AddOrSelectTab(string key, string title, IViewBase content)
         {
             var control = content as Control;

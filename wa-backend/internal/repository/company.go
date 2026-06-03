@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/ferdinandanggris/wa-backend/internal/model"
 )
 
 type CompanyRepository struct {
@@ -13,6 +15,17 @@ type CompanyRepository struct {
 
 func NewCompanyRepository(pool *pgxpool.Pool) *CompanyRepository {
 	return &CompanyRepository{pool: pool}
+}
+
+const companyCols = `id, name, created_at`
+
+func scanCompany(scanner interface{ Scan(...interface{}) error }) (*model.Company, error) {
+	var c model.Company
+	err := scanner.Scan(&c.ID, &c.Name, &c.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func (r *CompanyRepository) Create(ctx context.Context, name string) (int64, error) {
@@ -24,6 +37,36 @@ func (r *CompanyRepository) Create(ctx context.Context, name string) (int64, err
 		return 0, fmt.Errorf("create company: %w", err)
 	}
 	return id, nil
+}
+
+func (r *CompanyRepository) List(ctx context.Context) ([]*model.Company, error) {
+	rows, err := r.pool.Query(ctx, "SELECT "+companyCols+" FROM companies ORDER BY name")
+	if err != nil {
+		return nil, fmt.Errorf("list companies: %w", err)
+	}
+	defer rows.Close()
+
+	var out []*model.Company
+	for rows.Next() {
+		c, err := scanCompany(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan company: %w", err)
+		}
+		out = append(out, c)
+	}
+	if out == nil {
+		out = []*model.Company{}
+	}
+	return out, nil
+}
+
+func (r *CompanyRepository) GetByID(ctx context.Context, id int64) (*model.Company, error) {
+	c, err := scanCompany(r.pool.QueryRow(ctx,
+		"SELECT "+companyCols+" FROM companies WHERE id = $1", id))
+	if err != nil {
+		return nil, fmt.Errorf("get company %d: %w", id, err)
+	}
+	return c, nil
 }
 
 func (r *CompanyRepository) GetPhoneIDsByCompanyID(ctx context.Context, companyID int64) ([]string, error) {

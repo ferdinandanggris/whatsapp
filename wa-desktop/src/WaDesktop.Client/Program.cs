@@ -49,8 +49,9 @@ namespace WaDesktop.Client
             // ── Sidebar ──
             var sidebarView = new SidebarView();
             var sidebarPresenter = new SidebarPresenter(sidebarView, apiClient, eventAggregator);
-            shellView.Controls["panelSidebar"]?.Controls.Add(sidebarView);
-            sidebarView.Dock = DockStyle.Fill;
+            //shellView.Controls["panelSidebar"]?.Controls.Add(sidebarView);
+            //sidebarView.Dock = DockStyle.Fill;
+            shellView.RenderSidebar(sidebarView);
             _ = sidebarPresenter.LoadDataAsync();
 
             Application.Run(shellView);

@@ -28,7 +28,7 @@ namespace WaDesktop.Infrastructure.Services
             try
             {
                 var result = await _api.LoginAsync(username, password);
-                _state.SetSession(result.AccessToken, result.RefreshToken, result.Role, result.DisplayName);
+                _state.SetSession(result.AccessToken, result.RefreshToken, result.User.Role, result.User.DisplayName);
 
                 if (_api is ApiClient client)
                     client.SetToken(result.AccessToken);

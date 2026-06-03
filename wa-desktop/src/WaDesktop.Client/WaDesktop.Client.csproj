@@ -112,5 +112,13 @@
     <Compile Include="Presenters\TemplatesPresenter.cs" />
     <Compile Include="Presenters\AppSettingsPresenter.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Views\ManagementViews\AppSettingsView.resx">
+      <DependentUpon>AppSettingsView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\SidebarView.resx">
+      <DependentUpon>SidebarView.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

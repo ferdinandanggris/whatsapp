@@ -22,7 +22,7 @@ namespace WaDesktop.Client.Views.ManagementViews
                 {
                     dataGridView.Rows.Clear();
                     foreach (var c in value)
-                        dataGridView.Rows.Add(c.Id, c.Name, c.Email, c.Phone, c.IsActive ? "Active" : "Inactive");
+                        dataGridView.Rows.Add(c.Id, c.Name, c.CreatedAt);
                 });
             }
         }

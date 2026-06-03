@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using WaDesktop.Domain.Entities;
+using Newtonsoft.Json;
 
 namespace WaDesktop.Domain.Interfaces
 {
@@ -19,9 +20,11 @@ namespace WaDesktop.Domain.Interfaces
 
     public class AuthResult
     {
+        [JsonProperty("access_token")]
         public string AccessToken { get; set; }
+        [JsonProperty("refresh_token")]
         public string RefreshToken { get; set; }
-        public string Role { get; set; }
-        public string DisplayName { get; set; }
+        [JsonProperty("user")]
+        public User User { get; set; }
     }
 }
