@@ -144,6 +144,16 @@ func (r *PhoneRepository) UpdateBusinessProfileFields(ctx context.Context, id st
 	return nil
 }
 
+// UpdateMetaSyncedAt sets business_profile_updated = NOW() after successful Meta push.
+func (r *PhoneRepository) UpdateMetaSyncedAt(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE wa_phone_numbers SET business_profile_updated = NOW(), updated_at = NOW() WHERE phone_number_id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("update meta synced at %s: %w", id, err)
+	}
+	return nil
+}
+
 type PhoneBusinessProfile struct {
 	Description          string   `json:"description"`
 	Email                string   `json:"email"`

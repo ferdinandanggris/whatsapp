@@ -27,7 +27,17 @@ namespace WaDesktop.Client.Views.ManagementViews
         public string Email => txtEmail.Text.Trim();
         public string About => txtAbout.Text.Trim();
         public string Address => txtAddress.Text.Trim();
-        public string Vertical => cboVertical.Text;
+        public string Vertical {
+            get {
+                string tmpVertical = null;
+                if (this.InvokeRequired)
+                {
+                    BeginInvoke(new Action(() => tmpVertical = cboVertical.Text));
+                    return tmpVertical;
+                }
+                return tmpVertical;
+            }
+        }
         public string WebsitesText => txtWebsites.Text.Trim();
         public string PendingUploadPath { get; private set; }
         public long? SelectedCompanyId

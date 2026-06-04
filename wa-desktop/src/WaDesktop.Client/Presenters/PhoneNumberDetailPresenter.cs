@@ -69,11 +69,14 @@ namespace WaDesktop.Client.Presenters
                         _view.Address,
                         _view.Vertical,
                         _view.WebsitesText));
-                _view.LoadDetail(result);
+                _view.LoadDetail(result.Detail);
 
-                if (!string.IsNullOrEmpty(result.ProfilePictureUrl))
+                foreach (var w in result.Warnings)
+                    _view.ShowWarning(w);
+
+                if (!string.IsNullOrEmpty(result.Detail.ProfilePictureUrl))
                 {
-                    var pictureData = await Task.Run(() => _api.GetPhoneProfilePictureAsync(result.ProfilePictureUrl));
+                    var pictureData = await Task.Run(() => _api.GetPhoneProfilePictureAsync(result.Detail.ProfilePictureUrl));
                     _view.LoadProfilePicture(pictureData);
                 }
                 _view.ShowSuccess("Phone number updated.");

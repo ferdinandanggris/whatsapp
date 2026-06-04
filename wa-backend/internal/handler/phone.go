@@ -130,11 +130,11 @@ type updatePhoneRequest struct {
 	DisplayName string   `json:"display_name"`
 	Description string   `json:"description"`
 	CompanyID   *int64   `json:"company_id"`
-	Email       string   `json:"email,omitempty"`
-	About       string   `json:"about,omitempty"`
-	Address     string   `json:"address,omitempty"`
-	Vertical    string   `json:"vertical,omitempty"`
-	Websites    []string `json:"websites,omitempty"`
+	Email       string   `json:"email"`
+	About       string   `json:"about"`
+	Address     string   `json:"address"`
+	Vertical    string   `json:"vertical"`
+	Websites    []string `json:"websites"`
 }
 
 func (h *PhoneHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -148,17 +148,42 @@ func (h *PhoneHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
+	// Save to local DB first
 	if err := h.repo.Update(r.Context(), id, req.DisplayName, req.Description, req.CompanyID,
 		req.Email, req.About, req.Address, req.Vertical, req.Websites); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to update")
 		return
 	}
+
+	// Then push to Meta
+	var warnings []string
+	metaProfile := &types.BusinessProfile{
+		Description: req.Description,
+		Email:       req.Email,
+		About:       req.About,
+		Address:     req.Address,
+		Vertical:    req.Vertical,
+		Websites:    req.Websites,
+	}
+	if err := h.wapi.UpdateBusinessProfile(r.Context(), id, metaProfile); err != nil {
+		warnings = append(warnings, "Failed to update business profile on Meta: "+err.Error())
+		slog.Warn("update business profile on Meta failed", "id", id, "error", err)
+	} else {
+		_ = h.repo.UpdateMetaSyncedAt(r.Context(), id)
+		slog.Info("business profile synced to Meta", "id", id)
+	}
+
 	phone, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to reload")
 		return
 	}
-	writeJSON(w, http.StatusOK, phone)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"data":     phone,
+		"warnings": warnings,
+	})
 }
 
 // SyncProfile fetches the WhatsApp Business Profile from Meta and updates local DB.

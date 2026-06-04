@@ -217,7 +217,16 @@ namespace WaDesktop.Infrastructure.Services
                 throw new HttpRequestException($"Save failed ({res.StatusCode}): {err}");
             }
             var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+            var wrapped = JsonConvert.DeserializeObject<SavePhoneResponse>(json);
+            return new SavePhoneResult { Detail = wrapped?.Data, Warnings = wrapped?.Warnings ?? new List<string>() };
+        }
+
+        private class SavePhoneResponse
+        {
+            [JsonProperty("data")]
+            public PhoneNumberDetail Data { get; set; }
+            [JsonProperty("warnings")]
+            public List<string> Warnings { get; set; }
         }
 
         public async Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId)

@@ -21,10 +21,18 @@ namespace WaDesktop.Domain.Interfaces
         Task<List<string>> SaveAppSettingsAsync(AppSetting settings);
 
         Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId);
-        Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, string websitesText);
+        Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, string websitesText);
         Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId);
         Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath);
         Task<byte[]> GetPhoneProfilePictureAsync(string url);
+    }
+
+    public class SavePhoneResult
+    {
+        [JsonProperty("data")]
+        public PhoneNumberDetail Detail { get; set; }
+        [JsonProperty("warnings")]
+        public List<string> Warnings { get; set; }
     }
 
     public class AuthResult
