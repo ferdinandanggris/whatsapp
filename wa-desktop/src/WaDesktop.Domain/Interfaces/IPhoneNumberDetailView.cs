@@ -17,7 +17,8 @@ namespace WaDesktop.Domain.Interfaces
         string About { get; }
         string Address { get; }
         string Vertical { get; }
-        string WebsitesText { get; }
+        string Website1 { get; }
+        string Website2 { get; }
         long? SelectedCompanyId { get; }
 
         // ── Picture ──

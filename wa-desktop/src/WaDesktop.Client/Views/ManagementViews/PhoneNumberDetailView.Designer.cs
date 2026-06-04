@@ -29,8 +29,10 @@ namespace WaDesktop.Client.Views.ManagementViews
         private System.Windows.Forms.TextBox txtAddress;
         private System.Windows.Forms.Label lblVertical;
         private System.Windows.Forms.ComboBox cboVertical;
-        private System.Windows.Forms.Label lblWebsites;
-        private System.Windows.Forms.TextBox txtWebsites;
+        private System.Windows.Forms.Label lblWebsite1;
+        private System.Windows.Forms.TextBox txtWebsite1;
+        private System.Windows.Forms.Label lblWebsite2;
+        private System.Windows.Forms.TextBox txtWebsite2;
 
         protected override void Dispose(bool disposing)
         {
@@ -65,8 +67,10 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.txtAddress = new System.Windows.Forms.TextBox();
             this.lblVertical = new System.Windows.Forms.Label();
             this.cboVertical = new System.Windows.Forms.ComboBox();
-            this.lblWebsites = new System.Windows.Forms.Label();
-            this.txtWebsites = new System.Windows.Forms.TextBox();
+            this.lblWebsite1 = new System.Windows.Forms.Label();
+            this.txtWebsite1 = new System.Windows.Forms.TextBox();
+            this.lblWebsite2 = new System.Windows.Forms.Label();
+            this.txtWebsite2 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.picProfile)).BeginInit();
             this.SuspendLayout();
 
@@ -233,26 +237,39 @@ namespace WaDesktop.Client.Views.ManagementViews
                 "NONPROFIT", "PROF_SERVICES", "RETAIL", "TRAVEL", "RESTAURANT",
                 "ALCOHOL", "ONLINE_GAMBLING", "PHYSICAL_GAMBLING", "OTC_DRUGS"});
 
-            // lblWebsites
-            this.lblWebsites.AutoSize = true;
-            this.lblWebsites.Location = new System.Drawing.Point(160, 522);
-            this.lblWebsites.Name = "lblWebsites";
-            this.lblWebsites.Size = new System.Drawing.Size(50, 13);
-            this.lblWebsites.TabIndex = 21;
-            this.lblWebsites.Text = "Websites";
+            // lblWebsite1
+            this.lblWebsite1.AutoSize = true;
+            this.lblWebsite1.Location = new System.Drawing.Point(160, 522);
+            this.lblWebsite1.Name = "lblWebsite1";
+            this.lblWebsite1.Size = new System.Drawing.Size(55, 13);
+            this.lblWebsite1.TabIndex = 21;
+            this.lblWebsite1.Text = "Website 1";
 
-            // txtWebsites
-            this.txtWebsites.Location = new System.Drawing.Point(160, 538);
-            this.txtWebsites.Multiline = true;
-            this.txtWebsites.Name = "txtWebsites";
-            this.txtWebsites.Size = new System.Drawing.Size(260, 56);
-            this.txtWebsites.TabIndex = 22;
+            // txtWebsite1
+            this.txtWebsite1.Location = new System.Drawing.Point(160, 538);
+            this.txtWebsite1.Name = "txtWebsite1";
+            this.txtWebsite1.Size = new System.Drawing.Size(260, 22);
+            this.txtWebsite1.TabIndex = 22;
+
+            // lblWebsite2
+            this.lblWebsite2.AutoSize = true;
+            this.lblWebsite2.Location = new System.Drawing.Point(160, 574);
+            this.lblWebsite2.Name = "lblWebsite2";
+            this.lblWebsite2.Size = new System.Drawing.Size(55, 13);
+            this.lblWebsite2.TabIndex = 23;
+            this.lblWebsite2.Text = "Website 2";
+
+            // txtWebsite2
+            this.txtWebsite2.Location = new System.Drawing.Point(160, 590);
+            this.txtWebsite2.Name = "txtWebsite2";
+            this.txtWebsite2.Size = new System.Drawing.Size(260, 22);
+            this.txtWebsite2.TabIndex = 24;
 
             // btnSave
             this.btnSave.BackColor = System.Drawing.Color.FromArgb(7, 94, 84);
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Location = new System.Drawing.Point(160, 610);
+            this.btnSave.Location = new System.Drawing.Point(160, 628);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(120, 32);
             this.btnSave.TabIndex = 23;
@@ -265,8 +282,10 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.txtWebsites);
-            this.Controls.Add(this.lblWebsites);
+            this.Controls.Add(this.txtWebsite2);
+            this.Controls.Add(this.lblWebsite2);
+            this.Controls.Add(this.txtWebsite1);
+            this.Controls.Add(this.lblWebsite1);
             this.Controls.Add(this.cboVertical);
             this.Controls.Add(this.lblVertical);
             this.Controls.Add(this.txtAddress);

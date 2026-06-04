@@ -185,16 +185,10 @@ namespace WaDesktop.Infrastructure.Services
             return await res.Content.ReadAsByteArrayAsync();
         }
 
-        public async Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, string websitesText)
+        public async Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, List<string> websites)
         {
-            var websites = new List<string>();
-            foreach (var line in (websitesText ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                var trimmed = line.Trim();
-                if (trimmed.Length > 0)
-                    websites.Add(trimmed);
-            }
-            if (websites.Count == 0) websites = null;
+            if (websites != null && websites.Count > 2)
+                websites = websites.GetRange(0, 2);
 
             var payload = new
             {

@@ -29,16 +29,15 @@ namespace WaDesktop.Client.Views.ManagementViews
         public string Address => txtAddress.Text.Trim();
         public string Vertical {
             get {
-                string tmpVertical = null;
                 if (this.InvokeRequired)
                 {
-                    BeginInvoke(new Action(() => tmpVertical = cboVertical.Text));
-                    return tmpVertical;
+                    return (string)this.Invoke(new Func<string>(() => cboVertical.Text));
                 }
-                return tmpVertical;
+                return cboVertical.Text;
             }
         }
-        public string WebsitesText => txtWebsites.Text.Trim();
+        public string Website1 => txtWebsite1.Text.Trim();
+        public string Website2 => txtWebsite2.Text.Trim();
         public string PendingUploadPath { get; private set; }
         public long? SelectedCompanyId
         {
@@ -82,9 +81,8 @@ namespace WaDesktop.Client.Views.ManagementViews
                 txtAbout.Text = detail.About ?? "";
                 txtAddress.Text = detail.Address ?? "";
                 cboVertical.Text = detail.Vertical ?? "";
-                txtWebsites.Text = detail.Websites != null
-                    ? string.Join("\r\n", detail.Websites)
-                    : "";
+                txtWebsite1.Text = detail.Websites != null && detail.Websites.Count > 0 ? detail.Websites[0] : "";
+                txtWebsite2.Text = detail.Websites != null && detail.Websites.Count > 1 ? detail.Websites[1] : "";
 
                 SelectCompany(detail.CompanyId);
             });

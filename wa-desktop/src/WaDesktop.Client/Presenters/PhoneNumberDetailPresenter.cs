@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WaDesktop.Domain.Interfaces;
 
@@ -58,6 +59,10 @@ namespace WaDesktop.Client.Presenters
             _view.IsSaving = true;
             try
             {
+                var websites = new List<string>();
+                if (!string.IsNullOrEmpty(_view.Website1)) websites.Add(_view.Website1);
+                if (!string.IsNullOrEmpty(_view.Website2)) websites.Add(_view.Website2);
+
                 var result = await Task.Run(() =>
                     _api.SavePhoneDetailAsync(
                         _phoneNumberId,
@@ -68,7 +73,7 @@ namespace WaDesktop.Client.Presenters
                         _view.About,
                         _view.Address,
                         _view.Vertical,
-                        _view.WebsitesText));
+                        websites));
                 _view.LoadDetail(result.Detail);
 
                 foreach (var w in result.Warnings)

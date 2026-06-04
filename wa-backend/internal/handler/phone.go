@@ -156,6 +156,14 @@ func (h *PhoneHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Truncate websites to max 2 (Meta API limit)
+	if len(req.Websites) > 2 {
+		req.Websites = req.Websites[:2]
+		// Also update in DB
+		_ = h.repo.Update(r.Context(), id, req.DisplayName, req.Description, req.CompanyID,
+			req.Email, req.About, req.Address, req.Vertical, req.Websites)
+	}
+
 	// Then push to Meta
 	var warnings []string
 	metaProfile := &types.BusinessProfile{
