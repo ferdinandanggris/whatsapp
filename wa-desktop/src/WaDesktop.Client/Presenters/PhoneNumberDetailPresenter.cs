@@ -1,9 +1,6 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using WaDesktop.Domain.Entities;
 using WaDesktop.Domain.Interfaces;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace WaDesktop.Client.Presenters
 {
@@ -62,7 +59,16 @@ namespace WaDesktop.Client.Presenters
             try
             {
                 var result = await Task.Run(() =>
-                    _api.SavePhoneDetailAsync(_phoneNumberId, _view.DisplayName, _view.Description, _view.SelectedCompanyId));
+                    _api.SavePhoneDetailAsync(
+                        _phoneNumberId,
+                        _view.DisplayName,
+                        _view.Description,
+                        _view.SelectedCompanyId,
+                        _view.Email,
+                        _view.About,
+                        _view.Address,
+                        _view.Vertical,
+                        _view.WebsitesText));
                 _view.LoadDetail(result);
 
                 if (!string.IsNullOrEmpty(result.ProfilePictureUrl))

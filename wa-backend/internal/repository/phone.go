@@ -108,9 +108,17 @@ func (r *PhoneRepository) GetByID(ctx context.Context, id string) (*PhoneDetail,
 	return &p, nil
 }
 
-func (r *PhoneRepository) Update(ctx context.Context, id string, displayName, description string, companyID *int64) error {
-	query := `UPDATE wa_phone_numbers SET display_name = $1, description = $2, company_id = $3, updated_at = NOW() WHERE phone_number_id = $4`
-	_, err := r.pool.Exec(ctx, query, displayName, description, companyID, id)
+func (r *PhoneRepository) Update(ctx context.Context, id string, displayName, description string, companyID *int64, email, about, address, vertical string, websites []string) error {
+	query := `
+		UPDATE wa_phone_numbers SET
+			display_name = $1, description = $2, company_id = $3,
+			email = $4, about = $5, address = $6, vertical = $7, websites = $8,
+			updated_at = NOW()
+		WHERE phone_number_id = $9`
+	if websites == nil {
+		websites = []string{}
+	}
+	_, err := r.pool.Exec(ctx, query, displayName, description, companyID, email, about, address, vertical, websites, id)
 	if err != nil {
 		return fmt.Errorf("update phone %s: %w", id, err)
 	}

@@ -13,6 +13,11 @@ namespace WaDesktop.Domain.Interfaces
         // ── Field accessors for save ──
         string DisplayName { get; }
         string Description { get; }
+        string Email { get; }
+        string About { get; }
+        string Address { get; }
+        string Vertical { get; }
+        string WebsitesText { get; }
         long? SelectedCompanyId { get; }
 
         // ── Picture ──

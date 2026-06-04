@@ -24,21 +24,20 @@ namespace WaDesktop.Client.Views.ManagementViews
 
         public string DisplayName => txtDisplayName.Text.Trim();
         public string Description => txtDescription.Text.Trim();
+        public string Email => txtEmail.Text.Trim();
+        public string About => txtAbout.Text.Trim();
+        public string Address => txtAddress.Text.Trim();
+        public string Vertical => cboVertical.Text;
+        public string WebsitesText => txtWebsites.Text.Trim();
         public string PendingUploadPath { get; private set; }
         public long? SelectedCompanyId
         {
             get
             {
-                long? companyId = null;
                 if (this.InvokeRequired)
-                {
-                    BeginInvoke(new Action(() =>
-                    {
-                        if (cboCompany.SelectedItem is CompanyItem item)
-                            companyId = item.Id;
-                    }));
-                }
-                return companyId;
+                    return (long?)this.Invoke(new Func<long?>(() =>
+                        cboCompany.SelectedItem is CompanyItem item ? item.Id : null));
+                return cboCompany.SelectedItem is CompanyItem item2 ? item2.Id : null;
             }
         }
 
@@ -69,6 +68,13 @@ namespace WaDesktop.Client.Views.ManagementViews
                 txtDisplayName.Text = detail.DisplayName;
                 txtDescription.Text = detail.Description;
                 txtQuality.Text = detail.QualityRating;
+                txtEmail.Text = detail.Email ?? "";
+                txtAbout.Text = detail.About ?? "";
+                txtAddress.Text = detail.Address ?? "";
+                cboVertical.Text = detail.Vertical ?? "";
+                txtWebsites.Text = detail.Websites != null
+                    ? string.Join("\r\n", detail.Websites)
+                    : "";
 
                 SelectCompany(detail.CompanyId);
             });

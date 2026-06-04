@@ -185,14 +185,37 @@ namespace WaDesktop.Infrastructure.Services
             return await res.Content.ReadAsByteArrayAsync();
         }
 
-        public async Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId)
+        public async Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, string websitesText)
         {
-            var payload = new { display_name = displayName, description, company_id = companyId };
+            var websites = new List<string>();
+            foreach (var line in (websitesText ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var trimmed = line.Trim();
+                if (trimmed.Length > 0)
+                    websites.Add(trimmed);
+            }
+            if (websites.Count == 0) websites = null;
+
+            var payload = new
+            {
+                display_name = displayName,
+                description,
+                company_id = companyId,
+                email,
+                about,
+                address,
+                vertical,
+                websites
+            };
             var body = JsonConvert.SerializeObject(payload);
             var res = await _http.PutAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}",
                 new StringContent(body, Encoding.UTF8, "application/json"));
             if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
-            res.EnsureSuccessStatusCode();
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Save failed ({res.StatusCode}): {err}");
+            }
             var json = await res.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
         }

@@ -127,9 +127,14 @@ func (h *PhoneHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 type updatePhoneRequest struct {
-	DisplayName string `json:"display_name"`
-	Description string `json:"description"`
-	CompanyID   *int64 `json:"company_id"`
+	DisplayName string   `json:"display_name"`
+	Description string   `json:"description"`
+	CompanyID   *int64   `json:"company_id"`
+	Email       string   `json:"email,omitempty"`
+	About       string   `json:"about,omitempty"`
+	Address     string   `json:"address,omitempty"`
+	Vertical    string   `json:"vertical,omitempty"`
+	Websites    []string `json:"websites,omitempty"`
 }
 
 func (h *PhoneHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +148,8 @@ func (h *PhoneHandler) Update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if err := h.repo.Update(r.Context(), id, req.DisplayName, req.Description, req.CompanyID); err != nil {
+	if err := h.repo.Update(r.Context(), id, req.DisplayName, req.Description, req.CompanyID,
+		req.Email, req.About, req.Address, req.Vertical, req.Websites); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to update")
 		return
 	}
