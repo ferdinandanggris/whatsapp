@@ -42,6 +42,7 @@ type Config struct {
 	RedisURL          string
 	WABAToken         string
 	WABAID            string
+	AppID             string
 	JWTSecret         string
 	Port              string
 	LogLevel          string
@@ -67,6 +68,9 @@ func (c *Config) Override(name, value string) bool {
 	case "app_secret":
 		c.AppSecret = value
 		return true
+	case "app_id":
+		c.AppID = value
+		return true
 	case "webhook_verify_token":
 		c.WebhookVerifyToken = value
 		return true
@@ -81,6 +85,7 @@ func Load() *Config {
 		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379/0"),
 		WABAToken:          os.Getenv("WABA_TOKEN"),
 		WABAID:             getEnv("WABA_ID", ""),
+		AppID:              getEnv("APP_ID", ""),
 		JWTSecret:          getEnv("JWT_SECRET", "change-me-in-production-use-256-bit-key"),
 		Port:               getEnv("PORT", "8080"),
 		LogLevel:           getEnv("LOG_LEVEL", "debug"),

@@ -19,6 +19,12 @@ namespace WaDesktop.Domain.Interfaces
         Task<List<Template>> GetTemplatesAsync(string search = null);
         Task<AppSetting> GetAppSettingsAsync();
         Task<List<string>> SaveAppSettingsAsync(AppSetting settings);
+
+        Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId);
+        Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId);
+        Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId);
+        Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath);
+        Task<byte[]> GetPhoneProfilePictureAsync(string url);
     }
 
     public class AuthResult

@@ -84,6 +84,15 @@ namespace WaDesktop.Client.Presenters
                     return setView;
 
                 default:
+                    if (moduleKey.StartsWith("phonedetail_"))
+                    {
+                        var phoneId = moduleKey.Substring("phonedetail_".Length);
+                        var detailView = new PhoneNumberDetailView();
+                        var detailPresenter = new PhoneNumberDetailPresenter(detailView, ServiceLocator.Resolve<IApiClient>(), phoneId);
+                        ServiceLocator.Register(detailPresenter);
+                        detailPresenter.LoadData();
+                        return detailView;
+                    }
                     throw new ArgumentException($"Unknown module key: {moduleKey}");
             }
         }

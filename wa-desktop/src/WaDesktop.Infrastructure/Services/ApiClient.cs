@@ -163,13 +163,83 @@ namespace WaDesktop.Infrastructure.Services
             public string Value { get; set; }
         }
 
+        // ── Phone Details ──
+
+        public async Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId)
+        {
+            var json = await GetStringAsync($"/api/v1/phone-numbers/{phoneNumberId}");
+            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+        }
+
+        public async Task<byte[]> GetPhoneProfilePictureAsync(string url)
+        {
+            var res = await _http.GetAsync($"{_baseUrl}{url}");
+            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            if (res.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return null; // No picture
+            if (!res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed ({res.StatusCode}): {body}");
+            }
+            return await res.Content.ReadAsByteArrayAsync();
+        }
+
+        public async Task<PhoneNumberDetail> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId)
+        {
+            var payload = new { display_name = displayName, description, company_id = companyId };
+            var body = JsonConvert.SerializeObject(payload);
+            var res = await _http.PutAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            res.EnsureSuccessStatusCode();
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+        }
+
+        public async Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId)
+        {
+            var res = await _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/sync-profile", null);
+            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Sync failed ({res.StatusCode}): {err}");
+            }
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+        }
+
+        public async Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath)
+        {
+            var bytes = System.IO.File.ReadAllBytes(filePath);
+            var fileName = System.IO.Path.GetFileName(filePath);
+            using (var form = new System.Net.Http.MultipartFormDataContent())
+            {
+                form.Add(new System.Net.Http.ByteArrayContent(bytes), "photo", fileName);
+                var res = await _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/profile-picture", form);
+                if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+                if (!res.IsSuccessStatusCode)
+                {
+                    var body = await res.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"Upload failed ({res.StatusCode}): {body}");
+                }
+                var json = await res.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+            }
+        }
+
         // ── Helpers ──
 
         private async Task<string> GetStringAsync(string path)
         {
             var res = await _http.GetAsync($"{_baseUrl}{path}");
             if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
-            res.EnsureSuccessStatusCode();
+            if (!res.IsSuccessStatusCode)
+            {
+                var body = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Request failed ({res.StatusCode}): {body}");
+            }
             return await res.Content.ReadAsStringAsync();
         }
 

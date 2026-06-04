@@ -75,7 +75,7 @@ namespace WaDesktop.Client.Presenters
         {
             // Only leaf phone numbers (with PhoneNumberId) trigger tab open
             if (string.IsNullOrEmpty(e.PhoneNumberId)) return;
-            var key = $"phonenumber_{e.PhoneNumberId}_{e.WaId}";
+            var key = $"phonedetail_{e.PhoneNumberId}";
             _bus.Publish(new RequestOpenTabMessage(key, e.DisplayName ?? e.WaId));
         }
 

@@ -37,6 +37,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Interfaces\IPhoneNumberDetailView.cs" />
     <Compile Include="Interfaces\IViewBase.cs" />
     <Compile Include="Interfaces\IShellView.cs" />
     <Compile Include="Interfaces\ISidebarView.cs" />
@@ -52,6 +53,7 @@
     <Compile Include="Entities\Template.cs" />
     <Compile Include="Entities\AppSetting.cs" />
     <Compile Include="Messages\NavigationMessages.cs" />
+    <Compile Include="Entities\PhoneNumberDetail.cs" />
     <Compile Include="State\AppState.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
