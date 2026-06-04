@@ -12,6 +12,7 @@ namespace WaDesktop.Client.Presenters
         private readonly IEventAggregator _bus;
         private readonly IAuthService _auth;
         private IDisposable _loginSub;
+        private IDisposable _tokenRefreshSub;
         private bool _disposed;
 
         public DashboardPresenter(IDashboardView view, IEventAggregator bus, IAuthService auth)
@@ -23,6 +24,7 @@ namespace WaDesktop.Client.Presenters
             _view.LoadCompleted += OnLoadCompleted;
             _view.MessageReceived += OnMessageReceived;
             _loginSub = bus.Subscribe<LoginCompletedMessage>(_ => InjectToken());
+            _tokenRefreshSub = bus.Subscribe<TokenRefreshedMessage>(_ => InjectToken());
 
             // Load frontend SPA
             _view.Url = "http://localhost:5173"; // Vite dev server
@@ -36,10 +38,11 @@ namespace WaDesktop.Client.Presenters
 
             var script = $@"
 if (!window.__DESKTOP_BRIDGE__) {{
-    window.__DESKTOP_BRIDGE__ = {{
-        token: '{_auth.AccessToken}',
-        postMessage: function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }}
-    }};
+    window.__DESKTOP_BRIDGE__ = {{}};
+}}
+window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
+if (!window.__DESKTOP_BRIDGE__.postMessage) {{
+    window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
 }}
 ";
             _view.ExecuteScript(script);
@@ -79,6 +82,7 @@ if (!window.__DESKTOP_BRIDGE__) {{
                 _view.LoadCompleted -= OnLoadCompleted;
                 _view.MessageReceived -= OnMessageReceived;
                 _loginSub?.Dispose();
+                _tokenRefreshSub?.Dispose();
                 _disposed = true;
             }
         }

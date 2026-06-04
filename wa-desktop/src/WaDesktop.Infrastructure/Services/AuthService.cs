@@ -29,10 +29,6 @@ namespace WaDesktop.Infrastructure.Services
             {
                 var result = await _api.LoginAsync(username, password);
                 _state.SetSession(result.AccessToken, result.RefreshToken, result.User.Role, result.User.DisplayName);
-
-                if (_api is ApiClient client)
-                    client.SetToken(result.AccessToken);
-
                 return true;
             }
             catch
@@ -45,7 +41,7 @@ namespace WaDesktop.Infrastructure.Services
         {
             try
             {
-                // Implement refresh API call in production
+                // Handled internally by ApiClient.SendWithRefreshAsync → TryRefreshAsync
                 return false;
             }
             catch
@@ -57,8 +53,7 @@ namespace WaDesktop.Infrastructure.Services
         public void Logout()
         {
             _state.ClearSession();
-            if (_api is ApiClient client)
-                client.SetToken(null);
+            _api.SetToken(null);
         }
     }
 }

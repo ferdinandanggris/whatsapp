@@ -32,6 +32,8 @@ namespace WaDesktop.Client
 
             // ── Session Expired → publish message ──
             apiClient.SessionExpired += (s, e) => eventAggregator.Publish(new SessionExpiredMessage());
+            // ── Token Refreshed → notify bridge subscribers ──
+            apiClient.TokenRefreshed += (s, e) => eventAggregator.Publish(new TokenRefreshedMessage());
 
             // ── Login ──
             var loginView = new LoginView();

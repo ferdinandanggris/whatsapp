@@ -15,8 +15,11 @@ namespace WaDesktop.Infrastructure.Services
     {
         private readonly HttpClient _http;
         private readonly string _baseUrl;
+        private string _accessToken;
+        private string _refreshToken;
 
         public event EventHandler SessionExpired;
+        public event EventHandler TokenRefreshed;
 
         public ApiClient(string baseUrl = "http://localhost:8080")
         {
@@ -26,8 +29,15 @@ namespace WaDesktop.Infrastructure.Services
 
         public void SetToken(string token)
         {
+            _accessToken = token;
             _http.DefaultRequestHeaders.Authorization =
                 string.IsNullOrEmpty(token) ? null : new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        public void SetSession(string accessToken, string refreshToken)
+        {
+            SetToken(accessToken);
+            _refreshToken = refreshToken;
         }
 
         // ── Auth ──
@@ -45,7 +55,10 @@ namespace WaDesktop.Infrastructure.Services
             }
 
             var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<AuthResult>(json);
+            var result = JsonConvert.DeserializeObject<AuthResult>(json);
+            if (result != null)
+                SetSession(result.AccessToken, result.RefreshToken);
+            return result;
         }
 
         public Task LogoutAsync() => Task.CompletedTask;
@@ -140,11 +153,15 @@ namespace WaDesktop.Infrastructure.Services
             if (!string.IsNullOrEmpty(settings.AppId))      payload["app_id"] = settings.AppId;
 
             var body = JsonConvert.SerializeObject(payload);
-            var res = await _http.PutAsync($"{_baseUrl}/api/v1/settings",
-                new StringContent(body, Encoding.UTF8, "application/json"));
+            var res = await SendWithRefreshAsync(() =>
+                _http.PutAsync($"{_baseUrl}/api/v1/settings",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
 
-            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
-            res.EnsureSuccessStatusCode();
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Save settings failed ({res.StatusCode}): {err}");
+            }
 
             var json = await res.Content.ReadAsStringAsync();
             var wrapped = JsonConvert.DeserializeObject<SaveSettingsResponse>(json);
@@ -175,10 +192,9 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task<byte[]> GetPhoneProfilePictureAsync(string url)
         {
-            var res = await _http.GetAsync($"{_baseUrl}{url}");
-            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            var res = await SendWithRefreshAsync(() => _http.GetAsync($"{_baseUrl}{url}"));
             if (res.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return null; // No picture
+                return null;
             if (!res.IsSuccessStatusCode)
             {
                 var body = await res.Content.ReadAsStringAsync();
@@ -204,9 +220,10 @@ namespace WaDesktop.Infrastructure.Services
                 websites
             };
             var body = JsonConvert.SerializeObject(payload);
-            var res = await _http.PutAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}",
-                new StringContent(body, Encoding.UTF8, "application/json"));
-            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            var res = await SendWithRefreshAsync(() =>
+                _http.PutAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
             if (!res.IsSuccessStatusCode)
             {
                 var err = await res.Content.ReadAsStringAsync();
@@ -227,8 +244,9 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId)
         {
-            var res = await _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/sync-profile", null);
-            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/sync-profile", null));
+
             if (!res.IsSuccessStatusCode)
             {
                 var err = await res.Content.ReadAsStringAsync();
@@ -245,8 +263,9 @@ namespace WaDesktop.Infrastructure.Services
             using (var form = new System.Net.Http.MultipartFormDataContent())
             {
                 form.Add(new System.Net.Http.ByteArrayContent(bytes), "photo", fileName);
-                var res = await _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/profile-picture", form);
-                if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+                var res = await SendWithRefreshAsync(() =>
+                    _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/profile-picture", form));
+
                 if (!res.IsSuccessStatusCode)
                 {
                     var body = await res.Content.ReadAsStringAsync();
@@ -261,8 +280,7 @@ namespace WaDesktop.Infrastructure.Services
 
         private async Task<string> GetStringAsync(string path)
         {
-            var res = await _http.GetAsync($"{_baseUrl}{path}");
-            if ((int)res.StatusCode == 401) { FireSessionExpired(); throw new HttpRequestException("Session expired"); }
+            var res = await SendWithRefreshAsync(() => _http.GetAsync($"{_baseUrl}{path}"));
             if (!res.IsSuccessStatusCode)
             {
                 var body = await res.Content.ReadAsStringAsync();
@@ -278,8 +296,58 @@ namespace WaDesktop.Infrastructure.Services
             return wrapped?.Data ?? new List<T>();
         }
 
+        private async Task<bool> TryRefreshAsync()
+        {
+            if (string.IsNullOrEmpty(_refreshToken))
+                return false;
+
+            try
+            {
+                var payload = new { refresh_token = _refreshToken };
+                var body = JsonConvert.SerializeObject(payload);
+                // Use separate client to avoid auth header interference
+                using (var refreshHttp = new HttpClient())
+                {
+                    var res = await refreshHttp.PostAsync($"{_baseUrl}/api/v1/auth/refresh",
+                        new StringContent(body, Encoding.UTF8, "application/json"));
+                    if (!res.IsSuccessStatusCode)
+                        return false;
+
+                    var json = await res.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<AuthResult>(json);
+                    if (result == null || string.IsNullOrEmpty(result.AccessToken))
+                        return false;
+
+                    SetSession(result.AccessToken, result.RefreshToken ?? _refreshToken);
+                    TokenRefreshed?.Invoke(this, EventArgs.Empty);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendWithRefreshAsync(Func<Task<HttpResponseMessage>> send)
+        {
+            var res = await send();
+            if ((int)res.StatusCode == 401 && await TryRefreshAsync())
+            {
+                res = await send();
+                if ((int)res.StatusCode == 401)
+                {
+                    FireSessionExpired();
+                    throw new HttpRequestException("Session expired");
+                }
+            }
+            return res;
+        }
+
         private void FireSessionExpired()
         {
+            _accessToken = null;
+            _refreshToken = null;
             SetToken(null);
             SessionExpired?.Invoke(this, EventArgs.Empty);
         }

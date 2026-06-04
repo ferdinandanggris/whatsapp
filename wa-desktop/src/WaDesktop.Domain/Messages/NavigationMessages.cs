@@ -38,4 +38,7 @@ namespace WaDesktop.Domain.Messages
 
     /// <summary>Immutable message: session expired (401), perlu login ulang.</summary>
     public class SessionExpiredMessage { }
+
+    /// <summary>Published after a successful silent token refresh (no user interaction).</summary>
+    public class TokenRefreshedMessage { }
 }

@@ -10,6 +10,10 @@ namespace WaDesktop.Domain.Interfaces
     {
         /// <summary>Fired when any API call gets a 401 — session expired.</summary>
         event EventHandler SessionExpired;
+        /// <summary>Fired after a successful silent token refresh.</summary>
+        event EventHandler TokenRefreshed;
+        void SetToken(string token);
+        void SetSession(string accessToken, string refreshToken);
         Task<AuthResult> LoginAsync(string username, string password);
         Task LogoutAsync();
 
