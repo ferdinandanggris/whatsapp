@@ -7,6 +7,7 @@ namespace WaDesktop.Domain.Interfaces
         string WebhookUrl { get; set; }
         string ApiKey { get; set; }
         string WabaId { get; set; }
+        string AppId { get; set; }
         bool IsSaving { set; }
 
         event EventHandler SaveClicked;

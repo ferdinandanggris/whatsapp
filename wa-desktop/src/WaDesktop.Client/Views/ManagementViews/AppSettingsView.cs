@@ -30,6 +30,12 @@ namespace WaDesktop.Client.Views.ManagementViews
             set => this.InvokeIfRequired(() => txtWabaId.Text = value);
         }
 
+        public string AppId
+        {
+            get => txtAppId.Text;
+            set => this.InvokeIfRequired(() => txtAppId.Text = value);
+        }
+
         public bool IsSaving
         {
             set

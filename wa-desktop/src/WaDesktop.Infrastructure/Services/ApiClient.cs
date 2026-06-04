@@ -125,6 +125,7 @@ namespace WaDesktop.Infrastructure.Services
                     case "webhook_url":  setting.WebhookUrl = item.Value; break;
                     case "api_key":      setting.ApiKey = item.Value; break;
                     case "waba_id":      setting.WabaId = item.Value; break;
+                    case "app_id":       setting.AppId = item.Value; break;
                 }
             }
             return setting;
@@ -136,6 +137,7 @@ namespace WaDesktop.Infrastructure.Services
             if (!string.IsNullOrEmpty(settings.WebhookUrl)) payload["webhook_url"] = settings.WebhookUrl;
             if (!string.IsNullOrEmpty(settings.ApiKey))     payload["api_key"] = settings.ApiKey;
             if (!string.IsNullOrEmpty(settings.WabaId))     payload["waba_id"] = settings.WabaId;
+            if (!string.IsNullOrEmpty(settings.AppId))      payload["app_id"] = settings.AppId;
 
             var body = JsonConvert.SerializeObject(payload);
             var res = await _http.PutAsync($"{_baseUrl}/api/v1/settings",

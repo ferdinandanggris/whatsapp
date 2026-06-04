@@ -32,6 +32,7 @@ namespace WaDesktop.Client.Presenters
                 _view.WebhookUrl = settings.WebhookUrl;
                 _view.ApiKey = settings.ApiKey;
                 _view.WabaId = settings.WabaId;
+                _view.AppId = settings.AppId;
             }
             catch (Exception ex)
             {
@@ -52,7 +53,8 @@ namespace WaDesktop.Client.Presenters
                 {
                     WebhookUrl = _view.WebhookUrl,
                     ApiKey = _view.ApiKey,
-                    WabaId = _view.WabaId
+                    WabaId = _view.WabaId,
+                    AppId = _view.AppId
                 };
                 var warnings = await Task.Run(() => _api.SaveAppSettingsAsync(settings));
                 if (warnings != null && warnings.Any())

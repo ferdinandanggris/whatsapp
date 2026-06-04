@@ -9,6 +9,8 @@ namespace WaDesktop.Client.Views.ManagementViews
         private System.Windows.Forms.TextBox txtApiKey;
         private System.Windows.Forms.Label labelWabaId;
         private System.Windows.Forms.TextBox txtWabaId;
+        private System.Windows.Forms.Label labelAppId;
+        private System.Windows.Forms.TextBox txtAppId;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.TableLayoutPanel tableLayout;
@@ -28,6 +30,8 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.txtApiKey = new System.Windows.Forms.TextBox();
             this.labelWabaId = new System.Windows.Forms.Label();
             this.txtWabaId = new System.Windows.Forms.TextBox();
+            this.labelAppId = new System.Windows.Forms.Label();
+            this.txtAppId = new System.Windows.Forms.TextBox();
             this.flowPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
@@ -46,14 +50,17 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.tableLayout.Controls.Add(this.txtApiKey, 1, 1);
             this.tableLayout.Controls.Add(this.labelWabaId, 0, 2);
             this.tableLayout.Controls.Add(this.txtWabaId, 1, 2);
-            this.tableLayout.Controls.Add(this.flowPanel, 1, 3);
+            this.tableLayout.Controls.Add(this.labelAppId, 0, 3);
+            this.tableLayout.Controls.Add(this.txtAppId, 1, 3);
+            this.tableLayout.Controls.Add(this.flowPanel, 1, 4);
             this.tableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayout.Location = new System.Drawing.Point(0, 0);
             this.tableLayout.Name = "tableLayout";
             this.tableLayout.Padding = new System.Windows.Forms.Padding(20);
-            this.tableLayout.RowCount = 5;
+            this.tableLayout.RowCount = 6;
             this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+            this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 27F));
             this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 27F));
             this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
             this.tableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 36F));
@@ -106,19 +113,33 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.labelWabaId.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // txtWabaId
-            // 
             this.txtWabaId.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtWabaId.Location = new System.Drawing.Point(313, 74);
             this.txtWabaId.Name = "txtWabaId";
             this.txtWabaId.Size = new System.Drawing.Size(664, 20);
             this.txtWabaId.TabIndex = 5;
             // 
+            // labelAppId
+            this.labelAppId.Location = new System.Drawing.Point(23, 98);
+            this.labelAppId.Name = "labelAppId";
+            this.labelAppId.Size = new System.Drawing.Size(100, 20);
+            this.labelAppId.TabIndex = 6;
+            this.labelAppId.Text = "App ID:";
+            this.labelAppId.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // txtAppId
+            this.txtAppId.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtAppId.Location = new System.Drawing.Point(313, 101);
+            this.txtAppId.Name = "txtAppId";
+            this.txtAppId.Size = new System.Drawing.Size(664, 20);
+            this.txtAppId.TabIndex = 7;
+            // 
             // flowPanel
             // 
             this.flowPanel.Controls.Add(this.btnSave);
             this.flowPanel.Controls.Add(this.btnRefresh);
             this.flowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowPanel.Location = new System.Drawing.Point(313, 101);
+            this.flowPanel.Location = new System.Drawing.Point(313, 128);
             this.flowPanel.Name = "flowPanel";
             this.flowPanel.Size = new System.Drawing.Size(664, 36);
             this.flowPanel.TabIndex = 6;
