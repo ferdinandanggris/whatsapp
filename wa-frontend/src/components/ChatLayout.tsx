@@ -472,7 +472,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 isOpen={isTemplateDialogOpen}
                 onClose={() => setIsTemplateDialogOpen(false)}
                 onSelect={handleSendTemplate}
-                wabaId={activeConversation?.waba_id || ''}
                 conversation={activeConversation}
             />
 

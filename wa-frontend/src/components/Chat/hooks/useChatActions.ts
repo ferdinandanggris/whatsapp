@@ -114,7 +114,10 @@ export const useChatActions = ({
 
         const tempId = `temp_tpl_${Date.now()}`;
 
-        let previewText = template.body_content;
+        // Extract body text from components array (main backend format)
+        const bodyComp = template.components?.find((c: any) => c.type === 'BODY');
+        const bodyText = bodyComp?.text || '';
+        let previewText = bodyText;
         params.body.forEach((val, idx) => {
             previewText = previewText.replace(`{{${idx + 1}}}`, val || `{{${idx + 1}}}`);
         });
@@ -142,15 +145,15 @@ export const useChatActions = ({
                 wa_channel_id: currentConv.wa_channel_id,
                 target: currentConv.customer_wa_id,
                 sender_name: user?.display_name,
-                template_name: template.template_name,
-                language_code: template.language_code,
+                template_name: template.name,
+                language_code: template.language,
                 body_params: params.body,
                 button_params: params.buttons,
                 header_params: params.header,
                 wa_message_id: tempId
             });
         } else {
-            sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.template_name, template.language_code, params.body, params.buttons, params.header, user?.display_name, tempId)
+            sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, params.header, user?.display_name, tempId)
                 .then((res: any) => {
                     if (res.status) {
                         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
