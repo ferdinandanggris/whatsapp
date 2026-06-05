@@ -30,50 +30,71 @@ import { Button } from '@/components/ui/button';
 export const renderTemplateMessage = (msg: ChatMessage) => {
     try {
         const payload = typeof msg.raw_payload === 'string' ? JSON.parse(msg.raw_payload) : msg.raw_payload;
-        const template = payload.template_definition;
-        if (!template) return <div className="italic text-slate-400">Template data missing</div>;
 
-        // Extract parameters from payload (outbound format)
-        const bodyParams = payload.body_params || (payload.template?.components?.find((c: any) => c.type?.toLowerCase() === 'body')?.parameters?.map((p: any) => p.text)) || [];
-        const headerParams = payload.header_params || (payload.template?.components?.find((c: any) => c.type?.toLowerCase() === 'header')?.parameters?.map((p: any) => p.text)) || [];
+        // Template definition from backend JOIN (uppercase types: BODY, HEADER, BUTTONS)
+        const definition: any[] = payload.template_definition;
 
-        const bodyComponent = template.find((c: any) => c.type === 'BODY');
-        const headerComponent = template.find((c: any) => c.type === 'HEADER');
-        const footerComponent = template.find((c: any) => c.type === 'FOOTER');
-        const buttonComponent = template.find((c: any) => c.type === 'BUTTONS');
+        // Template message components from stored content (lowercase types: body, header, button)
+        const msgComponents: any[] = payload.template?.components || [];
+
+        if (!definition || !Array.isArray(definition)) {
+            // Fallback: no definition available — show template name
+            const tplName = payload.template?.name || payload.body || '';
+            return <div className="text-sm italic opacity-60">Template: {tplName}</div>;
+        }
+
+        // Build param map: lowercase type → array of text values
+        const paramMap: Record<string, string[]> = {};
+        for (const comp of msgComponents) {
+            const type = comp.type?.toLowerCase();
+            const values = (comp.parameters || []).map((p: any) => p.text || '');
+            if (type) paramMap[type] = values;
+        }
+
+        const getParams = (defType: string): string[] => {
+            const lower = defType.toLowerCase();
+            // For buttons, params may be in 'button' entries too
+            if (lower === 'buttons') {
+                return paramMap['button'] || paramMap['buttons'] || [];
+            }
+            return paramMap[lower] || [];
+        };
 
         const replaceParams = (text: string, params: string[]) => {
-            if (!text) return "";
-            return text.replace(/{{\d+}}/g, (match) => {
-                const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1;
-                return params[idx] || match;
-            });
+            if (!text) return '';
+            let idx = 0;
+            return text.replace(/{{\d+}}/g, () => params[idx] || '');
         };
+
+        const headerDef = definition.find((c: any) => c.type === 'HEADER');
+        const bodyDef = definition.find((c: any) => c.type === 'BODY');
+        const footerDef = definition.find((c: any) => c.type === 'FOOTER');
+        const buttonsDef = definition.find((c: any) => c.type === 'BUTTONS');
 
         return (
             <div className="space-y-2 py-1">
-                {headerComponent && headerComponent.format === 'TEXT' && (
+                {headerDef && headerDef.format === 'TEXT' && (
                     <div className="font-bold text-sm mb-1 leading-tight tracking-tight">
-                        {replaceParams(headerComponent.text, headerParams)}
+                        {replaceParams(headerDef.text, getParams('header'))}
                     </div>
                 )}
-                {headerComponent && headerComponent.format === 'IMAGE' && (
-                    <img src={headerComponent.image?.link} alt="Header" className="rounded-lg w-full mb-2 shadow-sm border border-slate-100" />
+                {headerDef && headerDef.format === 'IMAGE' && (
+                    <img src={headerDef.image?.link} alt="Header" className="rounded-lg w-full mb-2 shadow-sm border border-slate-100" />
                 )}
 
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {replaceParams(bodyComponent?.text || '', bodyParams)}
+                    {replaceParams(bodyDef?.text || '', getParams('body'))}
                 </div>
 
-                {footerComponent && (
+                {footerDef && (
                     <div className="text-[10px] opacity-60 mt-1 tracking-wider">
-                        {footerComponent.text}
+                        {footerDef.text}
                     </div>
                 )}
 
-                {buttonComponent && (
+                {buttonsDef && buttonsDef.buttons && (
                     <div className="border-t border-slate-100/20 pt-2 mt-2 flex flex-col gap-1.5">
-                        {buttonComponent.buttons?.map((btn: any, idx: number) => (
+                        {buttonsDef.buttons.map((btn: any, idx: number) => (
                             <Button
                                 key={idx}
                                 variant="outline"
@@ -90,7 +111,7 @@ export const renderTemplateMessage = (msg: ChatMessage) => {
             </div>
         );
     } catch (e) {
-        return <div className="text-sm italic opacity-50">{msg.message_text}</div>;
+        return <div className="text-sm italic opacity-50">{msg.message_text || 'Template'}</div>;
     }
 };
 

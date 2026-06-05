@@ -137,6 +137,14 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 		return
 	}
 
+	// Re-fetch template messages to populate template_definition from templates table
+	wsMsg := message
+	if msgType == "template" {
+		if m, err := h.Messages.GetByWamID(r.Context(), message.WamID); err == nil && m != nil {
+			wsMsg = m
+		}
+	}
+
 	preview := previewText(msgType, contact, content)
 	conv, err := h.Convs.Upsert(r.Context(), phoneNumberID, waID, preview, true)
 	if err != nil {
@@ -157,7 +165,7 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 			Type: "new_message",
 			Data: map[string]interface{}{
 				"conversation": conv,
-				"message":      message,
+				"message":      wsMsg,
 				"contact":      contact,
 			},
 		})

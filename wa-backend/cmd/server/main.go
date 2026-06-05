@@ -64,7 +64,7 @@ func main() {
 	wapiClient := wapicloud.New(wapicloud.WithAccessToken(cfg.WABAToken))
 
 	windowSvc := service.NewWindowService(contactRepo)
-	whatsappSvc := service.NewWhatsAppService(wapiClient, msgRepo, convRepo, contactRepo, windowSvc, hub)
+	whatsappSvc := service.NewWhatsAppService(wapiClient, msgRepo, convRepo, contactRepo, tplRepo, windowSvc, hub)
 	tplSvc := service.NewTemplateService(tplRepo, wapiClient, cfg.WABAToken, cfg.WABAID)
 	mediaSvc := service.NewMediaService(mediaRepo, wapiClient, cfg.WABAToken, cfg.MediaDir)
 
@@ -77,7 +77,7 @@ func main() {
 	mediaHandler := handler.NewMediaHandler(mediaSvc)
 	contactHandler := handler.NewContactHandler(contactRepo)
 	phoneHandler := handler.NewPhoneHandler(repository.NewPhoneRepository(pool), mediaRepo, wapiClient, cfg.AppID, cfg.MediaDir)
-	typingHandler := handler.NewTypingHandler(hub)
+	typingHandler := handler.NewTypingHandler(hub, convRepo)
 	webhookOverrideHandler := handler.NewWebhookOverrideHandler(wapiClient, cfg.WABAID, cfg.WebhookVerifyToken)
 	companyHandler := handler.NewCompanyHandler(companyRepo)
 

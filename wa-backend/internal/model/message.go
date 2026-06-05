@@ -36,6 +36,9 @@ type Message struct {
 	// Agent name enrichment (JOINed from users table at query time)
 	AgentName    string `json:"agent_name,omitempty"`
 	CustomerName string `json:"customer_name,omitempty"`
+
+	// Template definition (JOINed from templates table at query time for type=template)
+	TemplateDefinition interface{} `json:"template_definition,omitempty"`
 }
 
 type Conversation struct {

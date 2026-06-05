@@ -125,7 +125,10 @@ const mapMessage = (m: any) => {
         direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
         status: m.status,
         platform: 'whatsapp',
-        raw_payload: JSON.stringify(content),
+        raw_payload: JSON.stringify({
+            ...content,
+            ...(m.template_definition ? { template_definition: m.template_definition } : {}),
+        }),
         context_message_id: contextMessageId || undefined,
         reply_wamid: m.reply_wamid || undefined,
         reply_text: m.reply_text || undefined,

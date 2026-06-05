@@ -80,21 +80,6 @@ export const useChatActions = ({
             }).catch(() => {
                 setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
             });
-
-        // if ((window as any).chrome?.webview) {
-        //     (window as any).chrome.webview.postMessage({
-        //         type: 'SEND_MESSAGE',
-        //         conversation_id: currentConv.id,
-        //         wa_channel_id: currentConv.wa_channel_id,
-        //         target: currentConv.customer_wa_id,
-        //         sender_name: user?.display_name,
-        //         text: text,
-        //         wa_message_id: tempId,
-        //         context_message_id: context_id
-        //     });
-        // } else {
-           
-        // }
     };
 
     const handleSendTemplate = async (template: any, params: { body: string[], buttons: string[], header: string[] }) => {
@@ -114,13 +99,11 @@ export const useChatActions = ({
 
         const tempId = `temp_tpl_${Date.now()}`;
 
-        // Extract body text from components array (main backend format)
-        const bodyComp = template.components?.find((c: any) => c.type === 'BODY');
-        const bodyText = bodyComp?.text || '';
-        let previewText = bodyText;
-        params.body.forEach((val, idx) => {
-            previewText = previewText.replace(`{{${idx + 1}}}`, val || `{{${idx + 1}}}`);
-        });
+        // Build optimistic raw_payload with template_definition from selected template
+        const msgComponents: any[] = [];
+        if (params.header.length) msgComponents.push({ type: 'header', parameters: params.header.map((t: string) => ({ type: 'text', text: t })) });
+        if (params.body.length) msgComponents.push({ type: 'body', parameters: params.body.map((t: string) => ({ type: 'text', text: t })) });
+        if (params.buttons.length) msgComponents.push({ type: 'button', sub_type: 'quick_reply', index: '0', parameters: params.buttons.map((t: string) => ({ type: 'text', text: t })) });
 
         const newMessage: ChatMessage = {
             id: Date.now(),
@@ -128,42 +111,30 @@ export const useChatActions = ({
             app_id: currentConv.app_id,
             wa_message_id: tempId,
             sender_name: user?.display_name || 'Me',
-            message_text: previewText,
+            message_text: '',
             message_type: 'template',
             direction: 'OUTBOUND',
             status: 'pending',
             platform: 'whatsapp',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            raw_payload: JSON.stringify({
+                template: { name: template.name, language: { code: template.language }, components: msgComponents },
+                template_definition: template.components,
+            }),
         };
 
         setMessages(prev => [...prev, newMessage]);
 
-        if ((window as any).chrome?.webview) {
-            (window as any).chrome.webview.postMessage({
-                type: 'SEND_TEMPLATE',
-                conversation_id: currentConv.id,
-                wa_channel_id: currentConv.wa_channel_id,
-                target: currentConv.customer_wa_id,
-                sender_name: user?.display_name,
-                template_name: template.name,
-                language_code: template.language,
-                body_params: params.body,
-                button_params: params.buttons,
-                header_params: params.header,
-                wa_message_id: tempId
-            });
-        } else {
-            sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, params.header, user?.display_name, tempId)
-                .then((res: any) => {
-                    if (res.status) {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
-                    } else {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                    }
-                }).catch(() => {
+        sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, params.header, user?.display_name, tempId)
+            .then((res: any) => {
+                if (res.status) {
+                    setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
+                } else {
                     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                });
-        }
+                }
+            }).catch(() => {
+                setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+            });
     };
 
     const handleSendMedia = async (file: File, previewUrl: string, type: 'image' | 'video' | 'audio' | 'document', caption: string, replyingTo: ChatMessage | null) => {
@@ -200,34 +171,16 @@ export const useChatActions = ({
                 return;
             }
 
-            if ((window as any).chrome?.webview) {
-                (window as any).chrome.webview.postMessage({
-                    type: 'SEND_MESSAGE',
-                    conversation_id: currentConv.id,
-                    wa_channel_id: currentConv.wa_channel_id,
-                    target: currentConv.customer_wa_id,
-                    sender_name: user?.display_name,
-                    message_type: type,
-                    media_id: resp.data.media_id,
-                    file_path: resp.data.file_path,
-                    file_type: resp.data.file_type,
-                    text: caption,
-                    file_name: file.name,
-                    wa_message_id: tempId,
-                    context_message_id: context_id
-                });
-            } else {
-                    sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
-                    .then((res: any) => {
-                        if (res.status) {
-                            setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
-                        } else {
-                            setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                        }
-                    }).catch(() => {
-                        setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
-                    });
-            }
+            sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
+            .then((res: any) => {
+                if (res.status) {
+                    setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
+                } else {
+                    setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+                }
+            }).catch(() => {
+                setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
+            });
         } catch (error) {
             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed' } : m));
         }

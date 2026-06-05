@@ -42,13 +42,16 @@ func (r *MessageRepository) GetByWamID(ctx context.Context, wamid string) (*mode
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
 		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
-		       COALESCE(u.display_name, '')
+		       COALESCE(u.display_name, ''),
+		       tpl.components
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
+		LEFT JOIN templates tpl ON m.type = 'template' AND tpl.name = COALESCE(m.content->'template'->>'name', m.content->>'body')
+			AND (m.content->'template'->'language'->>'code' IS NULL OR tpl.language = m.content->'template'->'language'->>'code')
 		WHERE m.wamid = $1
 	`, wamid).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
-		&m.AgentName)
+		&m.AgentName, &m.TemplateDefinition)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -103,9 +106,12 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberI
 
 	rows, err := r.pool.Query(ctx, `
 		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
-		       COALESCE(u.display_name, '')
+		       COALESCE(u.display_name, ''),
+		       tpl.components
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
+		LEFT JOIN templates tpl ON m.type = 'template' AND tpl.name = COALESCE(m.content->'template'->>'name', m.content->>'body')
+			AND (m.content->'template'->'language'->>'code' IS NULL OR tpl.language = m.content->'template'->'language'->>'code')
 		`+cond+`
 		ORDER BY m.timestamp DESC, m.id DESC
 		LIMIT $`+fmt.Sprintf("%d", p), args...)
@@ -119,7 +125,7 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberI
 		var m model.Message
 		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
-			&m.AgentName); err != nil {
+			&m.AgentName, &m.TemplateDefinition); err != nil {
 			return nil, false, nil, nil, fmt.Errorf("scan message: %w", err)
 		}
 		msgs = append(msgs, &m)
@@ -145,10 +151,13 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 	}
 	rows, err := r.pool.Query(ctx, `
 		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
-		       COALESCE(u.display_name, ''), COALESCE(c.company_custom_name, '')
+		       COALESCE(u.display_name, ''), COALESCE(c.company_custom_name, ''),
+		       tpl.components
 		FROM messages m
 		LEFT JOIN contacts c ON m.phone_number_id = c.phone_number_id
 		LEFT JOIN users u ON m.agent_id = u.id
+		LEFT JOIN templates tpl ON m.type = 'template' AND tpl.name = COALESCE(m.content->'template'->>'name', m.content->>'body')
+			AND (m.content->'template'->'language'->>'code' IS NULL OR tpl.language = m.content->'template'->'language'->>'code')
 		WHERE m.wamid = ANY($1)
 	`, wamids)
 	if err != nil {
@@ -161,7 +170,7 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 		var m model.Message
 		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
-			&m.AgentName, &m.CustomerName); err != nil {
+			&m.AgentName, &m.CustomerName, &m.TemplateDefinition); err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
 		result[m.WamID] = &m
@@ -173,15 +182,18 @@ func (r *MessageRepository) GetLatestInboundByConversation(ctx context.Context, 
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
 		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
-		       COALESCE(u.display_name, '')
+		       COALESCE(u.display_name, ''),
+		       tpl.components
 		FROM messages m
 		LEFT JOIN users u ON m.agent_id = u.id
+		LEFT JOIN templates tpl ON m.type = 'template' AND tpl.name = COALESCE(m.content->'template'->>'name', m.content->>'body')
+			AND (m.content->'template'->'language'->>'code' IS NULL OR tpl.language = m.content->'template'->'language'->>'code')
 		WHERE m.phone_number_id = $1 AND m.wa_id = $2 AND m.direction = 'inbound'
 		ORDER BY m.timestamp DESC
 		LIMIT 1
 	`, phoneNumberID, waID).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
 		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
-		&m.AgentName)
+		&m.AgentName, &m.TemplateDefinition)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}

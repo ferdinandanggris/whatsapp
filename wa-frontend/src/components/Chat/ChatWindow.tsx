@@ -1,6 +1,6 @@
 
-import React, { useRef, useEffect } from 'react';
-import { Search, LayoutGrid, Clock, X, RefreshCw, ChevronRight } from "lucide-react";
+import React, { useRef, useEffect, useCallback } from 'react';
+import { Search, LayoutGrid, Clock, X, RefreshCw, ChevronRight, ChevronsDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import { cn } from '@/lib/utils';
 import { getInitials } from '../../lib/chatUtils';
+
+const SCROLL_BOTTOM_THRESHOLD = 150;
 
 interface ChatWindowProps {
     activeConversation: Conversation | null;
@@ -88,32 +90,97 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const scrollViewportRef = useRef<HTMLDivElement | null>(null);
+    const fabRef = useRef<HTMLDivElement | null>(null);
+    const badgeRef = useRef<HTMLSpanElement | null>(null);
+    const isNearBottomRef = useRef(true);
+    const prevMsgLenRef = useRef(0);
+    const newMsgCountRef = useRef(0);
+    const wasFetchingMoreRef = useRef(false);
 
+    const checkIsNearBottom = useCallback((viewport: HTMLDivElement) => {
+        const { scrollTop, clientHeight, scrollHeight } = viewport;
+        return scrollTop + clientHeight >= scrollHeight - SCROLL_BOTTOM_THRESHOLD;
+    }, []);
+
+    const scrollToBottom = useCallback((smooth = false) => {
+        const viewport = scrollViewportRef.current;
+        if (!viewport) return;
+        if (smooth) {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        } else {
+            viewport.scrollTop = viewport.scrollHeight;
+        }
+    }, []);
+
+    // Smart auto-scroll: scroll to bottom when new messages arrive (only if near bottom)
     useEffect(() => {
-        if (scrollRef.current) {
-            const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
-            if (viewport) {
-                scrollViewportRef.current = viewport;
-                if (!isFetchingMore) {
-                    viewport.scrollTop = viewport.scrollHeight;
-                }
+        // Find and cache viewport from ScrollArea
+        let viewport = scrollViewportRef.current;
+        if (!viewport && scrollRef.current) {
+            viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLDivElement;
+            if (viewport) scrollViewportRef.current = viewport;
+        }
+        if (!viewport) return;
+
+        // Skip while fetching more history
+        if (isFetchingMore) {
+            wasFetchingMoreRef.current = true;
+            return;
+        }
+        const wasFetching = wasFetchingMoreRef.current;
+        wasFetchingMoreRef.current = false;
+
+        const prevLen = prevMsgLenRef.current;
+        const newLen = messages.length;
+
+        if (isNearBottomRef.current) {
+            // User at bottom → auto-scroll, clear badge
+            newMsgCountRef.current = 0;
+            if (badgeRef.current) {
+                badgeRef.current.textContent = '';
+                badgeRef.current.classList.add('hidden');
+            }
+            viewport.scrollTop = viewport.scrollHeight;
+        } else if (newLen > prevLen && !wasFetching) {
+            // User scrolled up → update badge count
+            newMsgCountRef.current += newLen - prevLen;
+            if (badgeRef.current) {
+                badgeRef.current.textContent = newMsgCountRef.current > 99 ? '99+' : String(newMsgCountRef.current);
+                badgeRef.current.classList.remove('hidden');
             }
         }
+        prevMsgLenRef.current = newLen;
     }, [messages, isFetchingMore]);
 
+    // Scroll event listener: load more + track position
     useEffect(() => {
         const viewport = scrollViewportRef.current;
         if (!viewport) return;
 
         const handleScroll = () => {
+            // Load more on scroll to top
             if (viewport.scrollTop === 0 && hasMore && !isFetchingMore) {
                 handleLoadMore(viewport);
+            }
+
+            // Track if near bottom (toggle CSS class, no state update)
+            const nearBottom = checkIsNearBottom(viewport);
+            if (nearBottom !== isNearBottomRef.current) {
+                isNearBottomRef.current = nearBottom;
+                fabRef.current?.classList.toggle('hidden', nearBottom);
+                if (nearBottom) {
+                    newMsgCountRef.current = 0;
+                    if (badgeRef.current) {
+                        badgeRef.current.textContent = '';
+                        badgeRef.current.classList.add('hidden');
+                    }
+                }
             }
         };
 
         viewport.addEventListener('scroll', handleScroll);
         return () => viewport.removeEventListener('scroll', handleScroll);
-    }, [hasMore, isFetchingMore, handleLoadMore]);
+    }, [hasMore, isFetchingMore, handleLoadMore, checkIsNearBottom]);
 
     if (!activeConversation) {
         return (
@@ -138,7 +205,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     return (
         <div
             className="flex-1 flex flex-col min-w-0 bg-white"
-            style={{ backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')" }}
+            style={{ backgroundImage: "url('/images/chat-bg.png')" }}
             onDragOver={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -231,6 +298,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         ))}
                     </div>
                 </ScrollArea>
+
+                {/* Scroll to bottom FAB (always mounted, toggled via CSS class) */}
+                <div ref={fabRef} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 hidden">
+                    <Button
+                        size="sm"
+                        className="relative h-10 w-10 rounded-full bg-white border border-slate-200 shadow-xl hover:shadow-2xl hover:bg-white text-slate-600 hover:text-slate-900 transition-all hover:scale-105 active:scale-95"
+                        onClick={() => { scrollToBottom(false); newMsgCountRef.current = 0; if (badgeRef.current) { badgeRef.current.textContent = ''; badgeRef.current.classList.add('hidden'); } fabRef.current?.classList.add('hidden'); }}
+                        title="Scroll to bottom"
+                    >
+                        <ChevronsDown className="w-5 h-5" />
+                        <span ref={badgeRef} className="absolute -top-1.5 -right-1.5 bg-[#00a884] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shadow-lg ring-2 ring-white hidden" />
+                    </Button>
+                </div>
 
                 {isTemplateRequired && showTemplateQuickAction && allowSendTemplate && (
                     <div className="absolute inset-x-0 bottom-6 flex justify-center z-30 animate-in slide-in-from-bottom-4 duration-500">

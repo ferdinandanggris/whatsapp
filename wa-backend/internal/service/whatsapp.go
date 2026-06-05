@@ -21,12 +21,13 @@ type WhatsAppService struct {
 	msgs      *repository.MessageRepository
 	convRepo  *repository.ConversationRepository
 	contacts  *repository.ContactRepository
+	tplRepo   *repository.TemplateRepository
 	windowSvc *WindowService
 	hub       *ws.Hub
 }
 
-func NewWhatsAppService(client wapi.Client, msgs *repository.MessageRepository, convRepo *repository.ConversationRepository, contacts *repository.ContactRepository, windowSvc *WindowService, hub *ws.Hub) *WhatsAppService {
-	return &WhatsAppService{client: client, msgs: msgs, convRepo: convRepo, contacts: contacts, windowSvc: windowSvc, hub: hub}
+func NewWhatsAppService(client wapi.Client, msgs *repository.MessageRepository, convRepo *repository.ConversationRepository, contacts *repository.ContactRepository, tplRepo *repository.TemplateRepository, windowSvc *WindowService, hub *ws.Hub) *WhatsAppService {
+	return &WhatsAppService{client: client, msgs: msgs, convRepo: convRepo, contacts: contacts, tplRepo: tplRepo, windowSvc: windowSvc, hub: hub}
 }
 
 func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body, agentID, contextMessageID string) (*model.Message, error) {
@@ -109,7 +110,16 @@ func (s *WhatsAppService) storeOutboundMessage(ctx context.Context, msg *types.M
 	if err := s.msgs.Save(ctx, out); err != nil {
 		slog.Error("save outbound message", "error", err)
 	}
-	//s.convRepo.Upsert(ctx, phoneNumberID, to, previewForType(msg, phoneNumberID, to))
+
+	// Enrich template messages with template definition for render
+	if msg.Type == "template" && msg.Template != nil {
+		if tpl, err := s.tplRepo.GetByName(ctx, msg.Template.Name, msg.Template.Language.Code); err == nil && tpl != nil {
+			var td interface{}
+			if err := json.Unmarshal(tpl.Components, &td); err == nil {
+				out.TemplateDefinition = td
+			}
+		}
+	}
 
 	strAgent := "Agent"
 	contact := &model.Contact{CompanyCustomName: &strAgent}
