@@ -78,15 +78,8 @@ apiClient.interceptors.response.use(
 );
 
 // Helper to convert Go conversation model to WaMeta UI model
+// is_template_required is computed by the backend via subquery on messages table.
 const mapConversation = (c: any): Conversation => {
-    // Determine template requirement: if last_message_at is older than 24h
-    // (We will also refine this dynamically in the hooks using contact details)
-    let isTemplateRequired = true;
-    if (c.last_message_at) {
-        const lastMsgTime = new Date(c.last_message_at).getTime();
-        isTemplateRequired = (Date.now() - lastMsgTime) > 24 * 60 * 60 * 1000;
-    }
-
     return {
         id: c.id,
         wa_channel_id: c.phone_number_id,
@@ -99,7 +92,7 @@ const mapConversation = (c: any): Conversation => {
         display_phone_number: c.display_phone_number || String(c.phone_number_id),
         app_name: c.display_name || 'WA Number',
         wa_channel_display_name: c.display_name || 'WA Number',
-        is_template_required: isTemplateRequired,
+        is_template_required: c.is_template_required,
         platform: 'whatsapp',
         last_message_preview: c.last_message_preview || '',
         unread_count: c.unread_count || 0,

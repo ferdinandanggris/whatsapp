@@ -33,13 +33,8 @@ class WebMetaEventEmitter {
 }
 
 // Mapper matching chatService.ts for consistency
+// is_template_required is computed by the backend via subquery on messages table.
 const mapConversation = (c: any) => {
-    let isTemplateRequired = true;
-    if (c.last_message_at) {
-        const lastMsgTime = new Date(c.last_message_at).getTime();
-        isTemplateRequired = (Date.now() - lastMsgTime) > 24 * 60 * 60 * 1000;
-    }
-
     return {
         id: c.id,
         wa_channel_id: c.phone_number_id,
@@ -52,7 +47,7 @@ const mapConversation = (c: any) => {
         display_number: c.phone_number_id,
         app_name: c.display_name || 'WA Number',
         wa_channel_display_name: c.display_name || 'WA Number',
-        is_template_required: isTemplateRequired,
+        is_template_required: c.is_template_required,
         display_phone_number: c.display_phone_number || '',
         platform: 'whatsapp',
         last_message_preview: c.last_message_preview || '',

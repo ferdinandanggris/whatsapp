@@ -18,12 +18,12 @@ func NewConversationRepository(pool *pgxpool.Pool) *ConversationRepository {
 	return &ConversationRepository{pool: pool}
 }
 
-const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count, COALESCE(wpn.display_name, ''), COALESCE(wpn.display_phone_number, '')`
+const convCols = `c.id, c.phone_number_id, c.wa_id, COALESCE(ct.profile_name, ''), ct.company_custom_name, COALESCE(ct.is_blocked, FALSE), c.last_message_at, c.last_message_preview, c.unread_count, COALESCE(wpn.display_name, ''), COALESCE(wpn.display_phone_number, ''), NOT EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id = c.id AND m.direction = 'INBOUND' AND m.type != 'system' AND m.type != 'unsupported' AND m.timestamp > EXTRACT(EPOCH FROM (NOW() - INTERVAL '24 hours'))) AS is_template_required`
 
 func scanConversation(s pgx.Row) (*model.Conversation, error) {
 	var cv model.Conversation
 	err := s.Scan(&cv.ID, &cv.PhoneNumberID, &cv.WaID, &cv.ProfileName,
-		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount, &cv.DisplayName, &cv.DisplayPhoneNumber)
+		&cv.CompanyCustomName, &cv.IsBlocked, &cv.LastMessageAt, &cv.LastMessagePreview, &cv.UnreadCount, &cv.DisplayName, &cv.DisplayPhoneNumber, &cv.IsTemplateRequired)
 	if err != nil {
 		return nil, err
 	}

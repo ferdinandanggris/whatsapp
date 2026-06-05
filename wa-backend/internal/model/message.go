@@ -50,4 +50,5 @@ type Conversation struct {
 	UnreadCount        int        `json:"unread_count"`
 	DisplayName        string     `json:"display_name"`
 	DisplayPhoneNumber string     `json:"display_phone_number,omitempty"`
+	IsTemplateRequired bool       `json:"is_template_required"`
 }
