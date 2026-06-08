@@ -128,6 +128,7 @@ const mapMessage = (m: any) => {
         raw_payload: JSON.stringify({
             ...content,
             ...(m.template_definition ? { template_definition: m.template_definition } : {}),
+            ...(m.error_message ? { error_message: m.error_message } : {}),
         }),
         context_message_id: contextMessageId || undefined,
         reply_wamid: m.reply_wamid || undefined,
@@ -193,15 +194,14 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
                 } else if (ev.type === 'message_status') {
                     const wamid = ev.data.wamid;
                     const msgStatus = ev.data.status;
-                    const errorCode = ev.data.error_code;
+                    const errorMsg = ev.data.error_message;
 
                     if (msgStatus === 'failed') {
                         emitterRef.current.emit('MessageStatusFailed', wamid, JSON.stringify({
                             error_details: {
-                                code: errorCode || 0,
+                                error_message: errorMsg || '',
                                 failed_at: new Date().toISOString(),
-                                message_local: 'Pesan gagal terkirim (Meta Cloud API)',
-                                message_original: `Meta error code: ${errorCode || 'unknown'}`
+                                message_local: errorMsg || 'Pesan gagal terkirim (Meta Cloud API)',
                             }
                         }));
                     } else {

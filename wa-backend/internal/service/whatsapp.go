@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sort"
+	"strings"
 	"time"
 
 	wapi "github.com/ferdinandanggris/wapi"
@@ -49,7 +52,7 @@ func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body,
 	}
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
-		return nil, fmt.Errorf("send text: %w", err)
+		return s.storeFailedMessage(ctx, msg, phoneNumberID, to, agentID, err.Error()), fmt.Errorf("send text: %w", err)
 	}
 	if len(resp.Messages) == 0 {
 		return nil, fmt.Errorf("send text: no message id returned")
@@ -60,8 +63,9 @@ func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body,
 }
 
 type TemplateButtonSpec struct {
-	Index   int    `json:"index"`
-	SubType string `json:"sub_type"`
+	Index    int      `json:"index"`
+	SubType  string   `json:"sub_type"`
+	Params   []string `json:"params,omitempty"`
 }
 
 func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, templateName, lang string, params map[string]string, buttons []TemplateButtonSpec, agentID string) (*model.Message, error) {
@@ -83,7 +87,7 @@ func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, t
 
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
-		return nil, fmt.Errorf("send template: %w", err)
+		return s.storeFailedMessage(ctx, msg, phoneNumberID, to, agentID, err.Error()), fmt.Errorf("send template: %w", err)
 	}
 	if len(resp.Messages) == 0 {
 		return nil, fmt.Errorf("send template: no message id returned")
@@ -112,6 +116,121 @@ func (s *WhatsAppService) storeOutboundMessage(ctx context.Context, msg *types.M
 	}
 
 	// Enrich template messages with template definition for render
+	s.enrichTemplateDefinition(ctx, msg, out)
+
+	strAgent := "Agent"
+	contact := &model.Contact{CompanyCustomName: &strAgent}
+
+	preview := repository.PreviewText(msg.Type, contact, out.Content)
+	if msg.Type == "template" && out.TemplateDefinition != nil {
+		if r := renderTemplatePreview(out.TemplateDefinition, out.Content); r != "" {
+			preview = r
+		}
+	}
+	s.convRepo.Upsert(ctx, phoneNumberID, to, preview, false, out.Timestamp)
+	s.broadcastSent(phoneNumberID, out)
+	return out
+}
+
+// renderTemplatePreview combines template definition text with message parameters.
+// TemplateDefinition has BODY text like "Halo {{1}}, pesanan {{2}} sudah siap"
+// Message content has parameters like ["John", "#123"]
+// Result: "Halo John, pesanan #123 sudah siap"
+func renderTemplatePreview(td interface{}, content json.RawMessage) string {
+	// Parse template definition — find BODY text
+	tdBytes, err := json.Marshal(td)
+	if err != nil {
+		return ""
+	}
+	var defs []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(tdBytes, &defs); err != nil {
+		return ""
+	}
+	bodyText := ""
+	for _, d := range defs {
+		if d.Type == "BODY" {
+			bodyText = d.Text
+			break
+		}
+	}
+	if bodyText == "" {
+		return ""
+	}
+
+	// Parse message content — extract body parameter texts in order
+	var msg struct {
+		Template *struct {
+			Components []struct {
+				Type       string `json:"type"`
+				Parameters []struct {
+					Type string `json:"type"`
+					Text string `json:"text"`
+				} `json:"parameters"`
+			} `json:"components"`
+		} `json:"template"`
+	}
+	if err := json.Unmarshal(content, &msg); err != nil || msg.Template == nil {
+		return ""
+	}
+	var params []string
+	for _, c := range msg.Template.Components {
+		if c.Type == "body" {
+			for _, p := range c.Parameters {
+				params = append(params, p.Text)
+			}
+			break
+		}
+	}
+
+	// Replace {{1}}, {{2}} etc with actual parameter values
+	result := bodyText
+	for i, p := range params {
+		result = strings.ReplaceAll(result, fmt.Sprintf("{{%d}}", i+1), p)
+	}
+	return repository.Truncate(result, 100)
+}
+
+func (s *WhatsAppService) storeFailedMessage(ctx context.Context, msg *types.Message, phoneNumberID, to, agentID, errorMessage string) *model.Message {
+	b := make([]byte, 8)
+	rand.Read(b)
+	out := &model.Message{
+		WamID:         "fail_" + hex.EncodeToString(b),
+		PhoneNumberID: phoneNumberID,
+		WaID:          to,
+		Direction:     "outbound",
+		Type:          msg.Type,
+		Content:       repository.MustJSON(msg),
+		Status:        "failed",
+		Timestamp:     time.Now(),
+		ErrorMessage:  &errorMessage,
+	}
+	if agentID != "" {
+		out.AgentID = &agentID
+	}
+	if err := s.msgs.Save(ctx, out); err != nil {
+		slog.Error("save failed message", "error", err)
+	}
+
+	// Enrich template messages with template definition for render
+	s.enrichTemplateDefinition(ctx, msg, out)
+
+	strAgent := "Agent"
+	contact := &model.Contact{CompanyCustomName: &strAgent}
+	preview := repository.PreviewText(msg.Type, contact, out.Content)
+	if msg.Type == "template" && out.TemplateDefinition != nil {
+		if r := renderTemplatePreview(out.TemplateDefinition, out.Content); r != "" {
+			preview = r
+		}
+	}
+	s.convRepo.Upsert(ctx, phoneNumberID, to, preview, false, out.Timestamp)
+	s.broadcastSent(phoneNumberID, out)
+	return out
+}
+
+func (s *WhatsAppService) enrichTemplateDefinition(ctx context.Context, msg *types.Message, out *model.Message) {
 	if msg.Type == "template" && msg.Template != nil {
 		if tpl, err := s.tplRepo.GetByName(ctx, msg.Template.Name, msg.Template.Language.Code); err == nil && tpl != nil {
 			var td interface{}
@@ -120,93 +239,6 @@ func (s *WhatsAppService) storeOutboundMessage(ctx context.Context, msg *types.M
 			}
 		}
 	}
-
-	strAgent := "Agent"
-	contact := &model.Contact{CompanyCustomName: &strAgent}
-
-	s.convRepo.Upsert(ctx, phoneNumberID, to, previewText(msg.Type, contact, out.Content), false)
-	s.broadcastSent(phoneNumberID, out)
-	return out
-}
-
-func previewText(msgType string, contact *model.Contact, content json.RawMessage) string {
-	switch msgType {
-	case "text":
-		var t struct {
-			Text *struct {
-				Body string `json:"body"`
-			} `json:"text"`
-		}
-		if json.Unmarshal(content, &t) == nil && t.Text != nil && t.Text.Body != "" {
-			return truncate(t.Text.Body, 100)
-		}
-	case "image":
-		var i struct {
-			Image *struct {
-				Caption string `json:"caption"`
-			} `json:"image"`
-		}
-		if json.Unmarshal(content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
-			return "📷 " + truncate(i.Image.Caption, 100)
-		}
-		return "📷 Photo"
-	case "video":
-		var v struct {
-			Video *struct {
-				Caption string `json:"caption"`
-			} `json:"video"`
-		}
-		if json.Unmarshal(content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
-			return "🎥 " + truncate(v.Video.Caption, 100)
-		}
-		return "🎥 Video"
-	case "audio":
-		var a struct {
-			Audio *struct {
-				Caption string `json:"caption"`
-			} `json:"audio"`
-		}
-		if json.Unmarshal(content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
-			return "🎵 " + truncate(a.Audio.Caption, 100)
-		}
-		return "🎵 Audio"
-	case "document":
-		var d struct {
-			Document *struct {
-				Filename string `json:"filename"`
-			} `json:"document"`
-		}
-		if json.Unmarshal(content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
-			return "📄 " + truncate(d.Document.Filename, 100)
-		}
-		return "📄 Document"
-	case "location":
-		return "📍 Location"
-	case "interactive":
-		return "🔄 Reply"
-	case "reaction":
-		var r struct {
-			Reaction *struct {
-				Emoji string `json:"emoji"`
-			} `json:"reaction"`
-		}
-		if json.Unmarshal(content, &r) == nil && r.Reaction != nil {
-			if r.Reaction.Emoji != "" {
-				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
-			}
-			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
-		}
-		return "👍 Reaction"
-	}
-	return "[unknown]"
-}
-
-func truncate(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
-	}
-	return string(runes[:n]) + "..."
 }
 
 func (s *WhatsAppService) broadcastSent(phoneNumberID string, msg *model.Message) {
@@ -225,41 +257,49 @@ func buildTemplateComponents(params map[string]string, buttons []TemplateButtonS
 	}
 	var comps []*types.TemplateMsgComponent
 
-	if len(params) > 0 {
-		keys := make([]string, 0, len(params))
-		for k := range params {
-			keys = append(keys, k)
+	// Body params (numeric keys: "1", "2" etc.)
+	var bodyKeys, headerKeys []string
+	for k := range params {
+		if k == "" {
+			continue
 		}
-		sort.Strings(keys)
-		paramsList := make([]*types.TemplateParameter, len(keys))
-		for i, k := range keys {
-			paramsList[i] = &types.TemplateParameter{Type: "text", Text: params[k]}
+		switch k[0] {
+		case 'h': // header params: "h1", "h2"
+			headerKeys = append(headerKeys, k)
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9': // body params
+			bodyKeys = append(bodyKeys, k)
 		}
-		comps = append(comps, &types.TemplateMsgComponent{
-			Type: "body", Parameters: paramsList,
-		})
+	}
+
+	if len(bodyKeys) > 0 {
+		sort.Strings(bodyKeys)
+		pl := make([]*types.TemplateParameter, len(bodyKeys))
+		for i, k := range bodyKeys {
+			pl[i] = &types.TemplateParameter{Type: "text", Text: params[k]}
+		}
+		comps = append(comps, &types.TemplateMsgComponent{Type: "body", Parameters: pl})
+	}
+
+	if len(headerKeys) > 0 {
+		sort.Strings(headerKeys)
+		pl := make([]*types.TemplateParameter, len(headerKeys))
+		for i, k := range headerKeys {
+			pl[i] = &types.TemplateParameter{Type: "text", Text: params[k]}
+		}
+		comps = append(comps, &types.TemplateMsgComponent{Type: "header", Parameters: pl})
 	}
 
 	for _, btn := range buttons {
-		paramsList := make([]*types.TemplateParameter, 0, len(params))
-		for _, k := range sortedKeys(params) {
-			paramsList = append(paramsList, &types.TemplateParameter{Type: "text", Text: params[k]})
+		pl := make([]*types.TemplateParameter, 0, len(btn.Params))
+		for _, p := range btn.Params {
+			pl = append(pl, &types.TemplateParameter{Type: "text", Text: p})
 		}
 		comps = append(comps, &types.TemplateMsgComponent{
 			Type: "button", SubType: btn.SubType, Index: btn.Index,
-			Parameters: paramsList,
+			Parameters: pl,
 		})
 	}
 	return comps
-}
-
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, mediaType, mediaID, caption, agentID, contextMessageID string) (*model.Message, error) {
@@ -295,7 +335,7 @@ func (s *WhatsAppService) SendMedia(ctx context.Context, phoneNumberID, to, medi
 
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
-		return nil, fmt.Errorf("send %s: %w", mediaType, err)
+		return s.storeFailedMessage(ctx, msg, phoneNumberID, to, agentID, err.Error()), fmt.Errorf("send %s: %w", mediaType, err)
 	}
 	if len(resp.Messages) == 0 {
 		return nil, fmt.Errorf("send %s: no message id returned", mediaType)
@@ -340,7 +380,7 @@ func (s *WhatsAppService) SendReaction(ctx context.Context, phoneNumberID, to, m
 	msg := types.NewReactionMessage(to, messageID, emoji)
 	resp, err := s.client.SendMessage(ctx, phoneNumberID, msg)
 	if err != nil {
-		return nil, fmt.Errorf("send reaction: %w", err)
+		return s.storeFailedMessage(ctx, msg, phoneNumberID, to, "", err.Error()), fmt.Errorf("send reaction: %w", err)
 	}
 	if len(resp.Messages) == 0 {
 		return nil, fmt.Errorf("send reaction: no message id returned")
@@ -348,12 +388,4 @@ func (s *WhatsAppService) SendReaction(ctx context.Context, phoneNumberID, to, m
 
 	out := s.storeOutboundMessage(ctx, msg, resp.Messages[0].ID, phoneNumberID, to, "")
 	return out, nil
-}
-
-func truncateStr(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
-	}
-	return string(runes[:n]) + "..."
 }

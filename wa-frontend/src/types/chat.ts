@@ -36,10 +36,10 @@ export interface Conversation {
 }
 
 export interface ErrorDetails {
-    code: number;
-    failed_at: string;
-    message_local: string;
-    message_original: string;
+    code?: string | number;
+    failed_at?: string;
+    message_local?: string;
+    message_original?: string;
 }
 
 export interface ChatMessage {

@@ -35,18 +35,26 @@ function getBodyText(components: TemplateComponent[]): string {
 }
 
 function getComponentParamsCount(components: TemplateComponent[], type: string): number {
+  console.log("Getting params count for type", type, "in components", components);
   const comp = components.find((c) => c.type === type);
-  if (!comp?.text) return 0;
-  const match = comp.text.match(/{{\d+}}/g);
-  const count = match ? new Set(match).size : 0;
+  var count = 0;
+  if (comp?.text && comp.type != "BUTTONS") {
+    const match = comp.text.match(/{{\d+}}/g);
+    count = match ? new Set(match).size : 0;
+  }
   
   // For BUTTONS, also check button texts
   if (type === 'BUTTONS' && comp.buttons) {
     let btnCount = 0;
     comp.buttons.forEach((btn) => {
       const btnMatch = btn.text.match(/{{\d+}}/g);
+      const btnUrlMatch = btn.url?.match(/{{\d+}}/g);
       if (btnMatch) btnCount += new Set(btnMatch).size;
+      if (btnUrlMatch) btnCount += new Set(btnUrlMatch).size;
     });
+
+    console.log("Comp buttons:", comp.buttons);
+    console.log("Button params count:", btnCount);
     return btnCount;
   }
   return count;
@@ -194,25 +202,39 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                       const footer = selectedTemplate.components.find((c) => c.type === 'FOOTER');
                       const buttonsComp = selectedTemplate.components.find((c) => c.type === 'BUTTONS');
 
-                      const replaceParams = (text: string, idxOffset: number = 0) => {
+                      const replaceParams = (text: string, paramsArr: string[], offset: number = 0) => {
                         if (!text) return "";
                         return text.replace(/{{\d+}}/g, (match) => {
-                          const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1 - idxOffset;
-                          const allParams = [...params.header, ...params.body];
-                          return allParams[idx] || match;
+                          const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1 - offset;
+                          return paramsArr[idx] || match;
                         });
                       };
+
+                      // Build per-button param arrays from flat params.buttons
+                      const buttonParamArrays: string[][] = [];
+                      if (buttonsComp?.buttons) {
+                        let pi = 0;
+                        buttonsComp.buttons.forEach((btn) => {
+                          const btnParams: string[] = [];
+                          const btnMatch = btn.text.match(/{{\d+}}/g);
+                          const count = btnMatch ? new Set(btnMatch).size : 0;
+                          for (let j = 0; j < count; j++) {
+                            btnParams.push(params.buttons[pi++] || '');
+                          }
+                          buttonParamArrays.push(btnParams);
+                        });
+                      }
 
                       return (
                         <>
                           {header && (
                             <div className="p-3 font-bold border-b border-slate-50 text-slate-900">
-                              {header.format === 'TEXT' ? replaceParams(header.text || '', 0) : `[${header.format} Header]`}
+                              {header.format === 'TEXT' ? replaceParams(header.text || '', params.header, 0) : `[${header.format} Header]`}
                             </div>
                           )}
                           <div className="p-3">
                             <div className="whitespace-pre-wrap text-slate-800">
-                              {replaceParams(body?.text || '', params.header.length)}
+                              {replaceParams(body?.text || '', params.body, params.header.length)}
                             </div>
                             {footer && (
                               <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">
@@ -227,7 +249,7 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                             <div className="flex flex-col border-t border-slate-50">
                               {buttonsComp.buttons.map((btn, idx) => (
                                 <div key={idx} className="p-2 text-center text-[#00a884] font-semibold border-b border-slate-50 last:border-0 flex items-center justify-center gap-2">
-                                  {btn.text}
+                                  {replaceParams(btn.text, buttonParamArrays[idx] || [], 0)}
                                   {btn.type === 'URL' && <ExternalLink className="h-3 w-3 opacity-50" />}
                                   {btn.type === 'PHONE_NUMBER' && <Phone className="h-3 w-3 opacity-50" />}
                                 </div>
@@ -343,6 +365,67 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                     ))}
                   </div>
                 )}
+
+                {params.buttons.length > 0 && selectedTemplate && (() => {
+                  const buttonsComp = selectedTemplate.components.find((c) => c.type === 'BUTTONS');
+                  if (!buttonsComp?.buttons) return null;
+                  let paramIdx = 0;
+                  console.log("Rendering button params for buttonsComp:", buttonsComp);
+                  return (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Parameter Tombol</h4>
+                      {buttonsComp.buttons.map((btn, bi) => {
+                        const btnMatch = btn.text.match(/{{\d+}}/g);
+                        const count = btnMatch ? new Set(btnMatch).size : 0;
+                        const inputs = [];
+                        if (count !== 0) {
+                          for (let j = 0; j < count; j++) {
+                            const pi = paramIdx++;
+                            inputs.push(
+                              <div key={`${bi}-${j}`} className="flex flex-col gap-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Tombol "{btn.text}" — Variabel {j + 1}</label>
+                                <Input
+                                  value={params.buttons[pi] || ''}
+                                  onChange={(e) => {
+                                    const newBtns = [...params.buttons];
+                                    newBtns[pi] = e.target.value;
+                                    setParams({ ...params, buttons: newBtns });
+                                  }}
+                                  placeholder={`Nilai untuk tombol ${bi + 1}`}
+                                  className="h-10"
+                                />
+                              </div>
+                            );
+                          }
+                        }
+
+                        const btnUrlMatch = btn.url?.match(/{{\d+}}/g);
+                        console.log(`Button ${bi} text:`, btn.text, "matches:", btnMatch, "URL matches:", btnUrlMatch);
+                        const urlCount = btnUrlMatch ? new Set(btnUrlMatch).size : 0;
+                        for (let j = 0; j < urlCount; j++) {
+                          const pi = paramIdx++;
+                          inputs.push(
+                            <div key={`${bi}-url-${j}`} className="flex flex-col gap-1">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase">Tombol "{btn.text}" URL — Variabel {j + 1}</label>
+                              <Input
+                                value={params.buttons[pi] || ''}
+                                onChange={(e) => {
+                                  const newBtns = [...params.buttons];
+                                  newBtns[pi] = e.target.value;
+                                  setParams({ ...params, buttons: newBtns });
+                                }}
+                                placeholder={`Nilai untuk URL tombol ${bi + 1}`}
+                                className="h-10"
+                              />
+                            </div>
+                          );
+                        }
+
+                        return inputs;
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </ScrollArea>
 

@@ -28,10 +28,10 @@ func NewMessageRepository(pool *pgxpool.Pool) *MessageRepository {
 
 func (r *MessageRepository) Save(ctx context.Context, m *model.Message) error {
 	_, err := r.pool.Exec(ctx, `
-		INSERT INTO messages (wamid, phone_number_id, wa_id, direction, type, content, status, timestamp, agent_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO messages (wamid, phone_number_id, wa_id, direction, type, content, status, timestamp, agent_id, error_message)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (wamid) DO NOTHING
-	`, m.WamID, m.PhoneNumberID, m.WaID, m.Direction, m.Type, m.Content, m.Status, m.Timestamp, m.AgentID)
+	`, m.WamID, m.PhoneNumberID, m.WaID, m.Direction, m.Type, m.Content, m.Status, m.Timestamp, m.AgentID, m.ErrorMessage)
 	if err != nil {
 		return fmt.Errorf("save message: %w", err)
 	}
@@ -41,7 +41,7 @@ func (r *MessageRepository) Save(ctx context.Context, m *model.Message) error {
 func (r *MessageRepository) GetByWamID(ctx context.Context, wamid string) (*model.Message, error) {
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
-		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_message, m.agent_id,
 		       COALESCE(u.display_name, ''),
 		       tpl.components
 		FROM messages m
@@ -50,7 +50,7 @@ func (r *MessageRepository) GetByWamID(ctx context.Context, wamid string) (*mode
 			AND (m.content->'template'->'language'->>'code' IS NULL OR tpl.language = m.content->'template'->'language'->>'code')
 		WHERE m.wamid = $1
 	`, wamid).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
-		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
+		&m.Content, &m.Status, &m.Timestamp, &m.ErrorMessage, &m.AgentID,
 		&m.AgentName, &m.TemplateDefinition)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -61,10 +61,10 @@ func (r *MessageRepository) GetByWamID(ctx context.Context, wamid string) (*mode
 	return &m, nil
 }
 
-func (r *MessageRepository) UpdateStatus(ctx context.Context, wamid, status string, errorCode *int) error {
+func (r *MessageRepository) UpdateStatus(ctx context.Context, wamid, status string, errorMessage *string) error {
 	_, err := r.pool.Exec(ctx, `
-		UPDATE messages SET status = $1, error_code = $2 WHERE wamid = $3
-	`, status, errorCode, wamid)
+		UPDATE messages SET status = $1, error_message = $2 WHERE wamid = $3
+	`, status, errorMessage, wamid)
 	if err != nil {
 		return fmt.Errorf("update message status: %w", err)
 	}
@@ -105,7 +105,7 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberI
 	args = append(args, qlimit)
 
 	rows, err := r.pool.Query(ctx, `
-		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_message, m.agent_id,
 		       COALESCE(u.display_name, ''),
 		       tpl.components
 		FROM messages m
@@ -124,7 +124,7 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, phoneNumberI
 	for rows.Next() {
 		var m model.Message
 		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
-			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
+			&m.Content, &m.Status, &m.Timestamp, &m.ErrorMessage, &m.AgentID,
 			&m.AgentName, &m.TemplateDefinition); err != nil {
 			return nil, false, nil, nil, fmt.Errorf("scan message: %w", err)
 		}
@@ -150,7 +150,7 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 		return nil, nil
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_message, m.agent_id,
 		       COALESCE(u.display_name, ''), COALESCE(c.company_custom_name, ''),
 		       tpl.components
 		FROM messages m
@@ -169,7 +169,7 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 	for rows.Next() {
 		var m model.Message
 		if err := rows.Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
-			&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
+			&m.Content, &m.Status, &m.Timestamp, &m.ErrorMessage, &m.AgentID,
 			&m.AgentName, &m.CustomerName, &m.TemplateDefinition); err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
@@ -181,7 +181,7 @@ func (r *MessageRepository) GetByWamIDs(ctx context.Context, wamids []string) (m
 func (r *MessageRepository) GetLatestInboundByConversation(ctx context.Context, phoneNumberID, waID string) (*model.Message, error) {
 	var m model.Message
 	err := r.pool.QueryRow(ctx, `
-		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_code, m.agent_id,
+		SELECT m.id, m.wamid, m.phone_number_id, m.wa_id, m.direction, m.type, m.content, m.status, m.timestamp, m.error_message, m.agent_id,
 		       COALESCE(u.display_name, ''),
 		       tpl.components
 		FROM messages m
@@ -192,7 +192,7 @@ func (r *MessageRepository) GetLatestInboundByConversation(ctx context.Context, 
 		ORDER BY m.timestamp DESC
 		LIMIT 1
 	`, phoneNumberID, waID).Scan(&m.ID, &m.WamID, &m.PhoneNumberID, &m.WaID, &m.Direction, &m.Type,
-		&m.Content, &m.Status, &m.Timestamp, &m.ErrorCode, &m.AgentID,
+		&m.Content, &m.Status, &m.Timestamp, &m.ErrorMessage, &m.AgentID,
 		&m.AgentName, &m.TemplateDefinition)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -209,4 +209,112 @@ func MustJSON(v interface{}) json.RawMessage {
 		panic("must json: " + err.Error())
 	}
 	return b
+}
+
+func Truncate(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n]) + "..."
+}
+
+func PreviewText(msgType string, contact *model.Contact, content json.RawMessage) string {
+	switch msgType {
+	case "text":
+		var t struct {
+			Text *struct {
+				Body string `json:"body"`
+			} `json:"text"`
+		}
+		if json.Unmarshal(content, &t) == nil && t.Text != nil && t.Text.Body != "" {
+			return Truncate(t.Text.Body, 100)
+		}
+	case "image":
+		var i struct {
+			Image *struct {
+				Caption string `json:"caption"`
+			} `json:"image"`
+		}
+		if json.Unmarshal(content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
+			return "📷 " + Truncate(i.Image.Caption, 100)
+		}
+		return "📷 Photo"
+	case "video":
+		var v struct {
+			Video *struct {
+				Caption string `json:"caption"`
+			} `json:"video"`
+		}
+		if json.Unmarshal(content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
+			return "🎥 " + Truncate(v.Video.Caption, 100)
+		}
+		return "🎥 Video"
+	case "audio":
+		var a struct {
+			Audio *struct {
+				Caption string `json:"caption"`
+			} `json:"audio"`
+		}
+		if json.Unmarshal(content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
+			return "🎵 " + Truncate(a.Audio.Caption, 100)
+		}
+		return "🎵 Audio"
+	case "document":
+		var d struct {
+			Document *struct {
+				Filename string `json:"filename"`
+			} `json:"document"`
+		}
+		if json.Unmarshal(content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
+			return "📄 " + Truncate(d.Document.Filename, 100)
+		}
+		return "📄 Document"
+	case "location":
+		return "📍 Location"
+	case "interactive":
+		return "🔄 Reply"
+	case "reaction":
+		var r struct {
+			Reaction *struct {
+				Emoji string `json:"emoji"`
+			} `json:"reaction"`
+		}
+		if json.Unmarshal(content, &r) == nil && r.Reaction != nil {
+			if r.Reaction.Emoji != "" {
+				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
+			}
+			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
+		}
+		return "👍 Reaction"
+	case "template":
+		var t struct {
+			Template *struct {
+				Name       string `json:"name"`
+				Components []struct {
+					Type       string `json:"type"`
+					Parameters []struct {
+						Type string `json:"type"`
+						Text string `json:"text"`
+					} `json:"parameters"`
+				} `json:"components"`
+			} `json:"template"`
+		}
+		if json.Unmarshal(content, &t) == nil && t.Template != nil {
+			for _, c := range t.Template.Components {
+				if c.Type == "body" {
+					var full string
+					for _, p := range c.Parameters {
+						full += p.Text
+					}
+					if full != "" {
+						return Truncate(full, 100)
+					}
+				}
+			}
+			return "📋 " + t.Template.Name
+		}
+		return "📋 Template"
+	}
+	return "[unknown]"
 }

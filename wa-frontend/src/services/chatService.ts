@@ -175,6 +175,7 @@ const mapMessage = (m: any): ChatMessage => {
         raw_payload: JSON.stringify({
             ...content,
             ...(m.template_definition ? { template_definition: m.template_definition } : {}),
+            ...(m.error_message ? { error_message: m.error_message } : {}),
         }),
         context_message_id: contextMessageId || undefined,
         reply_wamid: m.reply_wamid || undefined,
@@ -512,6 +513,7 @@ export const sendTemplate = async (
     language_code: string,
     body_params: string[],
     button_params: string[],
+    button_types: string[],
     header_params: string[],
     sender_name?: string,
     wa_message_id?: string
@@ -529,14 +531,38 @@ export const sendTemplate = async (
             templateParams[`h${index + 1}`] = param;
         });
 
-        const payload = {
+        // Button params
+        button_params.forEach((param, index) => {
+            templateParams[`b${index + 1}`] = param;
+        });
+
+        // Build template_buttons array with actual button types from template definition
+        const mapBtnType = (t: string): string => {
+            switch (t) {
+                case 'URL': return 'url';
+                case 'PHONE_NUMBER': return 'phone_number';
+                case 'QUICK_REPLY': return 'quick_reply';
+                case 'COPY_CODE': return 'copy_code';
+                default: return 'quick_reply';
+            }
+        };
+        const templateButtons = button_params.length > 0 ? button_params.map((text, index) => ({
+            index,
+            sub_type: mapBtnType(button_types[index] || 'QUICK_REPLY'),
+            params: [text]
+        })) : [];
+
+        const payload: any = {
             to: target,
             phone_number_id: String(wa_channel_id),
             type: 'template',
             template_name,
             template_lang: language_code || 'id',
-            template_params: templateParams
+            template_params: templateParams,
         };
+        if (templateButtons.length > 0) {
+            payload.template_buttons = templateButtons;
+        }
 
         const response = await apiClient.post<any>('/api/v1/messages', payload);
         return {

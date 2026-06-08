@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -77,83 +76,7 @@ func enrichReplies(ctx context.Context, h *ConversationHandler, msgs []*model.Me
 }
 
 func previewOrig(contact *model.Contact, m *model.Message) string {
-	switch m.Type {
-	case "text":
-		var t struct {
-			Text *struct {
-				Body string `json:"body"`
-			} `json:"text"`
-		}
-		if json.Unmarshal(m.Content, &t) == nil && t.Text != nil && t.Text.Body != "" {
-			return truncate(t.Text.Body, 100)
-		}
-	case "image":
-		var i struct {
-			Image *struct {
-				Caption string `json:"caption"`
-			} `json:"image"`
-		}
-		if json.Unmarshal(m.Content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
-			return "📷 " + truncate(i.Image.Caption, 100)
-		}
-		return "📷 Photo"
-	case "video":
-		var v struct {
-			Video *struct {
-				Caption string `json:"caption"`
-			} `json:"video"`
-		}
-		if json.Unmarshal(m.Content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
-			return "🎥 " + truncate(v.Video.Caption, 100)
-		}
-		return "🎥 Video"
-	case "audio":
-		var a struct {
-			Audio *struct {
-				Caption string `json:"caption"`
-			} `json:"audio"`
-		}
-		if json.Unmarshal(m.Content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
-			return "🎵 " + truncate(a.Audio.Caption, 100)
-		}
-		return "🎵 Audio"
-	case "document":
-		var d struct {
-			Document *struct {
-				Filename string `json:"filename"`
-			} `json:"document"`
-		}
-		if json.Unmarshal(m.Content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
-			return "📄 " + truncate(d.Document.Filename, 100)
-		}
-		return "📄 Document"
-	case "location":
-		return "📍 Location"
-	case "interactive":
-		return "🔄 Reply"
-	case "reaction":
-		var r struct {
-			Reaction *struct {
-				Emoji string `json:"emoji"`
-			} `json:"reaction"`
-		}
-		if json.Unmarshal(m.Content, &r) == nil && r.Reaction != nil {
-			if r.Reaction.Emoji != "" {
-				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
-			}
-			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
-		}
-		return "👍 Reaction"
-	}
-	return "[unknown]"
-}
-
-func truncate(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
-	}
-	return string(runes[:n]) + "..."
+	return repository.PreviewText(m.Type, contact, m.Content)
 }
 
 func NewConversationHandler(contacts *repository.ContactRepository, convs *repository.ConversationRepository, msgs *repository.MessageRepository, svc *service.WhatsAppService) *ConversationHandler {

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,18 +31,18 @@ func scanConversation(s pgx.Row) (*model.Conversation, error) {
 	return &cv, nil
 }
 
-func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID, preview string, incrementUnread bool) (*model.Conversation, error) {
+func (r *ConversationRepository) Upsert(ctx context.Context, phoneNumberID, waID, preview string, incrementUnread bool, timestamp time.Time) (*model.Conversation, error) {
 	var id string
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO conversations (phone_number_id, wa_id, last_message_at, last_message_preview, unread_count)
-		VALUES ($1, $2, NOW(), $3, 1)
+		VALUES ($1, $2, $5, $3, 1)
 		ON CONFLICT (phone_number_id, wa_id)
 		DO UPDATE SET
-			last_message_at = NOW(),
+			last_message_at = $5,
 			last_message_preview = $3,
 			unread_count = conversations.unread_count + (CASE WHEN $4 THEN 1 ELSE 0 END)
 		RETURNING id
-	`, phoneNumberID, waID, preview, incrementUnread).Scan(&id)
+	`, phoneNumberID, waID, preview, incrementUnread, timestamp).Scan(&id)
 	if err != nil {
 		return nil, fmt.Errorf("upsert conversation: %w", err)
 	}

@@ -127,6 +127,49 @@ export const useConversations = ({
             });
         };
 
+        const templatePreview = (msg: ChatMessage) => {
+            const payload = typeof msg.raw_payload === 'string' ? JSON.parse(msg.raw_payload) : msg.raw_payload;
+
+        // Template definition from backend JOIN (uppercase types: BODY, HEADER, BUTTONS)
+        const definition: any[] = payload.template_definition;
+
+        // Template message components from stored content (lowercase types: body, header, button)
+        const msgComponents: any[] = payload.template?.components || [];
+
+        if (!definition || !Array.isArray(definition)) {
+            const tplName = payload.template?.name || payload.body || '';
+            return `Template: ${tplName}`;
+        }
+
+        // Build param map: lowercase type → array of text values
+        const paramMap: Record<string, string[]> = {};
+        for (const comp of msgComponents) {
+            const type = comp.type?.toLowerCase();
+            const values = (comp.parameters || []).map((p: any) => p.text || '');
+            if (type) paramMap[type] = values;
+        }
+
+        const getParams = (defType: string): string[] => {
+            const lower = defType.toLowerCase();
+            // For buttons, params may be in 'button' entries too
+            if (lower === 'buttons') {
+                return paramMap['button'] || paramMap['buttons'] || [];
+            }
+            return paramMap[lower] || [];
+        };
+
+        const replaceParams = (text: string, params: string[]) => {
+            if (!text) return '';
+            let idx = 0;
+            return text.replace(/{{\d+}}/g, () => params[idx] || '');
+        };
+
+        const bodyDef = definition.find((c: any) => c.type === 'BODY');
+
+        return replaceParams(bodyDef?.text || '', getParams('body'))
+
+        }
+
         const handleReceiveMessage = (message: any) => {
             const chatMsg = message as ChatMessage;
             if (activeAppIdRef.current !== null && chatMsg.app_id !== activeAppIdRef.current) return;
@@ -148,12 +191,14 @@ export const useConversations = ({
                     const conv = { ...updated[index] };
 
                     let preview = chatMsg.message_text;
-                    if (chatMsg.message_type === 'image') preview = "📷 Foto";
-                    else if (chatMsg.message_type === 'video') preview = "🎥 Video";
-                    else if (chatMsg.message_type === 'audio') preview = "🎵 Audio";
-                    else if (chatMsg.message_type === 'document') preview = "📄 Dokumen";
-                    else if (chatMsg.message_type === 'sticker') preview = "🧩 Stiker";
+                    if (chatMsg.message_type === 'image') preview = (chatMsg.message_text == "") ? "📷 Foto" : `📷 ${chatMsg.message_text}`;
+                    else if (chatMsg.message_type === 'video') preview = (chatMsg.message_text == "") ? "🎥 Video" : `🎥 ${chatMsg.message_text}`;
+                    else if (chatMsg.message_type === 'audio') preview = (chatMsg.message_text == "") ? "🎵 Audio" : `🎵 ${chatMsg.message_text}`;
+                    else if (chatMsg.message_type === 'document') preview = (chatMsg.message_text == "") ? "📄 Dokumen" : `📄 ${chatMsg.message_text}`;
+                    else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} sent a sticker`;
                     else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} reacted to a message`;
+                    else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} shared a location`;
+                    else if (chatMsg.message_type === 'template') preview =  templatePreview(chatMsg) || 'Template Message';
 
                     conv.last_message_preview = preview;
                     conv.last_message_timestamp = chatMsg.message_timestamp;

@@ -83,7 +83,12 @@ func (h *MessageHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		if msg != nil {
+			// Failed message was saved — return it so frontend can reconcile
+			writeJSON(w, http.StatusCreated, msg)
+		} else {
+			writeError(w, http.StatusBadRequest, err.Error())
+		}
 		return
 	}
 
@@ -109,7 +114,11 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 
 	msg, err := h.svc.SendReaction(r.Context(), req.PhoneNumberID, req.To, req.MessageID, req.Emoji)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		if msg != nil {
+			writeJSON(w, http.StatusCreated, msg)
+		} else {
+			writeError(w, http.StatusBadRequest, err.Error())
+		}
 		return
 	}
 

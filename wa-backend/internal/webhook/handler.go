@@ -145,8 +145,8 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 		}
 	}
 
-	preview := previewText(msgType, contact, content)
-	conv, err := h.Convs.Upsert(r.Context(), phoneNumberID, waID, preview, true)
+	preview := repository.PreviewText(msgType, contact, content)
+	conv, err := h.Convs.Upsert(r.Context(), phoneNumberID, waID, preview, true, message.Timestamp)
 	if err != nil {
 		slog.Error("webhook: upsert conversation", "error", err)
 		return
@@ -173,12 +173,14 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 }
 
 func (h *Handler) processStatus(r *http.Request, status *types.StatusUpdate, meta *types.Metadata) {
-	var errCode *int
+	var errMsg *string
 	if status.Errors != nil && len(status.Errors) > 0 {
-		errCode = &status.Errors[0].Code
+		e := status.Errors[0]
+		s := fmt.Sprintf("%s(%d)", e.Title, e.Code)
+		errMsg = &s
 	}
 
-	if err := h.Messages.UpdateStatus(r.Context(), status.ID, status.Status, errCode); err != nil {
+	if err := h.Messages.UpdateStatus(r.Context(), status.ID, status.Status, errMsg); err != nil {
 		slog.Error("webhook: update status", "wamid", status.ID, "error", err)
 		return
 	}
@@ -186,100 +188,24 @@ func (h *Handler) processStatus(r *http.Request, status *types.StatusUpdate, met
 	slog.Info("message status",
 		"wamid", status.ID,
 		"status", status.Status,
-		"error_code", errCode,
+		"error_message", errMsg,
 	)
 
 	if h.Hub != nil {
+		data := map[string]string{
+			"wamid":  status.ID,
+			"status": status.Status,
+		}
+		if errMsg != nil {
+			data["error_message"] = *errMsg
+		}
 		h.Hub.BroadcastEventToAll(ws.Event{
 			Type: "message_status",
-			Data: map[string]string{
-				"wamid":  status.ID,
-				"status": status.Status,
-			},
+			Data: data,
 		})
 	}
 }
 
 func inboundContent(msg *types.IncomingMsg) (string, json.RawMessage) {
 	return msg.Type, repository.MustJSON(msg)
-}
-
-func previewText(msgType string, contact *model.Contact, content json.RawMessage) string {
-	switch msgType {
-	case "text":
-		var t struct {
-			Text *struct {
-				Body string `json:"body"`
-			} `json:"text"`
-		}
-		if json.Unmarshal(content, &t) == nil && t.Text != nil && t.Text.Body != "" {
-			return truncate(t.Text.Body, 100)
-		}
-	case "image":
-		var i struct {
-			Image *struct {
-				Caption string `json:"caption"`
-			} `json:"image"`
-		}
-		if json.Unmarshal(content, &i) == nil && i.Image != nil && i.Image.Caption != "" {
-			return "📷 " + truncate(i.Image.Caption, 100)
-		}
-		return "📷 Photo"
-	case "video":
-		var v struct {
-			Video *struct {
-				Caption string `json:"caption"`
-			} `json:"video"`
-		}
-		if json.Unmarshal(content, &v) == nil && v.Video != nil && v.Video.Caption != "" {
-			return "🎥 " + truncate(v.Video.Caption, 100)
-		}
-		return "🎥 Video"
-	case "audio":
-		var a struct {
-			Audio *struct {
-				Caption string `json:"caption"`
-			} `json:"audio"`
-		}
-		if json.Unmarshal(content, &a) == nil && a.Audio != nil && a.Audio.Caption != "" {
-			return "🎵 " + truncate(a.Audio.Caption, 100)
-		}
-		return "🎵 Audio"
-	case "document":
-		var d struct {
-			Document *struct {
-				Filename string `json:"filename"`
-			} `json:"document"`
-		}
-		if json.Unmarshal(content, &d) == nil && d.Document != nil && d.Document.Filename != "" {
-			return "📄 " + truncate(d.Document.Filename, 100)
-		}
-		return "📄 Document"
-	case "location":
-		return "📍 Location"
-	case "interactive":
-		return "🔄 Reply"
-	case "reaction":
-		var r struct {
-			Reaction *struct {
-				Emoji string `json:"emoji"`
-			} `json:"reaction"`
-		}
-		if json.Unmarshal(content, &r) == nil && r.Reaction != nil {
-			if r.Reaction.Emoji != "" {
-				return fmt.Sprintf("%s reacted %s", *contact.CompanyCustomName, r.Reaction.Emoji)
-			}
-			return fmt.Sprintf("%s removed reaction", *contact.CompanyCustomName)
-		}
-		return "👍 Reaction"
-	}
-	return "[unknown]"
-}
-
-func truncate(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
-	}
-	return string(runes[:n]) + "..."
 }

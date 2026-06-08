@@ -2,11 +2,28 @@
 import { ExternalLink, Phone } from 'lucide-react';
 import type { ChatMessage, ErrorDetails } from '../../types/chat';
 
+/** Parse `"<message>(<code>)"` format into ErrorDetails */
+function parseErrorMessageString(raw: string): ErrorDetails | null {
+    if (!raw) return null;
+    const lastParen = raw.lastIndexOf('(');
+    if (lastParen > 0 && raw.endsWith(')')) {
+        return {
+            message_local: raw.substring(0, lastParen),
+            code: raw.substring(lastParen + 1, raw.length - 1),
+        };
+    }
+    return { message_local: raw };
+}
+
 export const parseErrorDetails = (msg: ChatMessage): ErrorDetails | null => {
     if (!msg.raw_payload) return null;
     try {
         const payload = JSON.parse(msg.raw_payload);
-        return payload.error_details || null;
+        // Old format: structured error_details object
+        if (payload.error_details) return payload.error_details;
+        // New format: error_message string "<msg>(<code>)"
+        if (payload.error_message) return parseErrorMessageString(payload.error_message);
+        return null;
     } catch (e) {
         return null;
     }

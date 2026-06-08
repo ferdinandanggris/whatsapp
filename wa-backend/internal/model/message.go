@@ -25,7 +25,7 @@ type Message struct {
 	Content       json.RawMessage `json:"content"`
 	Status        string          `json:"status"`
 	Timestamp     time.Time       `json:"timestamp"`
-	ErrorCode     *int            `json:"error_code,omitempty"`
+	ErrorMessage  *string         `json:"error_message,omitempty"`
 	AgentID       *string         `json:"agent_id,omitempty"`
 
 	// Reply enrichment (not stored in DB, populated at query time)
