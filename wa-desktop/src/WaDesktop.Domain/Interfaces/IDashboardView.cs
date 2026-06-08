@@ -15,6 +15,9 @@ namespace WaDesktop.Domain.Interfaces
 
         /// <summary>Event: menerima pesan dari JavaScript (via postMessage).</summary>
         event EventHandler<WebMessageReceivedEventArgs> MessageReceived;
+
+        /// <summary>Show native SaveFileDialog. Returns selected path or null if cancelled.</summary>
+        string ShowSaveFileDialog(string defaultFileName, string filter);
     }
 
     public class WebMessageReceivedEventArgs : EventArgs

@@ -22,5 +22,11 @@ namespace WaDesktop.Domain.Interfaces
         void AddOrSelectTab(string key, string title, IViewBase content);
         void CloseTab(string key);
         void ClearTabs();
+
+        /// <summary>Show Windows desktop notification balloon.</summary>
+        void ShowNotification(string title, string body);
+
+        /// <summary>Set taskbar overlay badge count. 0 or less clears the badge.</summary>
+        void SetBadge(int count);
     }
 }

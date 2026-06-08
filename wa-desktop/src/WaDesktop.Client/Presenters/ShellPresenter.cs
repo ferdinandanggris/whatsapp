@@ -17,6 +17,8 @@ namespace WaDesktop.Client.Presenters
         private readonly AppState _state;
         private IDisposable _tabSub;
         private IDisposable _sessionSub;
+        private IDisposable _notifSub;
+        private IDisposable _badgeSub;
         private bool _disposed;
 
         public ShellPresenter(IShellView view, IAuthService auth, IEventAggregator bus, AppState state)
@@ -28,6 +30,8 @@ namespace WaDesktop.Client.Presenters
 
             _tabSub = bus.Subscribe<RequestOpenTabMessage>(OnRequestOpenTab);
             _sessionSub = bus.Subscribe<SessionExpiredMessage>(OnSessionExpired);
+            _notifSub = bus.Subscribe<ShowNotificationMessage>(m => _view.ShowNotification(m.Title, m.Body));
+            _badgeSub = bus.Subscribe<SetBadgeMessage>(m => _view.SetBadge(m.Count));
 
             view.DashboardClicked += (s, e) => OpenDashboard();
             view.CompanyClicked += (s, e) => OpenCompany();
@@ -138,6 +142,8 @@ namespace WaDesktop.Client.Presenters
             {
                 _tabSub?.Dispose();
                 _sessionSub?.Dispose();
+                _notifSub?.Dispose();
+                _badgeSub?.Dispose();
                 _disposed = true;
             }
         }

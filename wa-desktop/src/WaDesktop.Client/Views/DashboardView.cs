@@ -45,6 +45,18 @@ namespace WaDesktop.Client.Views
                 webView.CoreWebView2.ExecuteScriptAsync(script);
         }
 
+        public string ShowSaveFileDialog(string defaultFileName, string filter)
+        {
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.FileName = defaultFileName;
+                dialog.Filter = filter;
+                if (dialog.ShowDialog() == DialogResult.OK)
+                    return dialog.FileName;
+            }
+            return null;
+        }
+
         private void OnWebViewInitialized(object sender, CoreWebView2InitializationCompletedEventArgs e)
         {
             if (e.IsSuccess)

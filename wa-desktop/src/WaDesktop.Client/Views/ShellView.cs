@@ -2,6 +2,7 @@ using System;
 using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Client.Extensions;
+using WaDesktop.Client.Helpers;
 
 namespace WaDesktop.Client.Views
 {
@@ -10,6 +11,7 @@ namespace WaDesktop.Client.Views
         public ShellView()
         {
             InitializeComponent();
+            notifyIcon.Icon = this.Icon;
         }
 
         // ── IShellView ──
@@ -91,6 +93,30 @@ namespace WaDesktop.Client.Views
             this.InvokeIfRequired(() => tabWorkspace.TabPages.Clear());
         }
 
+        public void ShowNotification(string title, string body)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowNotification(title, body)));
+                return;
+            }
+
+            notifyIcon.BalloonTipTitle = title;
+            notifyIcon.BalloonTipText = body;
+            notifyIcon.ShowBalloonTip(3000);
+        }
+
+        public void SetBadge(int count)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => SetBadge(count)));
+                return;
+            }
+
+            TaskbarHelper.SetBadge(this.Handle, count);
+        }
+
         // ── Event Handlers ──
 
         private void dashboardToolStripMenuItem_Click(object sender, EventArgs e)
@@ -120,6 +146,20 @@ namespace WaDesktop.Client.Views
                 if (result != DialogResult.Yes)
                     e.Cancel = true;
             }
+        }
+
+        private void NotifyIcon_BalloonTipClicked(object sender, EventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => NotifyIcon_BalloonTipClicked(sender, e)));
+                return;
+            }
+
+            if (this.WindowState == FormWindowState.Minimized)
+                this.WindowState = FormWindowState.Normal;
+            this.Activate();
+            this.Focus();
         }
     }
 }

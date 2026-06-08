@@ -53,6 +53,7 @@
     <Compile Include="Entities\Template.cs" />
     <Compile Include="Entities\AppSetting.cs" />
     <Compile Include="Messages\NavigationMessages.cs" />
+    <Compile Include="Messages\DesktopBridgeMessages.cs" />
     <Compile Include="Entities\PhoneNumberDetail.cs" />
     <Compile Include="State\AppState.cs" />
   </ItemGroup>

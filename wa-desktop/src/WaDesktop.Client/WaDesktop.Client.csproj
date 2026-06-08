@@ -110,6 +110,7 @@
     <Compile Include="Views\ManagementViews\PhoneNumberDetailView.Designer.cs">
       <DependentUpon>PhoneNumberDetailView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\TaskbarHelper.cs" />
     <Compile Include="Presenters\LoginPresenter.cs" />
     <Compile Include="Presenters\ShellPresenter.cs" />
     <Compile Include="Presenters\SidebarPresenter.cs" />
