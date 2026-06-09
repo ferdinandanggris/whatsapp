@@ -3,27 +3,24 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Domain.Entities;
+using WaDesktop.Client.Views.ManagementViews;
 
 namespace WaDesktop.Client.Presenters
 {
     public class CompanyPresenter : IDisposable
     {
-        private readonly IManagementView<Company> _view;
+        private readonly CompanyView _view;
         private readonly IApiClient _api;
-        private readonly IEventAggregator _bus;
         private bool _disposed;
 
-        public CompanyPresenter(IManagementView<Company> view, IApiClient api, IEventAggregator bus)
+        public CompanyPresenter(CompanyView view, IApiClient api)
         {
             _view = view;
             _api = api;
-            _bus = bus;
 
             _view.RefreshClicked += async (s, e) => await LoadDataAsync();
             _view.SearchClicked += async (s, q) => await LoadDataAsync(q);
-            _view.AddClicked += OnAdd;
-            _view.EditClicked += OnEdit;
-            _view.DeleteClicked += OnDelete;
+            _view.SaveClicked += OnSaveClicked;
         }
 
         public async void LoadData(string search = null) => await LoadDataAsync(search);
@@ -38,7 +35,7 @@ namespace WaDesktop.Client.Presenters
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Gagal load companies: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Gagal load companies: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -46,23 +43,35 @@ namespace WaDesktop.Client.Presenters
             }
         }
 
-        private void OnAdd(object sender, EventArgs e)
+        private async void OnSaveClicked(object sender, EventArgs e)
         {
-            MessageBox.Show("Add Company — implement form dialog.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+            _view.IsLoading = true;
+            try
+            {
+                // Delete rows that user removed via Delete key
+                foreach (long id in _view.GetDeletedIds())
+                    await Task.Run(() => _api.DeleteCompanyAsync(id));
 
-        private void OnEdit(object sender, EventArgs e)
-        {
-            if (_view.SelectedIndex < 0) { MessageBox.Show("Pilih baris dulu.", "Info"); return; }
-            MessageBox.Show("Edit Company — implement form dialog.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+                // Create new / update existing
+                foreach (Company c in _view.GetModifiedRows())
+                {
+                    if (c.Id == 0)
+                        await Task.Run(() => _api.CreateCompanyAsync(c.Name));
+                    else
+                        await Task.Run(() => _api.UpdateCompanyAsync(c.Id, c.Name));
+                }
 
-        private void OnDelete(object sender, EventArgs e)
-        {
-            if (_view.SelectedIndex < 0) { MessageBox.Show("Pilih baris dulu.", "Info"); return; }
-            var confirm = MessageBox.Show("Hapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm == DialogResult.Yes)
-                MessageBox.Show("Delete Company — implement API call.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await LoadDataAsync();
+                MessageBox.Show("Data berhasil disimpan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal menyimpan: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _view.IsLoading = false;
+            }
         }
 
         public void Dispose()
@@ -71,9 +80,7 @@ namespace WaDesktop.Client.Presenters
             {
                 _view.RefreshClicked -= null;
                 _view.SearchClicked -= null;
-                _view.AddClicked -= null;
-                _view.EditClicked -= null;
-                _view.DeleteClicked -= null;
+                _view.SaveClicked -= null;
                 _disposed = true;
             }
         }

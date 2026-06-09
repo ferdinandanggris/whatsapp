@@ -7,9 +7,7 @@ namespace WaDesktop.Client.Views.ManagementViews
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.Button btnRefresh;
-        private System.Windows.Forms.Button btnAdd;
-        private System.Windows.Forms.Button btnEdit;
-        private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Panel panelToolbar;
 
         protected override void Dispose(bool disposing)
@@ -24,34 +22,39 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnSearch = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
-            this.btnAdd = new System.Windows.Forms.Button();
-            this.btnEdit = new System.Windows.Forms.Button();
-            this.btnDelete = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             this.panelToolbar = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.panelToolbar.SuspendLayout();
             this.SuspendLayout();
 
             // dataGridView
-            this.dataGridView.AllowUserToAddRows = false;
-            this.dataGridView.AllowUserToDeleteRows = false;
+            this.dataGridView.AllowUserToAddRows = true;
+            this.dataGridView.AllowUserToDeleteRows = true;
             this.dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridView.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dataGridView.Location = new System.Drawing.Point(0, 40);
             this.dataGridView.Name = "dataGridView";
-            this.dataGridView.ReadOnly = true;
+            this.dataGridView.ReadOnly = false;
             this.dataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView.Size = new System.Drawing.Size(1000, 666);
             this.dataGridView.TabIndex = 0;
+
             // Columns
             this.dataGridView.Columns.Add("Id", "ID");
             this.dataGridView.Columns.Add("Name", "Name");
             this.dataGridView.Columns.Add("CreatedAt", "Created At");
+            this.dataGridView.Columns["Id"].ReadOnly = true;
+            this.dataGridView.Columns["CreatedAt"].ReadOnly = true;
+
+            // Events
+            this.dataGridView.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.DataGridView_CellBeginEdit);
+            this.dataGridView.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView_CellEndEdit);
+            this.dataGridView.UserDeletingRow += new System.Windows.Forms.DataGridViewRowCancelEventHandler(this.DataGridView_UserDeletingRow);
 
             // panelToolbar
-            this.panelToolbar.Controls.Add(this.btnDelete);
-            this.panelToolbar.Controls.Add(this.btnEdit);
-            this.panelToolbar.Controls.Add(this.btnAdd);
+            this.panelToolbar.Controls.Add(this.btnSave);
             this.panelToolbar.Controls.Add(this.btnRefresh);
             this.panelToolbar.Controls.Add(this.btnSearch);
             this.panelToolbar.Controls.Add(this.txtSearch);
@@ -79,23 +82,11 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
 
-            // btnAdd
-            this.btnAdd.Location = new System.Drawing.Point(376, 8);
-            this.btnAdd.Text = "Add";
-            this.btnAdd.UseVisualStyleBackColor = true;
-            this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
-
-            // btnEdit
-            this.btnEdit.Location = new System.Drawing.Point(457, 8);
-            this.btnEdit.Text = "Edit";
-            this.btnEdit.UseVisualStyleBackColor = true;
-            this.btnEdit.Click += new System.EventHandler(this.btnEdit_Click);
-
-            // btnDelete
-            this.btnDelete.Location = new System.Drawing.Point(538, 8);
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // btnSave
+            this.btnSave.Location = new System.Drawing.Point(376, 8);
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
 
             // CompanyView
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
