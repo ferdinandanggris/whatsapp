@@ -122,8 +122,14 @@
     <Compile Include="Presenters\PhoneNumberDetailPresenter.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Views\LoginView.resx">
+      <DependentUpon>LoginView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Views\ManagementViews\AppSettingsView.resx">
       <DependentUpon>AppSettingsView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ManagementViews\CompanyView.resx">
+      <DependentUpon>CompanyView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\ManagementViews\PhoneNumberDetailView.resx">
       <DependentUpon>PhoneNumberDetailView.cs</DependentUpon>

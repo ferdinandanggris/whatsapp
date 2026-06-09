@@ -134,11 +134,17 @@ namespace WaDesktop.Client.Views
             // tabWorkspace
             // 
             this.tabWorkspace.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabWorkspace.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
             this.tabWorkspace.Location = new System.Drawing.Point(0, 0);
             this.tabWorkspace.Name = "tabWorkspace";
+            this.tabWorkspace.Padding = new System.Drawing.Point(22, 5);
             this.tabWorkspace.SelectedIndex = 0;
             this.tabWorkspace.Size = new System.Drawing.Size(1076, 706);
+            this.tabWorkspace.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.tabWorkspace.TabIndex = 0;
+            this.tabWorkspace.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.TabWorkspace_DrawItem);
+            this.tabWorkspace.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TabWorkspace_MouseDown);
+            this.tabWorkspace.MouseMove += new System.Windows.Forms.MouseEventHandler(this.TabWorkspace_MouseMove);
             // 
             // statusStrip
             // 
