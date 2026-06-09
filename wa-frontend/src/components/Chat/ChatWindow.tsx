@@ -112,6 +112,34 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     }, []);
 
+    // Force scroll to bottom when switching conversations
+    useEffect(() => {
+        console.log(`Active conversation changed: `,activeConversation);
+        if (!activeConversation) return;
+
+        // Reset tracking so the messages effect can trigger auto-scroll
+        prevMsgLenRef.current = 0;
+        newMsgCountRef.current = 0;
+        isNearBottomRef.current = true;
+
+        // Hide badge and FAB
+        if (badgeRef.current) {
+            badgeRef.current.textContent = '';
+            badgeRef.current.classList.add('hidden');
+        }
+        if (fabRef.current) {
+            fabRef.current.classList.add('hidden');
+        }
+
+        // Scroll to bottom (with small delay for DOM to settle)
+        const viewport = scrollViewportRef.current;
+        if (viewport) {
+            requestAnimationFrame(() => {
+                viewport.scrollTop = viewport.scrollHeight;
+            });
+        }
+    }, [activeConversation?.id]);
+
     // Smart auto-scroll: scroll to bottom when new messages arrive (only if near bottom)
     useEffect(() => {
         // Find and cache viewport from ScrollArea
@@ -182,25 +210,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         return () => viewport.removeEventListener('scroll', handleScroll);
     }, [hasMore, isFetchingMore, handleLoadMore, checkIsNearBottom]);
 
-    if (!activeConversation) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/30">
-                <div className="text-center space-y-4">
-                    <div className="w-24 h-24 bg-[#00a884]/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-indigo-100">
-                        <Avatar className="w-16 h-16 rounded-full">
-                            <AvatarFallback className="bg-white text-[#00a884] font-bold text-2xl">WC</AvatarFallback>
-                        </Avatar>
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-800">Whatsapp Client</h2>
-                    <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed">
-                        Pilih percakapan dari daftar di sebelah kiri untuk mulai berkirim pesan dengan pelanggan Anda secara real-time.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    const currentTyping = typingAgents[activeConversation.id];
+    const currentTyping = activeConversation ? typingAgents[activeConversation.id] : null;
 
     return (
         <div
@@ -219,56 +229,79 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 }
             }}
         >
-            <div className="h-[72px] border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
-                <div 
-                    className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-85 transition-opacity"
-                    onClick={onToggleSidebar}
-                >
-                    <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
-                        <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
-                            {getInitials(activeConversation.customer_name)}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                        <h2 className="text-sm font-bold text-slate-900 truncate">{activeConversation.customer_name}</h2>
-                        <div className="flex items-center gap-2">
-                            <div className={cn("w-2 h-2 rounded-full", currentTyping ? "bg-green-500 animate-pulse" : "bg-slate-200")} />
-                            <span className={cn("text-[11px] font-medium transition-colors", currentTyping ? "text-green-600 italic" : "text-slate-500")}>
-                                {currentTyping ? `${currentTyping.name} sedang mengetik...` : activeConversation.customer_wa_id}
-                            </span>
+            {/* ── Header ── */}
+            {activeConversation ? (
+                <div className="h-[72px] border-b border-slate-100 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
+                    <div 
+                        className="flex items-center gap-3 min-w-0 cursor-pointer hover:opacity-85 transition-opacity"
+                        onClick={onToggleSidebar}
+                    >
+                        <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
+                            <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
+                                {getInitials(activeConversation.customer_name)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-bold text-slate-900 truncate">{activeConversation.customer_name}</h2>
+                            <div className="flex items-center gap-2">
+                                <div className={cn("w-2 h-2 rounded-full", currentTyping ? "bg-green-500 animate-pulse" : "bg-slate-200")} />
+                                <span className={cn("text-[11px] font-medium transition-colors", currentTyping ? "text-green-600 italic" : "text-slate-500")}>
+                                    {currentTyping ? `${currentTyping.name} sedang mengetik...` : activeConversation.customer_wa_id}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex items-center gap-1.5">
-                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-slate-500 hover:bg-slate-50" onClick={() => setIsMessageSearchOpen(!isMessageSearchOpen)}>
-                        <Search className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-slate-500 hover:bg-slate-50" onClick={onToggleSidebar} title="Info Kontak">
-                        <ChevronRight className="w-5 h-5" />
-                    </Button>
-                </div>
+                    <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-slate-500 hover:bg-slate-50" onClick={() => setIsMessageSearchOpen(!isMessageSearchOpen)}>
+                            <Search className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-slate-500 hover:bg-slate-50" onClick={onToggleSidebar} title="Info Kontak">
+                            <ChevronRight className="w-5 h-5" />
+                        </Button>
+                    </div>
 
-                {isMessageSearchOpen && (
-                    <div className="absolute top-[72px] right-6 w-80 bg-white border border-slate-100 rounded-b-2xl shadow-2xl p-3 z-50 animate-in slide-in-from-top-2 duration-200">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                            <Input
-                                placeholder="Cari pesan di chat ini..."
-                                className="pl-9 h-9 text-xs bg-slate-50 border-none"
-                                value={messageSearchTerm}
-                                onChange={(e) => setMessageSearchTerm(e.target.value)}
-                                autoFocus
-                            />
-                            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full" onClick={() => { setIsMessageSearchOpen(false); setMessageSearchTerm(''); }}>
-                                <X className="w-3 h-3 text-slate-400" />
-                            </Button>
+                    {isMessageSearchOpen && (
+                        <div className="absolute top-[72px] right-6 w-80 bg-white border border-slate-100 rounded-b-2xl shadow-2xl p-3 z-50 animate-in slide-in-from-top-2 duration-200">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                <Input
+                                    placeholder="Cari pesan di chat ini..."
+                                    className="pl-9 h-9 text-xs bg-slate-50 border-none"
+                                    value={messageSearchTerm}
+                                    onChange={(e) => setMessageSearchTerm(e.target.value)}
+                                    autoFocus
+                                />
+                                <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full" onClick={() => { setIsMessageSearchOpen(false); setMessageSearchTerm(''); }}>
+                                    <X className="w-3 h-3 text-slate-400" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <></>
+            )}
+
+            {/* ── Messages area (ScrollArea ALWAYS mounted) ── */}
+            <div className="flex-1 relative overflow-hidden bg-slate-50/30">
+                {/* Empty state overlay */}
+                {!activeConversation && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-50/30">
+                        <div className="text-center space-y-4">
+                            <div className="w-24 h-24 bg-[#00a884]/10 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-indigo-100">
+                                <Avatar className="w-16 h-16 rounded-full">
+                                    <AvatarFallback className="bg-white text-[#00a884] font-bold text-2xl">WC</AvatarFallback>
+                                </Avatar>
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-800">Whatsapp Client</h2>
+                            <p className="text-slate-500 max-w-sm mx-auto text-sm leading-relaxed">
+                                Pilih percakapan dari daftar di sebelah kiri untuk mulai berkirim pesan dengan pelanggan Anda secara real-time.
+                            </p>
                         </div>
                     </div>
                 )}
-            </div>
 
-            <div className="flex-1 relative overflow-hidden bg-slate-50/30">
                 <ScrollArea className="h-full w-full [&>div>div]:!block" ref={scrollRef}>
                     <div className="flex flex-col py-4 w-full min-w-0">
                         {isLoading && !processedMessages.length && (
@@ -299,18 +332,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     </div>
                 </ScrollArea>
 
-                {/* Scroll to bottom FAB (always mounted, toggled via CSS class) */}
-                <div ref={fabRef} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 hidden">
-                    <Button
-                        size="sm"
-                        className="relative h-10 w-10 rounded-full bg-white border border-slate-200 shadow-xl hover:shadow-2xl hover:bg-white text-slate-600 hover:text-slate-900 transition-all hover:scale-105 active:scale-95"
-                        onClick={() => { scrollToBottom(false); newMsgCountRef.current = 0; if (badgeRef.current) { badgeRef.current.textContent = ''; badgeRef.current.classList.add('hidden'); } fabRef.current?.classList.add('hidden'); }}
-                        title="Scroll to bottom"
-                    >
-                        <ChevronsDown className="w-5 h-5" />
-                        <span ref={badgeRef} className="absolute -top-1.5 -right-1.5 bg-[#00a884] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shadow-lg ring-2 ring-white hidden" />
-                    </Button>
-                </div>
+                {/* Scroll to bottom FAB */}
+                {activeConversation && (
+                    <div ref={fabRef} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 hidden">
+                        <Button
+                            size="sm"
+                            className="relative h-10 w-10 rounded-full bg-white border border-slate-200 shadow-xl hover:shadow-2xl hover:bg-white text-slate-600 hover:text-slate-900 transition-all hover:scale-105 active:scale-95"
+                            onClick={() => { scrollToBottom(false); newMsgCountRef.current = 0; if (badgeRef.current) { badgeRef.current.textContent = ''; badgeRef.current.classList.add('hidden'); } fabRef.current?.classList.add('hidden'); }}
+                            title="Scroll to bottom"
+                        >
+                            <ChevronsDown className="w-5 h-5" />
+                            <span ref={badgeRef} className="absolute -top-1.5 -right-1.5 bg-[#00a884] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 shadow-lg ring-2 ring-white hidden" />
+                        </Button>
+                    </div>
+                )}
 
                 {isTemplateRequired && showTemplateQuickAction && allowSendTemplate && (
                     <div className="absolute inset-x-0 bottom-6 flex justify-center z-30 animate-in slide-in-from-bottom-4 duration-500">
@@ -336,23 +371,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 )}
             </div>
 
-            <ChatInput
-                inputText={inputText}
-                setInputText={setInputText}
-                handleSend={handleSend}
-                handleKeyDown={handleKeyDown}
-                fileInputRef={fileInputRef}
-                handleFileSelect={handleFileSelect}
-                setShowEmojiPicker={setShowEmojiPicker}
-                showEmojiPicker={showEmojiPicker}
-                setEmojiTarget={setEmojiTarget}
-                isTemplateRequired={isTemplateRequired}
-                allowSendTemplate={allowSendTemplate}
-                setIsTemplateDialogOpen={setIsTemplateDialogOpen}
-                replyingTo={replyingTo}
-                setReplyingTo={setReplyingTo}
-                handleFiles={handleFiles}
-            />
+            {/* ── Input ── */}
+            {activeConversation && (
+                <ChatInput
+                    inputText={inputText}
+                    setInputText={setInputText}
+                    handleSend={handleSend}
+                    handleKeyDown={handleKeyDown}
+                    fileInputRef={fileInputRef}
+                    handleFileSelect={handleFileSelect}
+                    setShowEmojiPicker={setShowEmojiPicker}
+                    showEmojiPicker={showEmojiPicker}
+                    setEmojiTarget={setEmojiTarget}
+                    isTemplateRequired={isTemplateRequired}
+                    allowSendTemplate={allowSendTemplate}
+                    setIsTemplateDialogOpen={setIsTemplateDialogOpen}
+                    replyingTo={replyingTo}
+                    setReplyingTo={setReplyingTo}
+                    handleFiles={handleFiles}
+                />
+            )}
         </div>
     );
 };
