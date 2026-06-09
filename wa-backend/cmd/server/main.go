@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	chicors "github.com/go-chi/cors"
 	chimw "github.com/go-chi/chi/v5/middleware"
 
 	"github.com/ferdinandanggris/wa-backend/internal/config"
@@ -119,6 +120,14 @@ func main() {
 	r.Use(chimw.RealIP)
 	r.Use(requestLogger)
 	r.Use(chimw.Recoverer)
+	r.Use(chicors.Handler(chicors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 	r.Use(chimw.Timeout(30 * time.Second))
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

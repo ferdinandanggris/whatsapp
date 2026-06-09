@@ -120,6 +120,13 @@
     <Compile Include="Presenters\TemplatesPresenter.cs" />
     <Compile Include="Presenters\AppSettingsPresenter.cs" />
     <Compile Include="Presenters\PhoneNumberDetailPresenter.cs" />
+    <Compile Include="Services\EmbeddedServer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Copy built frontend to output -->
+    <Content Include="wwwroot\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Views\LoginView.resx">

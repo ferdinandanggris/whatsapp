@@ -10,6 +10,7 @@ namespace WaDesktop.Client.Views
     public partial class DashboardView : UserControl, IDashboardView
     {
         private bool _initialized;
+        private string _preloadScript;
 
         public DashboardView()
         {
@@ -19,6 +20,11 @@ namespace WaDesktop.Client.Views
         }
 
         // ── IDashboardView ──
+
+        public string PreloadScript
+        {
+            set { _preloadScript = value; }
+        }
 
         public string Url
         {
@@ -31,6 +37,14 @@ namespace WaDesktop.Client.Views
                         await webView.EnsureCoreWebView2Async(null);
                         _initialized = true;
                     }
+
+                    // Inject preload script before navigate — runs BEFORE React loads
+                    if (!string.IsNullOrEmpty(_preloadScript))
+                    {
+                        await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(_preloadScript);
+                        _preloadScript = null; // sudah terdaftar, jangan daftar ulang
+                    }
+
                     webView.CoreWebView2.Navigate(value);
                 });
             }

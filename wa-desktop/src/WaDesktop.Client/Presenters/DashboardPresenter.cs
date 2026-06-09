@@ -15,16 +15,21 @@ namespace WaDesktop.Client.Presenters
         private readonly IDashboardView _view;
         private readonly IEventAggregator _bus;
         private readonly IAuthService _auth;
+        private readonly string _dashboardUrl;
+        private readonly string _apiBaseUrl;
         private readonly HttpClient _http;
         private IDisposable _loginSub;
         private IDisposable _tokenRefreshSub;
         private bool _disposed;
 
-        public DashboardPresenter(IDashboardView view, IEventAggregator bus, IAuthService auth)
+        public DashboardPresenter(IDashboardView view, IEventAggregator bus, IAuthService auth,
+            string dashboardUrl, string apiBaseUrl = null)
         {
             _view = view;
             _bus = bus;
             _auth = auth;
+            _dashboardUrl = dashboardUrl;
+            _apiBaseUrl = apiBaseUrl ?? "http://localhost:8080";
             _http = new HttpClient();
 
             _view.LoadCompleted += OnLoadCompleted;
@@ -32,13 +37,19 @@ namespace WaDesktop.Client.Presenters
             _loginSub = bus.Subscribe<LoginCompletedMessage>(_ => InjectToken());
             _tokenRefreshSub = bus.Subscribe<TokenRefreshedMessage>(_ => InjectToken());
 
-            // Load frontend SPA
-            _view.Url = "http://localhost:5173"; // Vite dev server
+            // Inject token via preload script BEFORE React loads
+            SetupPreloadScript();
+
+            // Load frontend SPA from embedded server (or dev server fallback)
+            _view.Url = _dashboardUrl;
         }
 
         private void OnLoadCompleted(object sender, EventArgs e) => InjectToken();
 
-        private void InjectToken()
+        /// <summary>
+        /// Inject script via AddScriptToExecuteOnDocumentCreatedAsync — jalan SEBELUM React load.
+        /// </summary>
+        private void SetupPreloadScript()
         {
             if (string.IsNullOrEmpty(_auth.AccessToken)) return;
 
@@ -47,9 +58,31 @@ if (!window.__DESKTOP_BRIDGE__) {{
     window.__DESKTOP_BRIDGE__ = {{}};
 }}
 window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
+window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
+localStorage.setItem('token', '{_auth.AccessToken}');
+";
+            _view.PreloadScript = script;
+        }
+
+        private void InjectToken()
+        {
+            if (string.IsNullOrEmpty(_auth.AccessToken)) return;
+
+            // Parse WS host from API base URL (not embedded server)
+            var apiUri = new Uri(_apiBaseUrl);
+            var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
+
+            var script = $@"
+if (!window.__DESKTOP_BRIDGE__) {{
+    window.__DESKTOP_BRIDGE__ = {{}};
+}}
+window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
+window.__API_BASE__ = '{_apiBaseUrl}';
+window.__WS_HOST__ = '{wsHost}';
 if (!window.__DESKTOP_BRIDGE__.postMessage) {{
     window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
 }}
+localStorage.setItem('token', '{_auth.AccessToken}');
 ";
             _view.ExecuteScript(script);
         }

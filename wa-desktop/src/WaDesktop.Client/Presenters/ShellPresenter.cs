@@ -15,18 +15,23 @@ namespace WaDesktop.Client.Presenters
         private readonly IAuthService _auth;
         private readonly IEventAggregator _bus;
         private readonly AppState _state;
+        private readonly string _dashboardUrl;
+        private readonly string _apiBaseUrl;
         private IDisposable _tabSub;
         private IDisposable _sessionSub;
         private IDisposable _notifSub;
         private IDisposable _badgeSub;
         private bool _disposed;
 
-        public ShellPresenter(IShellView view, IAuthService auth, IEventAggregator bus, AppState state)
+        public ShellPresenter(IShellView view, IAuthService auth, IEventAggregator bus, AppState state,
+            string dashboardUrl, string apiBaseUrl = "http://localhost:8080")
         {
             _view = view;
             _auth = auth;
             _bus = bus;
             _state = state;
+            _dashboardUrl = dashboardUrl;
+            _apiBaseUrl = apiBaseUrl;
 
             _tabSub = bus.Subscribe<RequestOpenTabMessage>(OnRequestOpenTab);
             _sessionSub = bus.Subscribe<SessionExpiredMessage>(OnSessionExpired);
@@ -55,7 +60,7 @@ namespace WaDesktop.Client.Presenters
             {
                 case "dashboard":
                     var dashView = new DashboardView();
-                    var dashPresenter = new DashboardPresenter(dashView, _bus, _auth);
+                    var dashPresenter = new DashboardPresenter(dashView, _bus, _auth, _dashboardUrl, _apiBaseUrl);
                     ServiceLocator.Register(dashPresenter);
                     return dashView;
 

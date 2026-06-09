@@ -7,10 +7,16 @@ namespace WaDesktop.Domain.Interfaces
         /// <summary>URL yang akan di-load di WebView.</summary>
         string Url { set; }
 
+        /// <summary>
+        /// Script yang di-inject via AddScriptToExecuteOnDocumentCreatedAsync
+        /// sebelum navigasi. Jalan SEBELUM React app di-load.
+        /// </summary>
+        string PreloadScript { set; }
+
         /// <summary>Event: halaman selesai di-load.</summary>
         event EventHandler LoadCompleted;
 
-        /// <summary>Eksekusi JavaScript di WebView.</summary>
+        /// <summary>Eksekusi JavaScript di WebView (setelah page load).</summary>
         void ExecuteScript(string script);
 
         /// <summary>Event: menerima pesan dari JavaScript (via postMessage).</summary>
