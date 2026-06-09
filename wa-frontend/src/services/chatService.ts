@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { ApiResponse, PagedResponse, Conversation, ChatMessage, ApplicationSummary, WaChannel } from '../types/chat';
 import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
+
 const getBaseUrl = () => '';
 
 const apiClient = axios.create({
@@ -166,7 +167,7 @@ const mapMessage = (m: any): ChatMessage => {
         message_text: text,
         message_type: m.type,
         media_id: mediaId,
-        file_path: mediaId ? `/api/v1/media/${mediaId}` : undefined,
+        file_path: mediaId ? `${import.meta.env.VITE_BASE_URL}/api/v1/media/${mediaId}` : undefined,
         file_name: filename,
         file_type: m.type,
         direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',

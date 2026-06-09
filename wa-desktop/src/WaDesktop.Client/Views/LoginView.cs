@@ -39,5 +39,10 @@ namespace WaDesktop.Client.Views
             if (e.KeyChar == (char)Keys.Enter)
                 LoginClicked?.Invoke(this, EventArgs.Empty);
         }
+
+        private void labelTitle_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

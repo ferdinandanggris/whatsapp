@@ -205,8 +205,10 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                     </div>
                 </div>
 
-                {/* Danger Actions Section */}
-                <div className="space-y-2 pt-4">
+                {/* Danger Actions Section 
+                    // Comment dulu, karena fitur blokir kontak masih dalam tahap pengujian internal. Nantinya akan ada opsi untuk memblokir kontak langsung dari sidebar ini, lengkap dengan konfirmasi dan penjelasan konsekuensinya.
+                */}
+                {/* <div className="space-y-2 pt-4">
                     <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-1">Kontrol Kontak</span>
                     <div className="flex flex-col gap-2">
                         <Button 
@@ -235,7 +237,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                             </div>
                         )}
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
