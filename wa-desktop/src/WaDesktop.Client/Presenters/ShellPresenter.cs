@@ -61,14 +61,14 @@ namespace WaDesktop.Client.Presenters
 
                 case "company":
                     var coView = new CompanyView();
-                    var coPresenter = new CompanyPresenter(coView, ServiceLocator.Resolve<IApiClient>(), _bus);
+                    var coPresenter = new CompanyPresenter(coView, ServiceLocator.Resolve<IApiClient>());
                     ServiceLocator.Register(coPresenter);
                     coPresenter.LoadData();
                     return coView;
 
                 case "users":
                     var usrView = new UsersView();
-                    var usrPresenter = new UsersPresenter(usrView, ServiceLocator.Resolve<IApiClient>(), _bus);
+                    var usrPresenter = new UsersPresenter(usrView, ServiceLocator.Resolve<IApiClient>());
                     ServiceLocator.Register(usrPresenter);
                     usrPresenter.LoadData();
                     return usrView;

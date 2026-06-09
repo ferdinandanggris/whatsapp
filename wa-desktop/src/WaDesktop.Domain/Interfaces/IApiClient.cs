@@ -19,7 +19,14 @@ namespace WaDesktop.Domain.Interfaces
 
         Task<List<PhoneNumberNode>> GetPhoneNumbersAsync();
         Task<List<Company>> GetCompaniesAsync(string search = null);
+        Task<Company> CreateCompanyAsync(string name);
+        Task<Company> UpdateCompanyAsync(long id, string name);
+        Task DeleteCompanyAsync(long id);
         Task<List<User>> GetUsersAsync(string search = null);
+        Task<User> CreateUserAsync(string email, string password, string displayName, string role, long? companyId);
+        Task UpdateUserAsync(string id, string displayName, string role, long? companyId, bool? isActive = null);
+        Task DeactivateUserAsync(string id);
+        Task ResetPasswordAsync(string id, string newPassword);
         Task<List<Template>> GetTemplatesAsync(string search = null);
         Task<AppSetting> GetAppSettingsAsync();
         Task<List<string>> SaveAppSettingsAsync(AppSetting settings);

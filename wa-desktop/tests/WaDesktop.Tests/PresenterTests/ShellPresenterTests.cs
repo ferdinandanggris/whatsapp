@@ -41,6 +41,8 @@ namespace WaDesktop.Tests.PresenterTests
             public void AddOrSelectTab(string key, string title, IViewBase content) { }
             public void CloseTab(string key) { }
             public void ClearTabs() { }
+            public void ShowNotification(string title, string body) { }
+            public void SetBadge(int count) { }
 
             public void TriggerDashboard() => DashboardClicked?.Invoke(this, EventArgs.Empty);
             public void TriggerLogout() => LogoutClicked?.Invoke(this, EventArgs.Empty);

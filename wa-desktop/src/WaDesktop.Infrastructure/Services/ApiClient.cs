@@ -103,6 +103,52 @@ namespace WaDesktop.Infrastructure.Services
             return data;
         }
 
+        public async Task<Company> CreateCompanyAsync(string name)
+        {
+            var body = JsonConvert.SerializeObject(new { name });
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/companies",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Create company failed: {err}");
+            }
+
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Company>(json);
+        }
+
+        public async Task<Company> UpdateCompanyAsync(long id, string name)
+        {
+            var body = JsonConvert.SerializeObject(new { name });
+            var res = await SendWithRefreshAsync(() =>
+                _http.PutAsync($"{_baseUrl}/api/v1/companies/{id}",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Update company failed: {err}");
+            }
+
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Company>(json);
+        }
+
+        public async Task DeleteCompanyAsync(long id)
+        {
+            var res = await SendWithRefreshAsync(() =>
+                _http.DeleteAsync($"{_baseUrl}/api/v1/companies/{id}"));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Delete company failed: {err}");
+            }
+        }
+
         // ── Users ──
 
         public async Task<List<User>> GetUsersAsync(string search = null)
@@ -113,6 +159,72 @@ namespace WaDesktop.Infrastructure.Services
                 data = data.Where(u => u.DisplayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
                     || u.Email.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
             return data;
+        }
+
+        public async Task<User> CreateUserAsync(string email, string password, string displayName, string role, long? companyId)
+        {
+            var body = JsonConvert.SerializeObject(new { email, password, display_name = displayName, role, company_id = companyId });
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/users",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Create user failed: {err}");
+            }
+
+            var json = await res.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<User>(json);
+        }
+
+        public async Task UpdateUserAsync(string id, string displayName, string role, long? companyId, bool? isActive = null)
+        {
+            var payload = new Dictionary<string, object>
+            {
+                ["display_name"] = displayName,
+                ["role"] = role,
+                ["company_id"] = companyId
+            };
+            if (isActive.HasValue)
+                payload["is_active"] = isActive.Value;
+
+            var body = JsonConvert.SerializeObject(payload);
+            var res = await SendWithRefreshAsync(() =>
+                _http.PutAsync($"{_baseUrl}/api/v1/users/{id}",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Update user failed: {err}");
+            }
+        }
+
+        public async Task DeactivateUserAsync(string id)
+        {
+            var req = new HttpRequestMessage(new HttpMethod("PATCH"), $"{_baseUrl}/api/v1/users/{id}/deactivate");
+            var res = await SendWithRefreshAsync(() => _http.SendAsync(req));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Deactivate user failed: {err}");
+            }
+        }
+
+        public async Task ResetPasswordAsync(string id, string newPassword)
+        {
+            var body = JsonConvert.SerializeObject(new { new_password = newPassword });
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/users/{id}/reset-password",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Reset password failed: {err}");
+            }
         }
 
         // ── Templates ──
