@@ -161,7 +161,9 @@ func main() {
 				r.Use(middleware.RequireRole("super_admin", "company_admin"))
 				r.Get("/users", userHandler.List)
 				r.Post("/users", userHandler.Create)
+				r.Put("/users/{id}", userHandler.Update)
 				r.Patch("/users/{id}/deactivate", userHandler.Deactivate)
+				r.Post("/users/{id}/reset-password", userHandler.ResetPassword)
 				r.Put("/phone-numbers/{id}", phoneHandler.Update)
 				r.Post("/phone-numbers/{id}/sync-profile", phoneHandler.SyncProfile)
 				r.Post("/phone-numbers/{id}/profile-picture", phoneHandler.UploadPicture)
@@ -171,6 +173,11 @@ func main() {
 				r.Delete("/templates/{id}", tplHandler.Delete)
 			})
 
+			// Companies — authenticated
+			r.Get("/companies", companyHandler.List)
+			r.Get("/companies/{id}", companyHandler.GetByID)
+			r.Put("/companies/{id}", companyHandler.Update)
+
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("super_admin"))
 				r.Get("/webhook/override", webhookOverrideHandler.Get)
@@ -178,11 +185,9 @@ func main() {
 				r.Delete("/webhook/override", webhookOverrideHandler.Remove)
 				r.Get("/settings", settingsHandler.GetSettings)
 				r.Put("/settings", settingsHandler.UpdateSettings)
+				r.Post("/companies", companyHandler.Create)
+				r.Delete("/companies/{id}", companyHandler.Delete)
 			})
-
-			// Companies — super_admin sees all, company_admin sees own
-			r.Get("/companies", companyHandler.List)
-			r.Get("/companies/{id}", companyHandler.GetByID)
 		})
 	})
 

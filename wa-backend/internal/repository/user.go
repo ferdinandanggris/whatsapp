@@ -153,10 +153,20 @@ func (r *UserRepository) CreateInitialSuperAdmin(ctx context.Context, email, has
 	return &u, nil
 }
 
-// UpdateUser updates display_name and role for a user.
-func (r *UserRepository) UpdateUser(ctx context.Context, id, role, displayName string) error {
-	query := `UPDATE users SET role = $1, display_name = $2 WHERE id = $3`
-	_, err := r.pool.Exec(ctx, query, role, displayName, id)
+// UpdateUser updates display_name, role, company_id, and optionally is_active for a user.
+func (r *UserRepository) UpdateUser(ctx context.Context, id, role, displayName string, companyID *int64, isActive *bool) error {
+	if isActive != nil {
+		_, err := r.pool.Exec(ctx,
+			`UPDATE users SET role = $1, display_name = $2, company_id = $3, is_active = $4 WHERE id = $5`,
+			role, displayName, companyID, *isActive, id)
+		if err != nil {
+			return fmt.Errorf("update user: %w", err)
+		}
+		return nil
+	}
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET role = $1, display_name = $2, company_id = $3 WHERE id = $4`,
+		role, displayName, companyID, id)
 	if err != nil {
 		return fmt.Errorf("update user: %w", err)
 	}

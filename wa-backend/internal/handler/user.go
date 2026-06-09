@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -25,6 +26,17 @@ type createUserRequest struct {
 	Role        string `json:"role"`
 	CompanyID   *int64 `json:"company_id,omitempty"`
 	DisplayName string `json:"display_name"`
+}
+
+type updateUserRequest struct {
+	DisplayName string `json:"display_name"`
+	Role        string `json:"role"`
+	CompanyID   *int64 `json:"company_id,omitempty"`
+	IsActive    *bool  `json:"is_active,omitempty"`
+}
+
+type resetPasswordRequest struct {
+	NewPassword string `json:"new_password"`
 }
 
 func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +128,71 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "user id required")
+		return
+	}
+
+	claims := middleware.GetClaims(r.Context())
+
+	// company_admin can only update users in their own company
+	if claims.Role != "super_admin" {
+		existing, err := h.users.FindByID(r.Context(), id)
+		if err != nil || existing == nil {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		if existing.CompanyID == nil || claims.CompanyID == nil || *existing.CompanyID != *claims.CompanyID {
+			writeError(w, http.StatusForbidden, "access denied")
+			return
+		}
+
+		var req updateUserRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.DisplayName == "" {
+			writeError(w, http.StatusBadRequest, "display_name is required")
+			return
+		}
+
+		// company_admin: keep existing role & company_id
+		if err := h.users.UpdateUser(r.Context(), id, existing.Role, req.DisplayName, existing.CompanyID, req.IsActive); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to update user")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+		return
+	}
+
+	// super_admin: full update
+	var req updateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.DisplayName == "" {
+		writeError(w, http.StatusBadRequest, "display_name is required")
+		return
+	}
+
+	role := req.Role
+	if role == "" {
+		role = "agent"
+	}
+
+	if err := h.users.UpdateUser(r.Context(), id, role, req.DisplayName, req.CompanyID, req.IsActive); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update user")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
 func (h *UserHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if id == "" {
@@ -135,6 +212,56 @@ func (h *UserHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deactivated"})
+}
+
+func (h *UserHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeError(w, http.StatusBadRequest, "user id required")
+		return
+	}
+
+	var req resetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.NewPassword == "" {
+		writeError(w, http.StatusBadRequest, "new_password is required")
+		return
+	}
+	if len(req.NewPassword) < 8 {
+		writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
+		return
+	}
+
+	claims := middleware.GetClaims(r.Context())
+	if claims.Role != "super_admin" {
+		existing, err := h.users.FindByID(r.Context(), id)
+		if err != nil || existing == nil {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		if existing.CompanyID == nil || claims.CompanyID == nil || *existing.CompanyID != *claims.CompanyID {
+			writeError(w, http.StatusForbidden, "access denied")
+			return
+		}
+	}
+
+	hash, err := service.HashPassword(req.NewPassword)
+	if err != nil {
+		slog.Error("hash password", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to reset password")
+		return
+	}
+
+	if err := h.users.UpdatePassword(r.Context(), id, hash); err != nil {
+		slog.Error("update password", "error", err)
+		writeError(w, http.StatusInternalServerError, "failed to reset password")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "password_reset"})
 }
 
 func isDuplicateEmail(err error) bool {

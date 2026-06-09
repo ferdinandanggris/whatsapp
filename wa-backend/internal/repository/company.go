@@ -39,6 +39,22 @@ func (r *CompanyRepository) Create(ctx context.Context, name string) (int64, err
 	return id, nil
 }
 
+func (r *CompanyRepository) Update(ctx context.Context, id int64, name string) error {
+	_, err := r.pool.Exec(ctx, "UPDATE companies SET name = $1 WHERE id = $2", name, id)
+	if err != nil {
+		return fmt.Errorf("update company %d: %w", id, err)
+	}
+	return nil
+}
+
+func (r *CompanyRepository) Delete(ctx context.Context, id int64) error {
+	_, err := r.pool.Exec(ctx, "DELETE FROM companies WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("delete company %d: %w", id, err)
+	}
+	return nil
+}
+
 func (r *CompanyRepository) List(ctx context.Context) ([]*model.Company, error) {
 	rows, err := r.pool.Query(ctx, "SELECT "+companyCols+" FROM companies ORDER BY name")
 	if err != nil {
