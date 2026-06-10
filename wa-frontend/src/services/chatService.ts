@@ -3,7 +3,12 @@ import type { ApiResponse, PagedResponse, Conversation, ChatMessage, Application
 import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
 
-const getBaseUrl = () => '';
+const getBaseUrl = () => {
+    if (typeof window !== "undefined" && (window as any).__API_BASE__) {
+        return (window as any).__API_BASE__;
+    }
+    return '';
+};
 
 const apiClient = axios.create({
     baseURL: getBaseUrl(),

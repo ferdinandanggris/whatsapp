@@ -1,10 +1,15 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+    if (typeof window !== "undefined" && (window as any).__API_BASE__) {
+        return (window as any).__API_BASE__;
+    }
+    return '';
+};
+
 const apiClient = axios.create({
-    baseURL: '',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    baseURL: getBaseUrl(),
+    headers: { 'Content-Type': 'application/json', },
 });
 
 export const login = async (email: string, password: string) => {

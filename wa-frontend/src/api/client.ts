@@ -1,3 +1,4 @@
+import axios from "axios"
 import { isDesktop, initDesktopToken, postToDesktop } from "./desktopBridge"
 
 // Sync token from desktop bridge on first load
@@ -9,6 +10,9 @@ function getBase(): string {
   }
   return ""
 }
+
+// Set global axios base URL so all /api/v1/* calls go to backend, not same-origin
+axios.defaults.baseURL = getBase()
 
 let isRefreshing = false
 let refreshSubscribers: ((token: string) => void)[] = []

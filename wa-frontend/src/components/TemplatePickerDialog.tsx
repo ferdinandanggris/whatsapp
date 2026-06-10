@@ -73,11 +73,13 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
     }
   }, [isOpen]);
 
+  const getBase = () => typeof window !== "undefined" && (window as any).__API_BASE__ ? (window as any).__API_BASE__ : '';
+
   const fetchTemplates = async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/v1/templates', {
+      const response = await fetch(`${getBase()}/api/v1/templates`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await response.json();

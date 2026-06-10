@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:desktop": "tsc -b && vite build --outDir=../wa-desktop/src/WaDesktop.Client/wwwroot",
     "preview": "vite preview"
   },
   "dependencies": {
