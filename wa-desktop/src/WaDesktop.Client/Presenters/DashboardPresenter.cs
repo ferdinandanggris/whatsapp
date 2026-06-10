@@ -51,7 +51,13 @@ namespace WaDesktop.Client.Presenters
         /// </summary>
         private void SetupPreloadScript()
         {
-            if (string.IsNullOrEmpty(_auth.AccessToken)) return;
+            if (string.IsNullOrEmpty(_auth.AccessToken))
+            {
+                System.Diagnostics.Debug.WriteLine("[Dashboard] No token at preload setup — skipping");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[Dashboard] Setting preload script with token length=" + _auth.AccessToken.Length);
 
             var script = $@"
 if (!window.__DESKTOP_BRIDGE__) {{
@@ -66,7 +72,13 @@ localStorage.setItem('token', '{_auth.AccessToken}');
 
         private void InjectToken()
         {
-            if (string.IsNullOrEmpty(_auth.AccessToken)) return;
+            if (string.IsNullOrEmpty(_auth.AccessToken))
+            {
+                System.Diagnostics.Debug.WriteLine("[Dashboard] No token at InjectToken — skipping");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("[Dashboard] InjectToken — setting token in page");
 
             // Parse WS host from API base URL (not embedded server)
             var apiUri = new Uri(_apiBaseUrl);
