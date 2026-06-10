@@ -121,9 +121,12 @@ func (r *ConversationRepository) List(ctx context.Context, companyID *int64, pho
 	}
 
 	args = append(args, limit, offset)
+
+	// add conv cols to sort unread_count first, then last_message_at
+
 	rows, err := r.pool.Query(ctx, `
 		SELECT `+convCols+` `+join+where+`
-		ORDER BY c.last_message_at DESC NULLS LAST
+		ORDER BY (CASE WHEN c.unread_count >= 1 THEN TRUE ELSE FALSE END) DESC, c.last_message_at DESC NULLS LAST
 		LIMIT $`+fmt.Sprintf("%d", len(args)-1)+` OFFSET $`+fmt.Sprintf("%d", len(args)), args...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list conversations: %w", err)
