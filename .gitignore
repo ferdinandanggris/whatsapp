@@ -36,5 +36,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Built frontend (generated, not tracked)
+wa-desktop/src/WaDesktop.Client/wwwroot/assets/
+
 # Internal agent and cli tools
 .antigravitycli/

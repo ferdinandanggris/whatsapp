@@ -123,7 +123,7 @@
     <Compile Include="Services\EmbeddedServer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Copy built frontend to output -->
+    <!-- Copy built frontend to output — wildcard, gak perlu update tiap build -->
     <Content Include="wwwroot\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

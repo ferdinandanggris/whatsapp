@@ -59,12 +59,18 @@ namespace WaDesktop.Client.Presenters
 
             System.Diagnostics.Debug.WriteLine("[Dashboard] Setting preload script with token length=" + _auth.AccessToken.Length);
 
+            // Parse WS host from API base URL (not embedded server)
+            var apiUri = new Uri(_apiBaseUrl);
+            var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
+
             var script = $@"
 if (!window.__DESKTOP_BRIDGE__) {{
     window.__DESKTOP_BRIDGE__ = {{}};
 }}
 window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
 window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
+window.__API_BASE__ = '{_apiBaseUrl}';
+window.__WS_HOST__ = '{wsHost}';
 localStorage.setItem('token', '{_auth.AccessToken}');
 ";
             _view.PreloadScript = script;
