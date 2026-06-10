@@ -137,6 +137,16 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	claims := middleware.GetClaims(r.Context())
 
+	var req updateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.DisplayName == "" {
+		writeError(w, http.StatusBadRequest, "display_name is required")
+		return
+	}
+
 	// company_admin can only update users in their own company
 	if claims.Role != "super_admin" {
 		existing, err := h.users.FindByID(r.Context(), id)
@@ -146,16 +156,6 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		if existing.CompanyID == nil || claims.CompanyID == nil || *existing.CompanyID != *claims.CompanyID {
 			writeError(w, http.StatusForbidden, "access denied")
-			return
-		}
-
-		var req updateUserRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid request body")
-			return
-		}
-		if req.DisplayName == "" {
-			writeError(w, http.StatusBadRequest, "display_name is required")
 			return
 		}
 
@@ -170,16 +170,6 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// super_admin: full update
-	var req updateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-	if req.DisplayName == "" {
-		writeError(w, http.StatusBadRequest, "display_name is required")
-		return
-	}
-
 	role := req.Role
 	if role == "" {
 		role = "agent"
