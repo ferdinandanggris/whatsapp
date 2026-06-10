@@ -206,6 +206,18 @@ func (h *UserHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if claims.Role != "super_admin" {
+		existing, err := h.users.FindByID(r.Context(), id)
+		if err != nil || existing == nil {
+			writeError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		if existing.CompanyID == nil || claims.CompanyID == nil || *existing.CompanyID != *claims.CompanyID {
+			writeError(w, http.StatusForbidden, "access denied")
+			return
+		}
+	}
+
 	if err := h.users.Deactivate(r.Context(), id); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to deactivate user")
 		return
