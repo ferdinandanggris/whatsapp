@@ -18,6 +18,10 @@ namespace WaDesktop.Domain.Interfaces
         event EventHandler LogoutClicked;
 
         bool AppSettingsVisible { set; }
+        bool SidebarCollapsed { set; }
+        bool CompanyVisible { set; }
+        bool UsersVisible { set; }
+        bool TemplatesVisible { set; }
 
         void AddOrSelectTab(string key, string title, IViewBase content);
         void CloseTab(string key);

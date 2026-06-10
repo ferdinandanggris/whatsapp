@@ -38,6 +38,26 @@ namespace WaDesktop.Client.Views
             set { this.InvokeIfRequired(() => { appSettingsToolStripMenuItem.Visible = value; }); }
         }
 
+        public bool SidebarCollapsed
+        {
+            set { this.InvokeIfRequired(() => { splitContainer.Panel1Collapsed = value; }); }
+        }
+
+        public bool CompanyVisible
+        {
+            set { this.InvokeIfRequired(() => { companyToolStripMenuItem.Visible = value; }); }
+        }
+
+        public bool UsersVisible
+        {
+            set { this.InvokeIfRequired(() => { usersToolStripMenuItem.Visible = value; }); }
+        }
+
+        public bool TemplatesVisible
+        {
+            set { this.InvokeIfRequired(() => { templatesToolStripMenuItem.Visible = value; }); }
+        }
+
         public event EventHandler DashboardClicked;
         public event EventHandler CompanyClicked;
         public event EventHandler UsersClicked;

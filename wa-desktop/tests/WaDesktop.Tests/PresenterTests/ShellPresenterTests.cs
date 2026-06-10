@@ -30,6 +30,10 @@ namespace WaDesktop.Tests.PresenterTests
         {
             public string StatusText { get; set; }
             public bool AppSettingsVisible { get; set; }
+            public bool SidebarCollapsed { get; set; }
+            public bool CompanyVisible { get; set; }
+            public bool UsersVisible { get; set; }
+            public bool TemplatesVisible { get; set; }
             public bool InvokeRequired => false;
             public event EventHandler DashboardClicked;
             public event EventHandler CompanyClicked;

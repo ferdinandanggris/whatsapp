@@ -45,8 +45,15 @@ namespace WaDesktop.Client.Presenters
             view.AppSettingsClicked += (s, e) => OpenAppSettings();
             view.LogoutClicked += OnLogout;
 
+            bool isAgent = _state.Role == "agent";
             view.AppSettingsVisible = _auth.IsSuperAdmin;
+            view.SidebarCollapsed = isAgent;
+            view.CompanyVisible = !isAgent;
+            view.UsersVisible = !isAgent;
+            view.TemplatesVisible = !isAgent;
             view.StatusText = $"Logged in as {_auth.DisplayName}";
+
+            OpenDashboard();
         }
 
         private void OnRequestOpenTab(RequestOpenTabMessage msg)
