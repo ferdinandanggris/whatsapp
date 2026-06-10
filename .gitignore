@@ -39,5 +39,8 @@ dist/
 # Built frontend (generated, not tracked)
 wa-desktop/src/WaDesktop.Client/wwwroot/assets/
 
+# Backend binaries
+wa-backend/server
+
 # Internal agent and cli tools
 .antigravitycli/

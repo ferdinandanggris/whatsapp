@@ -368,6 +368,18 @@ namespace WaDesktop.Infrastructure.Services
             return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
         }
 
+        public async Task SyncPhoneNumbersFromMetaAsync()
+        {
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/sync", null));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Sync failed ({res.StatusCode}): {err}");
+            }
+        }
+
         public async Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath)
         {
             var bytes = System.IO.File.ReadAllBytes(filePath);

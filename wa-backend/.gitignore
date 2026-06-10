@@ -27,4 +27,4 @@ go.work.sum
 
 # Data
 data/
-wa-backend/server
+server

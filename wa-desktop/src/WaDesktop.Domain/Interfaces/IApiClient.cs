@@ -34,6 +34,7 @@ namespace WaDesktop.Domain.Interfaces
         Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId);
         Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, List<string> websites);
         Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId);
+        Task SyncPhoneNumbersFromMetaAsync();
         Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath);
         Task<byte[]> GetPhoneProfilePictureAsync(string url);
     }
