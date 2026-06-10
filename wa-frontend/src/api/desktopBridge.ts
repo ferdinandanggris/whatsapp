@@ -15,7 +15,7 @@ export function initDesktopToken(): void {
 /** Send a message back to the WinForms host */
 export function postToDesktop(msg: Record<string, unknown>): void {
   try {
-    ;(window as any).chrome?.webview?.postMessage(JSON.stringify(msg))
+    ;(window as any).chrome?.webview?.postMessage(msg)
   } catch {
     /* ignore */
   }
