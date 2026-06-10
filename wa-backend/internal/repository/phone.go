@@ -80,6 +80,22 @@ func (r *PhoneRepository) ListByCompany(ctx context.Context, companyID *int64) (
 	return phones, nil
 }
 
+func (r *PhoneRepository) Upsert(ctx context.Context, phoneNumberID, displayPhone, displayName, qualityRating string) error {
+	query := `
+		INSERT INTO wa_phone_numbers (phone_number_id, display_phone_number, display_name, quality_rating, updated_at)
+		VALUES ($1, $2, $3, $4, NOW())
+		ON CONFLICT (phone_number_id) DO UPDATE SET
+			display_phone_number = EXCLUDED.display_phone_number,
+			display_name = EXCLUDED.display_name,
+			quality_rating = EXCLUDED.quality_rating,
+			updated_at = NOW()`
+	_, err := r.pool.Exec(ctx, query, phoneNumberID, displayPhone, displayName, qualityRating)
+	if err != nil {
+		return fmt.Errorf("upsert phone %s: %w", phoneNumberID, err)
+	}
+	return nil
+}
+
 func (r *PhoneRepository) GetByID(ctx context.Context, id string) (*PhoneDetail, error) {
 	query := `
 		SELECT wpn.phone_number_id, wpn.display_name, wpn.display_phone_number,

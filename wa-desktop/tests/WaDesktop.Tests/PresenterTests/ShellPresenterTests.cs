@@ -57,7 +57,7 @@ namespace WaDesktop.Tests.PresenterTests
             var state = new AppState();
             state.SetSession("t", "rt", "admin", "Test");
 
-            var presenter = new global::WaDesktop.Client.Presenters.ShellPresenter(view, auth, bus, state);
+            var presenter = new global::WaDesktop.Client.Presenters.ShellPresenter(view, auth, bus, state, "http://localhost:5000");
 
             Assert.That(view.StatusText, Does.Contain("Test"));
             presenter.Dispose();
@@ -72,7 +72,7 @@ namespace WaDesktop.Tests.PresenterTests
             var state = new AppState();
             state.SetSession("t", "rt", "admin", "Test");
 
-            var presenter = new global::WaDesktop.Client.Presenters.ShellPresenter(view, auth, bus, state);
+            var presenter = new global::WaDesktop.Client.Presenters.ShellPresenter(view, auth, bus, state, "http://localhost:5000");
 
             view.TriggerLogout();
 

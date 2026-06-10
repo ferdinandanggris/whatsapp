@@ -25,11 +25,12 @@ type PhoneHandler struct {
 	mediaRepo *repository.MediaRepository
 	wapi     wapi.Client
 	appID    string
+	wabaID   string
 	mediaDir string
 }
 
-func NewPhoneHandler(repo *repository.PhoneRepository, mediaRepo *repository.MediaRepository, wapiClient wapi.Client, appID, mediaDir string) *PhoneHandler {
-	return &PhoneHandler{repo: repo, mediaRepo: mediaRepo, wapi: wapiClient, appID: appID, mediaDir: mediaDir}
+func NewPhoneHandler(repo *repository.PhoneRepository, mediaRepo *repository.MediaRepository, wapiClient wapi.Client, appID, wabaID, mediaDir string) *PhoneHandler {
+	return &PhoneHandler{repo: repo, mediaRepo: mediaRepo, wapi: wapiClient, appID: appID, wabaID: wabaID, mediaDir: mediaDir}
 }
 
 func (h *PhoneHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +57,49 @@ func (h *PhoneHandler) List(w http.ResponseWriter, r *http.Request) {
 		phones = []*repository.PhoneNumber{}
 	}
 	writeJSON(w, http.StatusOK, phones)
+}
+
+func (h *PhoneHandler) SyncFromMeta(w http.ResponseWriter, r *http.Request) {
+	claims := middleware.GetClaims(r.Context())
+	if claims == nil {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if claims.Role != "super_admin" && claims.Role != "company_admin" {
+		writeError(w, http.StatusForbidden, "no access")
+		return
+	}
+
+	wabaID := h.wabaID
+	if q := r.URL.Query().Get("waba_id"); q != "" {
+		wabaID = q
+	}
+	if wabaID == "" {
+		writeError(w, http.StatusBadRequest, "waba_id required (set WABA_ID env or pass as query param)")
+		return
+	}
+
+	phones, err := h.wapi.ListPhoneNumbers(r.Context(), wabaID)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to fetch phone numbers from Meta: "+err.Error())
+		return
+	}
+
+	synced := 0
+	for _, p := range phones {
+		if p.ID == "" {
+			continue
+		}
+		if err := h.repo.Upsert(r.Context(), p.ID, p.DisplayPhoneNumber, p.VerifiedName, p.QualityRating); err != nil {
+			slog.Warn("upsert phone number failed", "id", p.ID, "error", err)
+			continue
+		}
+		synced++
+	}
+
+	slog.Info("phone numbers synced from Meta",
+		"waba_id", wabaID, "total", len(phones), "synced", synced)
+	writeJSON(w, http.StatusOK, map[string]int{"synced": synced})
 }
 
 // cacheProfilePicture downloads a profile picture from Meta's temporary URL,

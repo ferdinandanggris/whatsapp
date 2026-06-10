@@ -63,9 +63,9 @@ func (s *WhatsAppService) SendText(ctx context.Context, phoneNumberID, to, body,
 }
 
 type TemplateButtonSpec struct {
-	Index    int      `json:"index"`
-	SubType  string   `json:"sub_type"`
-	Params   []string `json:"params,omitempty"`
+	Index   int      `json:"index"`
+	SubType string   `json:"sub_type"`
+	Params  []string `json:"params,omitempty"`
 }
 
 func (s *WhatsAppService) SendTemplate(ctx context.Context, phoneNumberID, to, templateName, lang string, params map[string]string, buttons []TemplateButtonSpec, agentID string) (*model.Message, error) {
@@ -360,6 +360,7 @@ func (s *WhatsAppService) MarkConversationRead(ctx context.Context, convID strin
 
 	msg, err := s.msgs.GetLatestInboundByConversation(ctx, conv.PhoneNumberID, conv.WaID)
 	if err == nil && msg != nil {
+		slog.Info("marking message as read", "wamid", msg.WamID)
 		if err := s.client.MarkAsRead(ctx, conv.PhoneNumberID, msg.WamID); err != nil {
 			slog.Warn("mark as read (non-fatal)", "error", err)
 		}
