@@ -17,16 +17,16 @@ namespace WaDesktop.Client.Views
             InitializeComponent();
             webView.CoreWebView2InitializationCompleted += OnWebViewInitialized;
             webView.WebMessageReceived += OnWebMessageReceived;
-            this.KeyPreview = true;
-            this.KeyDown += DashboardView_KeyDown;
         }
 
-        private void DashboardView_KeyDown(object sender, KeyEventArgs e)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (e.KeyCode == Keys.F12 && _initialized)
+            if (keyData == Keys.F12 && _initialized)
             {
                 webView.CoreWebView2.OpenDevToolsWindow();
+                return true;
             }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         // ── IDashboardView ──
@@ -85,12 +85,6 @@ namespace WaDesktop.Client.Views
         {
             if (e.IsSuccess)
             {
-                // Log JS console messages for debugging
-                webView.CoreWebView2.ConsoleMessage += (s, args) =>
-                {
-                    System.Diagnostics.Debug.WriteLine("[WebView2 Console] " + args.Message);
-                };
-
                 webView.CoreWebView2.NavigationCompleted += (s, args) =>
                 {
                     LoadCompleted?.Invoke(this, EventArgs.Empty);
