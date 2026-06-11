@@ -64,9 +64,9 @@ namespace WaDesktop.Client.Presenters
             var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
 
             var script = $@"
-                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}'}};
+                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}','refresh_token':'{_auth.RefreshToken}'}};
                 localStorage.setItem('token', '{_auth.AccessToken}');
-                //localStorage.setItem('refresh_token','{_auth.RefreshToken}');
+                localStorage.setItem('refresh_token','{_auth.RefreshToken}');
             ";
             _view.PreloadScript = script;
         }
@@ -87,9 +87,9 @@ namespace WaDesktop.Client.Presenters
             var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
 
             var script = $@"
-                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}'}};
+                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}','refresh_token':'{_auth.RefreshToken}'}};
                 localStorage.setItem('token', '{_auth.AccessToken}');
-               //localStorage.setItem('refresh_token','{_auth.RefreshToken}');
+                localStorage.setItem('refresh_token','{_auth.RefreshToken}');
             ";
             _view.ExecuteScript(script);
         }
@@ -102,11 +102,11 @@ namespace WaDesktop.Client.Presenters
                 var type = msg?.Value<string>("type");
                 switch (type)
                 {
-                    case "logout":
+                    case "LOGOUT":
                         _bus.Publish(new LogoutMessage());
                         break;
 
-                    case "token_expired":
+                    case "TOKEN_EXPIRED":
                         _bus.Publish(new SessionExpiredMessage());
                         break;
 

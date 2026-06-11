@@ -74,7 +74,7 @@ apiClient.interceptors.response.use(
             if (isDesktop()) {
               // send message to desktop
             //   console.log('Posting token_expired to desktop');
-              postToDesktop({ type: 'token_expired' });
+              postToDesktop({ type: 'TOKEN_EXPIRED' });
             } else {
               window.location.href = '/login';
             }

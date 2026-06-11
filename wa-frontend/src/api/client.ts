@@ -107,7 +107,7 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
       localStorage.removeItem("token")
       localStorage.removeItem("refresh_token")
       if (isDesktop()) {
-        postToDesktop({ type: "token_expired" })
+        postToDesktop({ type: "TOKEN_EXPIRED" })
       } else {
         window.location.href = "/login"
       }

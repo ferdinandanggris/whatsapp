@@ -13,7 +13,7 @@ namespace WaDesktop.Infrastructure.Services
         public AuthService(IApiClient api, AppState state)
         {
             _api = api;
-            _state = state;
+            _state = state; 
 
             // Sync AppState when ApiClient refreshes token internally
             _api.TokenRefreshed += (s, e) =>

@@ -31,9 +31,12 @@ export const useConversations = ({
 
     const activeAppIdRef = useRef(activeAppId);
     const activeConversationRef = useRef(activeConversation);
+    const convFilterRef = useRef(convFilter);
 
     useEffect(() => { activeAppIdRef.current = activeAppId; }, [activeAppId]);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
+    useEffect(() => { convFilterRef.current = convFilter; }, [convFilter]);
+
 
     const fetchConvs = async (silent = false) => {
         if (!silent) setIsLoading(true);
@@ -174,6 +177,9 @@ export const useConversations = ({
             const chatMsg = message as ChatMessage;
             if (activeAppIdRef.current !== null && chatMsg.app_id !== activeAppIdRef.current) return;
 
+             // Cek INBOUND + kirim notification DI LUAR setConversations
+            let shouldNotify = false;
+            
             setConversations(prev => {
                 const index = prev.findIndex(c =>
                     c.id === chatMsg.conversation_id ||
@@ -206,14 +212,16 @@ export const useConversations = ({
 
                     if (chatMsg.direction === 'INBOUND') {
 
-                        // Bridge to WinForms for desktop notification
-                        if ((window as any).chrome?.webview) {
+                        // Simpan info buat notif, jangan postMessage di sini
+                        if (!shouldNotify && (window as any).chrome?.webview) {
                             (window as any).chrome.webview.postMessage({
                                 type: 'SHOW_NOTIFICATION',
-                                title: conv.customer_name || "Pesan Baru",
-                                message: preview
+                                title: conv.customer_name,
+                                message: preview || 'Pesan baru'
                             });
                         }
+                        shouldNotify = true;
+                        
 
                         // Refresh app badges in sidebar
                         getApplicationSummary().then(res => {
@@ -239,6 +247,17 @@ export const useConversations = ({
                 return prev;
             });
 
+             // Bridge to WinForms for desktop notification
+
+             // Notification DI LUAR updater function — panggil sekali aja
+            // console.log(`shouldNotify: ${shouldNotify}, title: ${notifyTitle}, message: ${notifyMessage}`);
+            // if (shouldNotify && (window as any).chrome?.webview) {
+            //     (window as any).chrome.webview.postMessage({
+            //         type: 'SHOW_NOTIFICATION',
+            //         title: notifyTitle,
+            //         message: notifyMessage
+            //     });
+            // }
 
         };
 

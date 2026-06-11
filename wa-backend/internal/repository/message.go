@@ -27,13 +27,16 @@ func NewMessageRepository(pool *pgxpool.Pool) *MessageRepository {
 }
 
 func (r *MessageRepository) Save(ctx context.Context, m *model.Message) error {
-	_, err := r.pool.Exec(ctx, `
+	tag, err := r.pool.Exec(ctx, `
 		INSERT INTO messages (wamid, phone_number_id, wa_id, direction, type, content, status, timestamp, agent_id, error_message)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		ON CONFLICT (wamid) DO NOTHING
 	`, m.WamID, m.PhoneNumberID, m.WaID, m.Direction, m.Type, m.Content, m.Status, m.Timestamp, m.AgentID, m.ErrorMessage)
 	if err != nil {
 		return fmt.Errorf("save message: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("duplicate wamid: %s", m.WamID)
 	}
 	return nil
 }

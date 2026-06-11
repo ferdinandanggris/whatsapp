@@ -63,10 +63,37 @@ namespace WaDesktop.Client.Views
         public event EventHandler LoadCompleted;
         public event EventHandler<WebMessageReceivedEventArgs> MessageReceived;
 
-        public void ExecuteScript(string script)
+        public async void ExecuteScript(string script)
         {
-            if (_initialized && webView.CoreWebView2 != null)
-                webView.CoreWebView2.ExecuteScriptAsync(script);
+            // Check if we are running on a non-UI thread
+            if (this.InvokeRequired)
+            {
+                // Marshal the call to the UI thread asynchronously
+                this.BeginInvoke(new Action(() => ExecuteScript(script)));
+                return;
+            }
+
+            try
+            {
+                // 2. Pastikan WebView2 control-nya sendiri tidak null
+                if (this.webView == null) return;
+
+                // 3. JIKA CoreWebView2 belum diinisialisasi, tunggu sampai siap
+                // Ini sering terjadi jika token masuk tepat saat aplikasi baru terbuka
+                if (this.webView.CoreWebView2 == null)
+                {
+                    // Menunggu inisialisasi internal selesai tanpa memblock UI thread
+                    await this.webView.EnsureCoreWebView2Async(null);
+                }
+
+                // 4. Jalankan script dengan aman
+                await this.webView.CoreWebView2.ExecuteScriptAsync(script);
+            }
+            catch (Exception ex)
+            {
+                // Log atau handle exception jika ada masalah saat eksekusi script
+                System.Diagnostics.Debug.WriteLine($"WebView2 Error: {ex.Message}");
+            }
         }
 
         public string ShowSaveFileDialog(string defaultFileName, string filter)

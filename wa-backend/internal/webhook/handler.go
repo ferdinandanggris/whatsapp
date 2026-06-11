@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ferdinandanggris/wapi/types"
@@ -133,6 +134,10 @@ func (h *Handler) processInbound(r *http.Request, msg *types.IncomingMsg, meta *
 	}
 
 	if err := h.Messages.Save(r.Context(), message); err != nil {
+		if strings.Contains(err.Error(), "duplicate wamid") {
+			slog.Warn("webhook: duplicate message, skipping broadcast", "wamid", msg.ID)
+			return
+		}
 		slog.Error("webhook: save message", "error", err)
 		return
 	}
