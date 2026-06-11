@@ -2,7 +2,7 @@ using System;
 
 namespace WaDesktop.Domain.Interfaces
 {
-    public interface IDashboardView : IViewBase
+    public interface IMessagesView : IViewBase
     {
         /// <summary>URL yang akan di-load di WebView.</summary>
         string Url { set; }

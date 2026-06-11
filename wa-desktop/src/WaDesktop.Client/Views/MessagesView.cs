@@ -7,12 +7,12 @@ using WaDesktop.Client.Extensions;
 
 namespace WaDesktop.Client.Views
 {
-    public partial class DashboardView : UserControl, IDashboardView
+    public partial class MessagesView : UserControl, IMessagesView
     {
         private bool _initialized;
         private string _preloadScript;
 
-        public DashboardView()
+        public MessagesView()
         {
             InitializeComponent();
             webView.CoreWebView2InitializationCompleted += OnWebViewInitialized;
@@ -29,7 +29,7 @@ namespace WaDesktop.Client.Views
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // ── IDashboardView ──
+        // ── IMessagesView ──
 
         public string PreloadScript
         {

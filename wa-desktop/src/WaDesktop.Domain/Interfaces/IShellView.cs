@@ -10,7 +10,7 @@ namespace WaDesktop.Domain.Interfaces
     {
         string StatusText { get; set; }
 
-        event EventHandler DashboardClicked;
+        event EventHandler MessagesClicked;
         event EventHandler CompanyClicked;
         event EventHandler UsersClicked;
         event EventHandler TemplatesClicked;

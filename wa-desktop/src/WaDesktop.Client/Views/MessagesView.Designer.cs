@@ -1,6 +1,6 @@
 namespace WaDesktop.Client.Views
 {
-    partial class DashboardView
+    partial class MessagesView
     {
         private System.ComponentModel.IContainer components = null;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView;
@@ -29,11 +29,11 @@ namespace WaDesktop.Client.Views
             this.webView.TabIndex = 0;
             this.webView.ZoomFactor = 1.0;
 
-            // DashboardView
+            // MessagesView
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.webView);
-            this.Name = "DashboardView";
+            this.Name = "MessagesView";
             this.Size = new System.Drawing.Size(1000, 706);
             ((System.ComponentModel.ISupportInitialize)(this.webView)).EndInit();
             this.ResumeLayout(false);

@@ -35,7 +35,7 @@ namespace WaDesktop.Tests.PresenterTests
             public bool UsersVisible { get; set; }
             public bool TemplatesVisible { get; set; }
             public bool InvokeRequired => false;
-            public event EventHandler DashboardClicked;
+            public event EventHandler MessagesClicked;
             public event EventHandler CompanyClicked;
             public event EventHandler UsersClicked;
             public event EventHandler TemplatesClicked;
@@ -48,7 +48,7 @@ namespace WaDesktop.Tests.PresenterTests
             public void ShowNotification(string title, string body) { }
             public void SetBadge(int count) { }
 
-            public void TriggerDashboard() => DashboardClicked?.Invoke(this, EventArgs.Empty);
+            public void TriggerDashboard() => MessagesClicked?.Invoke(this, EventArgs.Empty);
             public void TriggerLogout() => LogoutClicked?.Invoke(this, EventArgs.Empty);
         }
 

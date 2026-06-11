@@ -30,7 +30,7 @@ namespace WaDesktop.Client
             using (var embeddedServer = new EmbeddedServer(wwwRoot, apiBaseUrl))
             {
                 embeddedServer.StartAsync().GetAwaiter().GetResult();
-                var dashboardUrl = embeddedServer.BaseUrl;
+                var messagesUrl = embeddedServer.BaseUrl;
 
                 // ── DI Registration ──
                 var appState = new AppState();
@@ -63,7 +63,7 @@ namespace WaDesktop.Client
                 // ── Shell ──
                 var shellView = new ShellView();
                 var shellPresenter = new ShellPresenter(shellView, authService, eventAggregator, appState,
-                    dashboardUrl, apiBaseUrl);
+                    messagesUrl, apiBaseUrl);
                 ServiceLocator.Register(shellPresenter);
 
                 // ── Sidebar ──

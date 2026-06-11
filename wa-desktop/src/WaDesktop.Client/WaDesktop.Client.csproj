@@ -74,11 +74,11 @@
     <Compile Include="Views\SidebarView.Designer.cs">
       <DependentUpon>SidebarView.cs</DependentUpon>
     </Compile>
-    <Compile Include="Views\DashboardView.cs">
+    <Compile Include="Views\MessagesView.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Views\DashboardView.Designer.cs">
-      <DependentUpon>DashboardView.cs</DependentUpon>
+    <Compile Include="Views\MessagesView.Designer.cs">
+      <DependentUpon>MessagesView.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\ManagementViews\CompanyView.cs">
       <SubType>UserControl</SubType>
@@ -114,7 +114,7 @@
     <Compile Include="Presenters\LoginPresenter.cs" />
     <Compile Include="Presenters\ShellPresenter.cs" />
     <Compile Include="Presenters\SidebarPresenter.cs" />
-    <Compile Include="Presenters\DashboardPresenter.cs" />
+    <Compile Include="Presenters\MessagesPresenter.cs" />
     <Compile Include="Presenters\CompanyPresenter.cs" />
     <Compile Include="Presenters\UsersPresenter.cs" />
     <Compile Include="Presenters\TemplatesPresenter.cs" />

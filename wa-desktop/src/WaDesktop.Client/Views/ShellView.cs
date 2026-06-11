@@ -58,7 +58,7 @@ namespace WaDesktop.Client.Views
             set { this.InvokeIfRequired(() => { templatesToolStripMenuItem.Visible = value; }); }
         }
 
-        public event EventHandler DashboardClicked;
+        public event EventHandler MessagesClicked;
         public event EventHandler CompanyClicked;
         public event EventHandler UsersClicked;
         public event EventHandler TemplatesClicked;
@@ -225,7 +225,7 @@ namespace WaDesktop.Client.Views
         // ── Event Handlers ──
 
         private void dashboardToolStripMenuItem_Click(object sender, EventArgs e)
-            => DashboardClicked?.Invoke(sender, e);
+            => MessagesClicked?.Invoke(sender, e);
 
         private void companyToolStripMenuItem_Click(object sender, EventArgs e)
             => CompanyClicked?.Invoke(sender, e);

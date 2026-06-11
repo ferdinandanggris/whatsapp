@@ -10,25 +10,25 @@ using WaDesktop.Domain.Messages;
 
 namespace WaDesktop.Client.Presenters
 {
-    public class DashboardPresenter : IDisposable
+    public class MessagesPresenter : IDisposable
     {
-        private readonly IDashboardView _view;
+        private readonly IMessagesView _view;
         private readonly IEventAggregator _bus;
         private readonly IAuthService _auth;
-        private readonly string _dashboardUrl;
+        private readonly string _messagesUrl;
         private readonly string _apiBaseUrl;
         private readonly HttpClient _http;
         private IDisposable _loginSub;
         private IDisposable _tokenRefreshSub;
         private bool _disposed;
 
-        public DashboardPresenter(IDashboardView view, IEventAggregator bus, IAuthService auth,
-            string dashboardUrl, string apiBaseUrl = null)
+        public MessagesPresenter(IMessagesView view, IEventAggregator bus, IAuthService auth,
+            string messagesUrl, string apiBaseUrl = null)
         {
             _view = view;
             _bus = bus;
             _auth = auth;
-            _dashboardUrl = dashboardUrl;
+            _messagesUrl = messagesUrl;
             _apiBaseUrl = apiBaseUrl ?? "http://localhost:8080";
             _http = new HttpClient();
 
@@ -41,7 +41,7 @@ namespace WaDesktop.Client.Presenters
             SetupPreloadScript();
 
             // Load frontend SPA from embedded server (or dev server fallback)
-            _view.Url = _dashboardUrl;
+            _view.Url = _messagesUrl;
         }
 
         private void OnLoadCompleted(object sender, EventArgs e) => InjectToken();
@@ -53,11 +53,11 @@ namespace WaDesktop.Client.Presenters
         {
             if (string.IsNullOrEmpty(_auth.AccessToken))
             {
-                System.Diagnostics.Debug.WriteLine("[Dashboard] No token at preload setup — skipping");
+                System.Diagnostics.Debug.WriteLine("[Messages] No token at preload setup — skipping");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("[Dashboard] Setting preload script with token length=" + _auth.AccessToken.Length);
+            System.Diagnostics.Debug.WriteLine("[Messages] Setting preload script with token length=" + _auth.AccessToken.Length);
 
             // Parse WS host from API base URL (not embedded server)
             var apiUri = new Uri(_apiBaseUrl);
@@ -75,12 +75,12 @@ namespace WaDesktop.Client.Presenters
         {
             if (string.IsNullOrEmpty(_auth.AccessToken))
             {
-                System.Diagnostics.Debug.WriteLine("[Dashboard] No token at InjectToken — skipping");
+                System.Diagnostics.Debug.WriteLine("[Messages] No token at InjectToken — skipping");
                 _bus.Publish(new SessionExpiredMessage());
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("[Dashboard] InjectToken — setting token in page");
+            System.Diagnostics.Debug.WriteLine("[Messages] InjectToken — setting token in page");
 
             // Parse WS host from API base URL (not embedded server)
             var apiUri = new Uri(_apiBaseUrl);

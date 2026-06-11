@@ -41,7 +41,7 @@
     <Compile Include="Interfaces\IViewBase.cs" />
     <Compile Include="Interfaces\IShellView.cs" />
     <Compile Include="Interfaces\ISidebarView.cs" />
-    <Compile Include="Interfaces\IDashboardView.cs" />
+    <Compile Include="Interfaces\IMessagesView.cs" />
     <Compile Include="Interfaces\IManagementView.cs" />
     <Compile Include="Interfaces\IAppSettingsView.cs" />
     <Compile Include="Interfaces\IApiClient.cs" />

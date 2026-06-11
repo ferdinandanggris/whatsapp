@@ -15,7 +15,7 @@ namespace WaDesktop.Client.Presenters
         private readonly IAuthService _auth;
         private readonly IEventAggregator _bus;
         private readonly AppState _state;
-        private readonly string _dashboardUrl;
+        private readonly string _messagesUrl;
         private readonly string _apiBaseUrl;
         private IDisposable _tabSub;
         private IDisposable _sessionSub;
@@ -24,13 +24,13 @@ namespace WaDesktop.Client.Presenters
         private bool _disposed;
 
         public ShellPresenter(IShellView view, IAuthService auth, IEventAggregator bus, AppState state,
-            string dashboardUrl, string apiBaseUrl = "http://localhost:8080")
+            string messagesUrl, string apiBaseUrl = "http://localhost:8080")
         {
             _view = view;
             _auth = auth;
             _bus = bus;
             _state = state;
-            _dashboardUrl = dashboardUrl;
+            _messagesUrl = messagesUrl;
             _apiBaseUrl = apiBaseUrl;
 
             _tabSub = bus.Subscribe<RequestOpenTabMessage>(OnRequestOpenTab);
@@ -38,7 +38,7 @@ namespace WaDesktop.Client.Presenters
             _notifSub = bus.Subscribe<ShowNotificationMessage>(m => _view.ShowNotification(m.Title, m.Body));
             _badgeSub = bus.Subscribe<SetBadgeMessage>(m => _view.SetBadge(m.Count));
 
-            view.DashboardClicked += (s, e) => OpenDashboard();
+            view.MessagesClicked += (s, e) => OpenMessages();
             view.CompanyClicked += (s, e) => OpenCompany();
             view.UsersClicked += (s, e) => OpenUsers();
             view.TemplatesClicked += (s, e) => OpenTemplates();
@@ -53,7 +53,7 @@ namespace WaDesktop.Client.Presenters
             view.TemplatesVisible = !isAgent;
             view.StatusText = $"Logged in as {_auth.DisplayName}";
 
-            OpenDashboard();
+                OpenMessages();
         }
 
         private void OnRequestOpenTab(RequestOpenTabMessage msg)
@@ -66,10 +66,10 @@ namespace WaDesktop.Client.Presenters
             switch (moduleKey)
             {
                 case "dashboard":
-                    var dashView = new DashboardView();
-                    var dashPresenter = new DashboardPresenter(dashView, _bus, _auth, _dashboardUrl, _apiBaseUrl);
-                    ServiceLocator.Register(dashPresenter);
-                    return dashView;
+                    var msgView = new MessagesView();
+                    var msgPresenter = new MessagesPresenter(msgView, _bus, _auth, _messagesUrl, _apiBaseUrl);
+                    ServiceLocator.Register(msgPresenter);
+                    return msgView;
 
                 case "company":
                     var coView = new CompanyView();
@@ -113,7 +113,7 @@ namespace WaDesktop.Client.Presenters
             }
         }
 
-        private void OpenDashboard() => OnRequestOpenTab(new RequestOpenTabMessage("dashboard", "Dashboard"));
+        private void OpenMessages() => OnRequestOpenTab(new RequestOpenTabMessage("dashboard", "Messages"));
         private void OpenCompany() => OnRequestOpenTab(new RequestOpenTabMessage("company", "Company"));
         private void OpenUsers() => OnRequestOpenTab(new RequestOpenTabMessage("users", "Users"));
         private void OpenTemplates() => OnRequestOpenTab(new RequestOpenTabMessage("templates", "Templates"));
@@ -129,7 +129,7 @@ namespace WaDesktop.Client.Presenters
             if (loginView.ShowDialog() == DialogResult.OK)
             {
                 _view.StatusText = $"Logged in as {_auth.DisplayName}";
-                OpenDashboard();
+            OpenMessages();
             }
             else
             {
