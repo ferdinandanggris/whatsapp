@@ -87,8 +87,13 @@ func (h *Hub) BroadcastToRoom(roomID string, data []byte) {
 func (h *Hub) BroadcastToAllRooms(data []byte) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
+	sent := make(map[*Client]bool)
 	for _, clients := range h.rooms {
 		for client := range clients {
+			if sent[client] {
+				continue
+			}
+			sent[client] = true
 			select {
 			case client.send <- data:
 			default:
