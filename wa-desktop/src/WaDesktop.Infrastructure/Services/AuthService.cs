@@ -14,6 +14,12 @@ namespace WaDesktop.Infrastructure.Services
         {
             _api = api;
             _state = state;
+
+            // Sync AppState when ApiClient refreshes token internally
+            _api.TokenRefreshed += (s, e) =>
+            {
+                _state.AccessToken = _api.AccessToken;
+            };
         }
 
         public string AccessToken => _state.AccessToken;

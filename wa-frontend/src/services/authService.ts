@@ -18,6 +18,7 @@ export const login = async (email: string, password: string) => {
         // The Go backend returns { access_token, user }
         if (response.data && response.data.access_token) {
             localStorage.setItem('token', response.data.access_token);
+            localStorage.setItem('refresh_token', response.data.refresh_token);
             return {
                 status: true,
                 data: response.data.user

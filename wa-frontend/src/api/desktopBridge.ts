@@ -6,9 +6,13 @@ export function isDesktop(): boolean {
 /** Sync token from desktop bridge into localStorage (call once on startup) */
 export function initDesktopToken(): void {
   if (!isDesktop()) return
-  const bridge = (window as any).__DESKTOP_BRIDGE__
+  const bridge = (window as any)?.__DESKTOP_BRIDGE__
   if (bridge?.token) {
     localStorage.setItem("token", bridge.token)
+  }
+
+  if (bridge?.refreshToken) {
+    localStorage.setItem("refresh_token", bridge.refreshToken)
   }
 }
 

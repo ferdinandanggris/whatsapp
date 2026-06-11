@@ -12,6 +12,7 @@ namespace WaDesktop.Domain.Interfaces
         event EventHandler SessionExpired;
         /// <summary>Fired after a successful silent token refresh.</summary>
         event EventHandler TokenRefreshed;
+        string AccessToken { get; }
         void SetToken(string token);
         void SetSession(string accessToken, string refreshToken);
         Task<AuthResult> LoginAsync(string username, string password);

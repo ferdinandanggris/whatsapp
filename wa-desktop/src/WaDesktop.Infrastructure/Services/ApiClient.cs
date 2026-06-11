@@ -21,6 +21,8 @@ namespace WaDesktop.Infrastructure.Services
         public event EventHandler SessionExpired;
         public event EventHandler TokenRefreshed;
 
+        public string AccessToken => _accessToken;
+
         public ApiClient(string baseUrl = "http://localhost:8080")
         {
             _baseUrl = baseUrl;

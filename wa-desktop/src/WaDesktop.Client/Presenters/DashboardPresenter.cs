@@ -64,15 +64,10 @@ namespace WaDesktop.Client.Presenters
             var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
 
             var script = $@"
-if (!window.__DESKTOP_BRIDGE__) {{
-    window.__DESKTOP_BRIDGE__ = {{}};
-}}
-window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
-window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
-window.__API_BASE__ = '{_apiBaseUrl}';
-window.__WS_HOST__ = '{wsHost}';
-localStorage.setItem('token', '{_auth.AccessToken}');
-";
+                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}'}};
+                localStorage.setItem('token', '{_auth.AccessToken}');
+                //localStorage.setItem('refresh_token','{_auth.RefreshToken}');
+            ";
             _view.PreloadScript = script;
         }
 
@@ -81,6 +76,7 @@ localStorage.setItem('token', '{_auth.AccessToken}');
             if (string.IsNullOrEmpty(_auth.AccessToken))
             {
                 System.Diagnostics.Debug.WriteLine("[Dashboard] No token at InjectToken — skipping");
+                _bus.Publish(new SessionExpiredMessage());
                 return;
             }
 
@@ -91,17 +87,10 @@ localStorage.setItem('token', '{_auth.AccessToken}');
             var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
 
             var script = $@"
-if (!window.__DESKTOP_BRIDGE__) {{
-    window.__DESKTOP_BRIDGE__ = {{}};
-}}
-window.__DESKTOP_BRIDGE__.token = '{_auth.AccessToken}';
-window.__API_BASE__ = '{_apiBaseUrl}';
-window.__WS_HOST__ = '{wsHost}';
-if (!window.__DESKTOP_BRIDGE__.postMessage) {{
-    window.__DESKTOP_BRIDGE__.postMessage = function(msg) {{ window.chrome.webview.postMessage(JSON.stringify(msg)); }};
-}}
-localStorage.setItem('token', '{_auth.AccessToken}');
-";
+                window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}'}};
+                localStorage.setItem('token', '{_auth.AccessToken}');
+               //localStorage.setItem('refresh_token','{_auth.RefreshToken}');
+            ";
             _view.ExecuteScript(script);
         }
 
