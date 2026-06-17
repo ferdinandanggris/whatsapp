@@ -4,10 +4,10 @@ import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
 
 const getBaseUrl = () => {
-    if (typeof window !== "undefined" && (window as any).__API_BASE__) {
-        return (window as any).__API_BASE__;
-    }
-    return '';
+    // if (typeof window !== "undefined" && (window as any).__API_BASE__) {
+    //     return (window as any).__API_BASE__;
+    // }
+    return 'http://localhost:8080';
 };
 
 const apiClient = axios.create({
@@ -210,12 +210,11 @@ export const getConversations = async (
         if (application_id) params.phone_number_id = String(application_id);
         if (search) params.q = search; // Search queries map to contact search in List
 
-        const response = await apiClient.get<any>('/api/v1/conversations', { params });
-        const data = response.data;
+        const response = await apiClient.get<ApiResponse<{conversations: Conversation[], has_more: boolean}>>('/api/v1/conversations', { params });
+        const data = response.data.data;
 
-        const items = (data.data || []).map(mapConversation);
-        const total = data.total || 0;
-        const hasMore = page * limit < total;
+        const items = (data.conversations || []).map(mapConversation);
+        const hasMore = data.has_more;
 
         return {
             status_code: 200,
@@ -252,8 +251,8 @@ export const getPingInfo = async () => {
 
 export const getApplicationSummary = async (): Promise<ApiResponse<ApplicationSummary[]>> => {
     try {
-        const response = await apiClient.get<any[]>('/api/v1/phone-numbers');
-        const items: ApplicationSummary[] = response.data.map(p => ({
+        const response = await apiClient.get<ApiResponse<any[]>>('/api/v1/phone-numbers');
+        const items: ApplicationSummary[] = response.data.data.map(p => ({
             id: p.phone_number_id,
             app_name: p.display_name || p.display_phone_number || 'WA Number',
             unread_count: p.unread_count || 0
@@ -336,7 +335,7 @@ export const getMessages = async (
             status: true,
             message: 'Success',
             data: {
-                items,
+                 items,
                 limit,
                 next_cursor_ts: body.next_cursor_ts ?? undefined,
                 next_cursor_id: body.next_cursor_id ?? undefined,

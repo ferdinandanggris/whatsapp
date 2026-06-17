@@ -35,7 +35,14 @@ export const useAuth = create<AuthState>((set) => ({
       return
     }
     try {
-      const user = await authApi.getMe()
+      // const user = await authApi.getMe()
+      const user : User = {
+        id: "1",
+        email: "1",
+        role: "1",
+        display_name: "1",
+        is_active: true
+      }
       set({ token, user, loading: false })
     } catch {
       localStorage.removeItem("token")
