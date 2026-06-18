@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
 import type { Conversation, ChatMessage } from '../../../types/chat';
 import { User } from '@/types';
+import { Guid } from 'guid-ts';
 
 interface UseChatActionsProps {
     user: User;
@@ -47,9 +48,9 @@ export const useChatActions = ({
             } catch (error) { return; }
         }
 
-        const tempId = `temp_${Date.now()}`;
+        const tempId = `temp_${Guid.newGuid().toString()}`;
         const newMessage: ChatMessage = {
-            id: Date.now(),
+            id: Guid.newGuid().toString(),
             conversation_id: currentConv.id,
             app_id: currentConv.app_id,
             wa_message_id: tempId,
@@ -98,7 +99,7 @@ export const useChatActions = ({
             } catch (error) { return; }
         }
 
-        const tempId = `temp_tpl_${Date.now()}`;
+        const tempId = `temp_tpl_${Guid.newGuid().toString()}`;
 
         // Extract button types from template definition
         const buttonsComp = template.components?.find((c: any) => c.type === 'BUTTONS');
@@ -134,7 +135,7 @@ export const useChatActions = ({
         }
 
         const newMessage: ChatMessage = {
-            id: Date.now(),
+            id: Guid.newGuid().toString(),
             conversation_id: currentConv.id,
             app_id: currentConv.app_id,
             wa_message_id: tempId,
@@ -169,11 +170,11 @@ export const useChatActions = ({
     const handleSendMedia = async (file: File, previewUrl: string, type: 'image' | 'video' | 'audio' | 'document', caption: string, replyingTo: ChatMessage | null) => {
         if (!activeConversation) return;
         const currentConv = activeConversation;
-        const tempId = `temp_${Date.now()}`;
+        const tempId = `temp_${Guid.newGuid().toString()}`;
         const context_id = replyingTo?.wa_message_id;
 
         const newMessage: ChatMessage = {
-            id: Date.now(),
+            id: Guid.newGuid().toString(),
             conversation_id: currentConv.id,
             app_id: currentConv.app_id,
             wa_message_id: tempId,

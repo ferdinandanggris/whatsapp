@@ -322,11 +322,11 @@ export const getMessages = async (
         if (search) params.q = search;
         if (message_type) params.type = message_type;
         if (direction) params.direction = direction;
-        const response = await apiClient.get<any>(`/api/v1/conversations/${conversation_id}/messages`, { params });
+        const response = await apiClient.get<ApiResponse<{ messages: any[], has_more: boolean}>>(`/api/v1/conversations/${conversation_id}/messages`, { params });
 
         // Backend returns { data: [], has_more: bool, next_cursor_ts, next_cursor_id }
-        const body = response.data || {};
-        const rawMessages: any[] = body.data || [];
+        const body = response.data.data;
+        const rawMessages: any[] = body.messages || [];
         const items = rawMessages.map(mapMessage);
         const hasMore = body.has_more ?? false;
 
@@ -337,8 +337,6 @@ export const getMessages = async (
             data: {
                  items,
                 limit,
-                next_cursor_ts: body.next_cursor_ts ?? undefined,
-                next_cursor_id: body.next_cursor_id ?? undefined,
                 has_more: hasMore
             }
         };
@@ -482,7 +480,8 @@ export const sendMessage = async (
         const payload: any = {
             to: target,
             phone_number_id: String(wa_channel_id),
-            type: message_type
+            type: message_type,
+            id:wa_message_id,
         };
 
         if (message_type === 'text') {

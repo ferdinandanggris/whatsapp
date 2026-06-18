@@ -43,7 +43,7 @@ export interface ErrorDetails {
 }
 
 export interface ChatMessage {
-    id: string | number;
+    id: string;
     conversation_id: string | number;
     app_id: string | number;
     wa_message_id: string;
