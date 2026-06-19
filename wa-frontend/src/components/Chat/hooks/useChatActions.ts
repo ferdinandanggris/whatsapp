@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
-import type { Conversation, ChatMessage, Bubble, Component } from '../../../types/chat';
+import type { Conversation, ChatMessage, Bubble } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
 
