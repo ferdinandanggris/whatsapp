@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Edit2, Send, Smile } from "lucide-react";
 
-import type { Conversation, ChatMessage, ApplicationSummary, WaChannel } from '../types/chat';
+import type { Conversation, ChatMessage, ApplicationSummary, WaChannel, Bubble } from '../types/chat';
 import { getApplicationSummary, getChannels, getPingInfo } from '../services/chatService';
 import { normalizeTo62 } from '../lib/chatUtils';
 
@@ -61,7 +61,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const [renamingConv, setRenamingConv] = useState<Conversation | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, conversation: Conversation | null }>({ x: 0, y: 0, conversation: null });
 
-    const [contextMenuImage, setContextMenuImage] = useState<{ x: number, y: number, chatMsg: ChatMessage | null }>({ x: 0, y: 0, chatMsg: null });
+    const [contextMenuImage, setContextMenuImage] = useState<{ x: number, y: number, chatMsg: Bubble | null }>({ x: 0, y: 0, chatMsg: null });
 
     // Chat Window Filter/Search
     const [isMessageSearchOpen, setIsMessageSearchOpen] = useState(false);
@@ -75,9 +75,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // Emoji/Reaction State
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [emojiTarget, setEmojiTarget] = useState<'input' | 'media' | 'reaction'>('input');
-    const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-    const [reactionTargetMsg, setReactionTargetMsg] = useState<ChatMessage | null>(null);
-    const [viewingMedia, setViewingMedia] = useState<ChatMessage | null>(null);
+    const [replyingTo, setReplyingTo] = useState<Bubble | null>(null);
+    const [reactionTargetMsg, setReactionTargetMsg] = useState<Bubble | null>(null);
+    const [viewingMedia, setViewingMedia] = useState<Bubble | null>(null);
     const [showContactSidebar, setShowContactSidebar] = useState(false);
 
 
@@ -93,7 +93,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, setApplications
     });
 
-    const { messages, processedMessages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
+    const { messages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
         activeConversation, debouncedMessageSearchTerm, connection, setConversations, setActiveConversation
     });
 
@@ -275,83 +275,83 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
 
     // Fungsi Copy Gambar
     const handleCopy = async () => {
-        try {
-            // Bridge to WinForms for desktop notification
-            if (!contextMenuImage.chatMsg?.file_path) return;
-            if ((window as any).chrome?.webview) {
-                (window as any).chrome.webview.postMessage({
-                    type: 'COPY_IMAGE',
-                    url: contextMenuImage.chatMsg?.file_path,
-                });
-            } else {
-                // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-                console.log("Tidak berada di WinForms. Fallback copy URL...");
-                navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-            }
-        } catch (error) {
-            console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-            navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-        }
+        // try {
+        //     // Bridge to WinForms for desktop notification
+        //     if (!contextMenuImage.chatMsg?.file_path) return;
+        //     if ((window as any).chrome?.webview) {
+        //         (window as any).chrome.webview.postMessage({
+        //             type: 'COPY_IMAGE',
+        //             url: contextMenuImage.chatMsg?.file_path,
+        //         });
+        //     } else {
+        //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
+        //         console.log("Tidak berada di WinForms. Fallback copy URL...");
+        //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
+        //     }
+        // } catch (error) {
+        //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
+        //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
+        // }
     };
 
     // Fungsi Download Gambar
     const handleDownload = async () => {
-        try {
-            // Bridge to WinForms for desktop notification
-            if (!contextMenuImage.chatMsg?.file_path) return;
-            if ((window as any).chrome?.webview) {
-                (window as any).chrome.webview.postMessage({
-                    type: 'SAVE_IMAGE',
-                    url: contextMenuImage.chatMsg?.file_path,
-                });
-            } else {
-                // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-                console.log("Tidak berada di WinForms. Fallback copy URL...");
-                navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-            }
-        } catch (error) {
-            console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-            navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-        }
+        // try {
+        //     // Bridge to WinForms for desktop notification
+        //     if (!contextMenuImage.chatMsg?.file_path) return;
+        //     if ((window as any).chrome?.webview) {
+        //         (window as any).chrome.webview.postMessage({
+        //             type: 'SAVE_IMAGE',
+        //             url: contextMenuImage.chatMsg?.file_path,
+        //         });
+        //     } else {
+        //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
+        //         console.log("Tidak berada di WinForms. Fallback copy URL...");
+        //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
+        //     }
+        // } catch (error) {
+        //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
+        //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
+        // }
 
     };
 
     // Media Handlers
-    const handleResendMessage = async (msg: ChatMessage) => {
-        if (!msg) return;
+    const handleResendMessage = async (msg: Bubble) => {
+        // if (!msg) return;
 
-        // Populate Input Text
-        setInputText(msg.message_text || '');
+        // // Populate Input Text
+        // setInputText(msg.message_text || '');
 
-        // Handle Media Resending
-        if (msg.file_path && ['image', 'video', 'audio', 'document'].includes(msg.message_type)) {
-            if ((window as any).chrome?.webview) {
-                // Use WinForms bridge to bypass CORS/SSL issues
-                (window as any).chrome.webview.postMessage({
-                    type: 'FETCH_MEDIA_FOR_RESEND',
-                    url: msg.file_path,
-                    message_type: msg.message_type,
-                    file_name: msg.file_name || 'file'
-                });
-            } else {
-                // Fallback for browser (might fail due to CORS)
-                try {
-                    const response = await fetch(msg.file_path);
-                    const blob = await response.blob();
-                    const fileName = msg.file_name || msg.file_path.split('/').pop() || 'file';
-                    const file = new File([blob], fileName, { type: msg.file_type || blob.type });
+        // // Handle Media Resending
+        // if (msg.file_path && ['image', 'video', 'audio', 'document'].includes(msg.message_type)) {
+        //     if ((window as any).chrome?.webview) {
+        //         // Use WinForms bridge to bypass CORS/SSL issues
+        //         (window as any).chrome.webview.postMessage({
+        //             type: 'FETCH_MEDIA_FOR_RESEND',
+        //             url: msg.file_path,
+        //             message_type: msg.message_type,
+        //             file_name: msg.file_name || 'file'
+        //         });
+        //     } else {
+        //         // Fallback for browser (might fail due to CORS)
+        //         try {
+        //             const response = await fetch(msg.file_path);
+        //             const blob = await response.blob();
+        //             const fileName = msg.file_name || msg.file_path.split('/').pop() || 'file';
+        //             const file = new File([blob], fileName, { type: msg.file_type || blob.type });
 
-                    const previewUrl = URL.createObjectURL(file);
-                    setPendingMedia({
-                        file,
-                        previewUrl,
-                        type: msg.message_type as any
-                    });
-                } catch (error) {
-                    console.error("Failed to fetch media for resend:", error);
-                }
-            }
-        }
+        //             const previewUrl = URL.createObjectURL(file);
+        //             setPendingMedia({
+        //                 file,
+        //                 previewUrl,
+        //                 type: msg.message_type as any
+        //             });  
+        //         } catch (error) {
+        //             console.error("Failed to fetch media for resend:", error);
+        //         }
+        //     }
+        // }
     };
 
     const handleFiles = (files: FileList | File[] | null) => {
@@ -416,7 +416,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
             <ChatWindow
                 activeConversation={activeConversation}
                 messages={messages}
-                processedMessages={processedMessages}
                 hasMore={hasMoreMsg}
                 isFetchingMore={isFetchingMoreMsg}
                 isLoading={isLoading}
@@ -489,7 +488,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                         const tempConv: Conversation = {
                             id: 0,
                             wa_channel_id: channelId,
-                            app_id: selectedChannel?.app_id || (activeAppId || applications[0]?.id || ""),
+                            app_id: selectedChannel?.app_id,
                             waba_id: selectedChannel?.waba_id || '',
                             customer_wa_id: normalizedWaId,
                             customer_name: name || normalizedWaId,
@@ -665,10 +664,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 </div>
             )}
             {/* Image Viewer Overlay */}
-            <ImageViewer
+            {/* <ImageViewer
                 message={viewingMedia}
                 onClose={() => setViewingMedia(null)}
-            />
+            /> */}
         </div>
     );
 };

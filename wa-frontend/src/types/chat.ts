@@ -17,7 +17,7 @@ export interface PagedResponse<T> {
 export interface Conversation {
     id: string | number;
     wa_channel_id: string | number;
-    app_id: string | number;
+    app_id: string ;
     waba_id: string;
     customer_wa_id: string;
     customer_name: string;
@@ -58,6 +58,7 @@ export interface ChatMessage {
     status: string;
     platform: string;
     raw_payload?: string;
+    content?: MessageContent;
     context_message_id?: string;
     reply_wamid?: string;
     reply_name?: string;
@@ -70,6 +71,74 @@ export interface ChatMessage {
     error_details?: ErrorDetails;
 }
 
+export interface Bubble{
+    id: string;
+    conversation_id: string | number;
+    phone_number_id: string;
+    wa_message_id: string;
+    direction: 'INBOUND' | 'OUTBOUND';
+    created_at: string;
+    error_details?: ErrorDetails;
+    message_timestamp?: number;
+    message_type: string;
+    status : string;
+    sender_name : string;
+    error_message?: string;
+
+    raw_message? : string;
+    header? : ContentMsg;
+    body? : ContentMsg;
+    footer? : ContentMsg;
+    buttons? : ButtonMsg[];
+    context? : ContextMsg;
+}
+
+export interface ContentMsg {
+    format?: string;
+    text?: string;
+    url?: string;
+}
+
+export interface ButtonMsg {
+    format: string;
+    text: string;
+    url?: string;
+    phone_number?: string;
+}
+
+export interface ContextMsg {
+    context_id: string;
+    name: string;
+    text: string;
+}
+
+
+
+export interface MessageContent {
+    header?: ContentMsg;
+    body?: ContentMsg;
+    footer?: ContentMsg;
+    buttons?: ButtonMsg[];
+    context?: ContextMsg;
+}
+
+export interface MessageResponse{
+    agent_id : string;
+    agent_name : string,
+    content : MessageContent,
+    direction : string,
+    id : string,
+    phone_number_id : string,
+    raw_message : string | null,
+    status : string,
+    wa_id : string
+    wamid : string
+    type : string
+    timestamp : string
+    conversation_id : string,
+    error_details : ErrorDetails    
+}
+
 export interface ApplicationSummary {
     id: string | number;
     app_name: string;
@@ -78,7 +147,7 @@ export interface ApplicationSummary {
 
 export interface WaChannel {
     id: string | number;
-    app_id: string | number;
+    app_id: string ;
     phone_number_id: string;
     waba_id: string;
     display_name: string;

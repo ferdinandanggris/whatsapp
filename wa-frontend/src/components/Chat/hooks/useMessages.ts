@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { getMessages, markAsRead } from '../../../services/chatService';
-import type { ChatMessage, Conversation } from '../../../types/chat';
+import type { Bubble,  Conversation } from '../../../types/chat';
 
 interface UseMessagesProps {
     activeConversation: Conversation | null;
@@ -17,7 +17,7 @@ export const useMessages = ({
     setConversations,
     setActiveConversation,
 }: UseMessagesProps) => {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<Bubble[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -60,41 +60,41 @@ export const useMessages = ({
             .finally(() => setIsLoading(false));
     }, [activeConversation?.id, searchTerm]);
 
-    const processedMessages = useMemo(() => {
-        const reactionsMap: Record<string, Record<string, string>> = {};
-        messages.forEach(msg => {
-            if (msg.message_type === 'reaction' && msg.context_message_id) {
-                if (!reactionsMap[msg.context_message_id]) reactionsMap[msg.context_message_id] = {};
-                const sideKey = msg.direction;
-                if (msg.message_text && msg.message_text.trim()) {
-                    reactionsMap[msg.context_message_id][sideKey] = msg.message_text;
-                } else {
-                    delete reactionsMap[msg.context_message_id][sideKey];
-                }
-            }
-        });
+    // const processedMessages = useMemo(() => {
+    //     const reactionsMap: Record<string, Record<string, string>> = {};
+    //     messages.forEach(msg => {
+    //         if (msg.message_type === 'reaction' && msg.context_message_id) {
+    //             if (!reactionsMap[msg.context_message_id]) reactionsMap[msg.context_message_id] = {};
+    //             const sideKey = msg.direction;
+    //             if (msg.message_text && msg.message_text.trim()) {
+    //                 reactionsMap[msg.context_message_id][sideKey] = msg.message_text;
+    //             } else {
+    //                 delete reactionsMap[msg.context_message_id][sideKey];
+    //             }
+    //         }
+    //     });
 
-        return [...new Map(messages.map((item) => [item.id, item])).values()]
-            .filter(msg => msg.message_type !== 'reaction')
-            .map(msg => {
-                const senderMap = reactionsMap[msg.wa_message_id] || {};
-                const activeReactions = Object.values(senderMap);
-                const uniqueEmojis = Array.from(new Set(activeReactions));
+    //     return [...new Map(messages.map((item) => [item.id, item])).values()]
+    //         .filter(msg => msg.message_type !== 'reaction')
+    //         .map(msg => {
+    //             const senderMap = reactionsMap[msg.wa_message_id] || {};
+    //             const activeReactions = Object.values(senderMap);
+    //             const uniqueEmojis = Array.from(new Set(activeReactions));
 
-                if (activeReactions.length === 0 && !msg.reactionData) {
-                    return msg;
-                }
+    //             if (activeReactions.length === 0 && !msg.reactionData) {
+    //                 return msg;
+    //             }
 
-                return {
-                    ...msg,
-                    reactions: activeReactions,
-                    reactionData: activeReactions.length > 0 ? {
-                        emojis: uniqueEmojis,
-                        total: activeReactions.length
-                    } : null
-                };
-            });
-    }, [messages]);
+    //             return {
+    //                 ...msg,
+    //                 reactions: activeReactions,
+    //                 reactionData: activeReactions.length > 0 ? {
+    //                     emojis: uniqueEmojis,
+    //                     total: activeReactions.length
+    //                 } : null
+    //             };
+    //         });
+    // }, [messages]);
 
     const handleLoadMore = async (scrollViewport: HTMLDivElement | null) => {
         if (!activeConversation || !hasMore || isFetchingMore) return;
@@ -129,14 +129,14 @@ export const useMessages = ({
         if (!connection) return;
 
         const handleReceiveMessage = (message: any) => {
-            const chatMsg = message as ChatMessage;
+            const chatMsg = message as Bubble;
             const conv = activeConversationRef.current;
             const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
             if (!conv || (chatMsg.conversation_id !== conv.id && chatMsg.conversation_id !== compositeId)) return;
 
-            console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
+            // console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
             const convId = conv.id;
-            const tempMatch = (m: ChatMessage) =>
+            const tempMatch = (m: Bubble) =>
                 typeof m.wa_message_id === 'string' &&
                 m.wa_message_id.startsWith('temp_') &&
                 (String(m.conversation_id) === String(convId) || String(m.conversation_id) === compositeId);
@@ -146,12 +146,11 @@ export const useMessages = ({
                 if (existing) {
                     return prev.map(m => m.wa_message_id === chatMsg.wa_message_id ? {
                         ...existing, ...chatMsg,
-                        sender_name: existing.sender_name,
-                        reply_wamid: chatMsg.reply_wamid || existing.reply_wamid,
-                        reply_text: chatMsg.reply_text || existing.reply_text,
-                        reply_name: chatMsg.reply_name || existing.reply_name,
-                        emoji: chatMsg.emoji || existing.emoji,
-                        file_path: chatMsg.file_path || existing.file_path,
+                        // reply_wamid: chatMsg.reply_wamid || existing.reply_wamid,
+                        // reply_text: chatMsg.reply_text || existing.reply_text,
+                        // reply_name: chatMsg.reply_name || existing.reply_name,
+                        // emoji: chatMsg.emoji || existing.emoji,
+                        // file_path: chatMsg.file_path || existing.file_path,
                     } : m);
                 }
 
@@ -182,7 +181,7 @@ export const useMessages = ({
             const errorDetails = parsedPayload?.error_details;
             setMessages(prev => prev.map(m => {
                 if (m.wa_message_id === waMessageId) {
-                    const oldParsedPayload = JSON.parse(m.raw_payload || '{}');
+                    const oldParsedPayload = JSON.parse(m.raw_message || '{}');
                     const rawPayload = JSON.stringify({ ...oldParsedPayload, error_details: errorDetails });
                     return { ...m, raw_payload: rawPayload, status: 'failed' };
                 }
@@ -203,7 +202,6 @@ export const useMessages = ({
 
     return {
         messages,
-        processedMessages,
         setMessages,
         isLoading,
         hasMore,

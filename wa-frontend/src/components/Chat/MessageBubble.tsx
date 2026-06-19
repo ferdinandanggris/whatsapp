@@ -3,20 +3,20 @@ import React from 'react';
 import { Check, CheckCheck, AlertCircle, Clock, Reply, Smile, Info, RotateCw } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import type { ChatMessage, Conversation } from '../../types/chat';
+import type { Bubble, ChatMessage, Conversation } from '../../types/chat';
 import { formatTime, formatDividerDate, isSameDay, getInitials } from '../../lib/chatUtils';
 import { cn } from '@/lib/utils';
 import { parseErrorDetails } from './MessageRenderer';
 
 interface MessageBubbleProps {
-    msg: ChatMessage;
-    prevMsg?: ChatMessage;
-    onReply: (msg: ChatMessage) => void;
-    onReaction: (msg: ChatMessage) => void;
-    onResend: (msg: ChatMessage) => void;
-    renderTemplateMessage: (msg: ChatMessage) => React.ReactNode;
-    renderMessageContent: (msg: ChatMessage, handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void) => React.ReactNode;
-    handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void;
+    msg: Bubble;
+    prevMsg?: Bubble;
+    onReply: (msg: Bubble) => void;
+    onReaction: (msg: Bubble) => void;
+    onResend: (msg: Bubble) => void;
+    renderTemplateMessage: (msg: Bubble) => React.ReactNode;
+    renderMessageContent: (msg: Bubble, handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void) => React.ReactNode;
+    handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void;
     conversation: Conversation;
     isTemplateRequired: boolean;
 }
@@ -36,7 +36,7 @@ const MessageBubble = React.memo(function MessageBubble({
     const [showErrorInfo, setShowErrorInfo] = React.useState(false);
     const isOutbound = msg.direction === 'OUTBOUND';
     const isFailed = msg.status === 'failed';
-    const errorDetails = isFailed ? parseErrorDetails(msg) : null;
+    // const errorDetails = isFailed ? parseErrorDetails(msg) : null;
     const showDateDivider = !prevMsg || !isSameDay(new Date(msg.message_timestamp ? msg.message_timestamp * 1000 : msg.created_at), new Date(prevMsg.message_timestamp ? prevMsg.message_timestamp * 1000 : prevMsg.created_at));
 
     const renderStatusIcon = (status?: string) => {
@@ -53,7 +53,7 @@ const MessageBubble = React.memo(function MessageBubble({
     return (
         <div className="flex flex-col mb-1 group/bubble"
             key={msg.id}
-            id={`msg-${msg.wa_message_id}`}
+            id={`msg-${msg.id}`}
         >
             {showDateDivider && (
                 <div className="flex justify-center my-6 sticky top-2 z-10">
@@ -97,14 +97,14 @@ const MessageBubble = React.memo(function MessageBubble({
 
                         {msg.message_type === 'template' ? renderTemplateMessage(msg) : renderMessageContent(msg, handleContextMenuImage)}
 
-                        {isFailed && errorDetails && showErrorInfo && (
+                        {/* {isFailed && errorDetails && showErrorInfo && (
                             <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-[10px] text-red-100 font-medium">
                                     {errorDetails.message_local || "Gagal mengirim pesan."}
                                     {errorDetails.code && <span className="ml-1 opacity-60">({errorDetails.code})</span>}
                                 </p>
                             </div>
-                        )}
+                        )} */}
 
                         <div className={cn(
                             "flex items-center gap-1.5 mt-1",
@@ -120,7 +120,7 @@ const MessageBubble = React.memo(function MessageBubble({
                         </div>
                     </div>
 
-                    {msg.reactionData && (() => {console.log(`Log Message Reactions: ${JSON.stringify(msg.reactionData)}`); return true;}) && (
+                    {/* {msg.reactionData && (() => {console.log(`Log Message Reactions: ${JSON.stringify(msg.reactionData)}`); return true;}) && (
                         <div className={cn(
                             "absolute -bottom-2 flex items-center bg-white border border-slate-100 rounded-full px-1.5 py-0.5 shadow-md scale-90 origin-center transition-transform hover:scale-100 select-none z-20",
                             isOutbound ? "right-2" : "left-2"
@@ -134,7 +134,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                 <span className="ml-1 text-[9px] font-bold text-slate-500 border-l pl-1 border-slate-100">{msg.reactionData.total}</span>
                             )}
                         </div>
-                    )}
+                    )} */}
 
                     <div className={cn(
                         "absolute top-0 opacity-0 group-hover/bubble:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 pointer-events-none group-hover/bubble:pointer-events-auto",
@@ -146,7 +146,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                     variant="ghost"
                                     size="icon"
                                     className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors"
-                                    onClick={() => onReply({...msg, reply_name: conversation?.customer_name || msg.sender_name || 'Contact'})}
+                                    onClick={() => onReply({...msg})}
                                     title="Balas"
                                     disabled={isTemplateRequired}
                                 >

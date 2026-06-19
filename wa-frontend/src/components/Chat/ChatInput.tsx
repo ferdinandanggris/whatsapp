@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Smile, Paperclip, LayoutGrid, Send, X, Reply } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ChatMessage } from '../../types/chat';
+import type { Bubble, ChatMessage } from '../../types/chat';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
@@ -18,8 +18,8 @@ interface ChatInputProps {
     isTemplateRequired: boolean;
     allowSendTemplate: boolean;
     setIsTemplateDialogOpen: (open: boolean) => void;
-    replyingTo: ChatMessage | null;
-    setReplyingTo: (msg: ChatMessage | null) => void;
+    replyingTo: Bubble | null;
+    setReplyingTo: (msg: Bubble | null) => void;
     handleFiles: (files: FileList | File[] | null) => void;
 }
 
@@ -56,8 +56,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Reply className="w-4 h-4 text-indigo-500 shrink-0" />
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Balas ke {replyingTo.reply_name}</span>
-                            <p className="text-xs text-slate-500 truncate">{replyingTo.message_text || (replyingTo.message_type === 'image' ? '📷 Foto' : 'Media')}</p>
+                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Balas ke {replyingTo.sender_name}</span>
+                            <p className="text-xs text-slate-500 truncate">{replyingTo.body?.text || (replyingTo.message_type === 'image' ? '📷 Foto' : 'Media')}</p>
                         </div>
                     </div>
                     <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-slate-200 transition-colors" onClick={() => setReplyingTo(null)}>

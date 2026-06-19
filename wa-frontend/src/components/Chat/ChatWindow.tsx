@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Conversation, ChatMessage } from '../../types/chat';
+import type { Conversation, ChatMessage, Bubble } from '../../types/chat';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import { cn } from '@/lib/utils';
@@ -15,8 +15,7 @@ const SCROLL_BOTTOM_THRESHOLD = 150;
 
 interface ChatWindowProps {
     activeConversation: Conversation | null;
-    messages: ChatMessage[];
-    processedMessages: ChatMessage[];
+    messages: Bubble[];
     hasMore: boolean;
     isFetchingMore: boolean;
     isLoading: boolean;
@@ -39,13 +38,13 @@ interface ChatWindowProps {
     setShowEmojiPicker: (show: boolean) => void;
     showEmojiPicker: boolean;
     setEmojiTarget: (target: 'input' | 'media' | 'reaction') => void;
-    replyingTo: ChatMessage | null;
-    setReplyingTo: (msg: ChatMessage | null) => void;
-    onReaction: (msg: ChatMessage) => void;
-    onResend: (msg: ChatMessage) => void;
-    renderTemplateMessage: (msg: ChatMessage) => React.ReactNode;
-    renderMessageContent: (msg: ChatMessage, handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void) => React.ReactNode;
-    handleContextMenuImage: (e: React.MouseEvent, msg: ChatMessage) => void;
+    replyingTo: Bubble | null;
+    setReplyingTo: (msg: Bubble | null) => void;
+    onReaction: (msg: Bubble) => void;
+    onResend: (msg: Bubble) => void;
+    renderTemplateMessage: (msg: Bubble) => React.ReactNode;
+    renderMessageContent: (msg: Bubble, handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void) => React.ReactNode;
+    handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void;
     typingAgents: Record<number, { name: string, timeout: any }>;
     handleFiles: (files: FileList | File[] | null) => void;
     onToggleSidebar?: () => void;
@@ -54,7 +53,6 @@ interface ChatWindowProps {
 const ChatWindow: React.FC<ChatWindowProps> = ({
     activeConversation,
     messages,
-    processedMessages,
     hasMore,
     isFetchingMore,
     isLoading,
@@ -304,7 +302,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 <ScrollArea className="h-full w-full [&>div>div]:!block" ref={scrollRef}>
                     <div className="flex flex-col py-4 w-full min-w-0">
-                        {isLoading && !processedMessages.length && (
+                        {isLoading && !messages.length && (
                             <div className="flex items-center justify-center py-16">
                                 <RefreshCw className="w-6 h-6 text-[#00a884] animate-spin" />
                             </div>
@@ -314,13 +312,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 <RefreshCw className="w-4 h-4 text-slate-400 animate-spin" />
                             </div>
                         )}
-                        {processedMessages.map((msg, idx) => (
+                        {messages.map((msg, idx) => (
                             <MessageBubble
                                 key={msg.id || msg.wa_message_id}
                                 isTemplateRequired={isTemplateRequired}
                                 msg={msg}
                                 conversation={activeConversation}
-                                prevMsg={idx > 0 ? processedMessages[idx - 1] : undefined}
+                                prevMsg={idx > 0 ? messages[idx - 1] : undefined}
                                 onReply={(m) => setReplyingTo(m)}
                                 onReaction={onReaction}
                                 onResend={onResend}

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, PagedResponse, Conversation, ChatMessage, ApplicationSummary, WaChannel } from '../types/chat';
+import type { ApiResponse, PagedResponse, Conversation, ChatMessage, ApplicationSummary, WaChannel, MessageResponse, Bubble } from '../types/chat';
 import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
 
@@ -111,87 +111,112 @@ const mapConversation = (c: any): Conversation => {
 };
 
 // Helper to convert Go message model to WaMeta UI model
-const mapMessage = (m: any): ChatMessage => {
+const mapMessage = (m: MessageResponse): Bubble => {
     let text = '';
     let mediaId = '';
     let caption = '';
     let filename = '';
     let contextMessageId = '';
     let emoji = '';
+    // each map will set the text, mediaId, caption, filename, contextMessageId, emoji
 
-    const content = typeof m.content === 'string' ? JSON.parse(m.content || '{}') : (m.content || {});
+    // New format (inbound): content
+    
 
     // Raw Meta format (inbound): content.text, content.image, content.video, etc.
     // Old format (outbound): content.body, content.id, content.caption, etc.
-    if (m.type === 'text') {
-        text = content.text?.body || content.body || '';
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'image') {
-        const img = content.image || content;
-        mediaId = img.id || '';
-        caption = img.caption || '';
-        text = caption;
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'video') {
-        const vid = content.video || content;
-        mediaId = vid.id || '';
-        caption = vid.caption || '';
-        text = caption;
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'audio') {
-        const aud = content.audio || content;
-        mediaId = aud.id || '';
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'document') {
-        const doc = content.document || content;
-        mediaId = doc.id || '';
-        caption = doc.caption || '';
-        filename = doc.filename || 'file';
-        text = caption;
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'location') {
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    } else if (m.type === 'reaction') {
-        const react = content.reaction || content;
-        emoji = react.emoji || '';
-        contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
-        text = emoji ? `${emoji}` : '';
-    } else {
-        text = content.text?.body || content.body || '';
-        mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
-        caption = content.image?.caption || content.video?.caption || content.document?.caption || content.caption || '';
-        filename = content.document?.filename || content.filename || 'file';
-        text = text || caption;
-        contextMessageId = content.context?.id || content.context?.message_id || '';
-    }
+    // if (m.type === 'text') {
+    //     text = content.text?.body || content.body || '';
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'image') {
+    //     const img = content.image || content;
+    //     mediaId = img.id || '';
+    //     caption = img.caption || '';
+    //     text = caption;
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'video') {
+    //     const vid = content.video || content;
+    //     mediaId = vid.id || '';
+    //     caption = vid.caption || '';
+    //     text = caption;
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'audio') {
+    //     const aud = content.audio || content;
+    //     mediaId = aud.id || '';
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'document') {
+    //     const doc = content.document || content;
+    //     mediaId = doc.id || '';
+    //     caption = doc.caption || '';
+    //     filename = doc.filename || 'file';
+    //     text = caption;
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'location') {
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // } else if (m.type === 'reaction') {
+    //     const react = content.reaction || content;
+    //     emoji = react.emoji || '';
+    //     contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
+    //     text = emoji ? `${emoji}` : '';
+    // } else {
+    //     text = content.text?.body || content.body || '';
+    //     mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
+    //     caption = content.image?.caption || content.video?.caption || content.document?.caption || content.caption || '';
+    //     filename = content.document?.filename || content.filename || 'file';
+    //     text = text || caption;
+    //     contextMessageId = content.context?.id || content.context?.message_id || '';
+    // }
+
 
     return {
-        id: m.wamid,
-        conversation_id: m.phone_number_id + '_' + m.wa_id,
-        app_id: m.phone_number_id,
-        wa_message_id: m.wamid,
-        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
-        message_text: text,
-        message_type: m.type,
-        media_id: mediaId,
-        file_path: mediaId ? `${import.meta.env.VITE_BASE_URL}/api/v1/media/${mediaId}` : undefined,
-        file_name: filename,
-        file_type: m.type,
+        id: m.id,
+        conversation_id: m.conversation_id,
+        phone_number_id: m.phone_number_id,
         direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
+        created_at : m.timestamp,
+        message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000),
+        error_details: m.error_details,
+        raw_message: JSON.stringify(m.raw_message),
+        wa_message_id: m.wamid,
+        message_type: m.type,
         status: m.status,
-        platform: 'whatsapp',
-        raw_payload: JSON.stringify({
-            ...content,
-            ...(m.template_definition ? { template_definition: m.template_definition } : {}),
-            ...(m.error_message ? { error_message: m.error_message } : {}),
-        }),
-        context_message_id: contextMessageId || undefined,
-        reply_wamid: m.reply_wamid || undefined,
-        reply_text: m.reply_text || undefined,
-        reply_name: m.reply_name || undefined,
-        emoji: emoji || undefined,
-        created_at: m.timestamp,
-        message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000)
+        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
+
+        body: m.content.body,
+        header: m.content.header,
+        footer: m.content.footer,
+        buttons: m.content.buttons,
+        context: m.content.context,
+
+
+
+        // id: m.id,
+        // conversation_id: m.phone_number_id + '_' + m.wa_id,
+        // app_id: m.phone_number_id,
+        // wa_message_id: m.wamid,
+        // sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
+        // message_text: text,
+        // message_type: m.type,
+        // media_id: mediaId,
+        // file_path: mediaId ? `${import.meta.env.VITE_BASE_URL}/api/v1/media/${mediaId}` : undefined,
+        // file_name: filename,
+        // file_type: m.type,
+        // direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
+        // status: m.status,
+        // platform: 'whatsapp',
+        // raw_payload: JSON.stringify({
+        //     ...content,
+        //     ...(m.template_definition ? { template_definition: m.template_definition } : {}),
+        //     ...(m.error_message ? { error_message: m.error_message } : {}),
+        // }),
+        // content : m.content,
+        // context_message_id: contextMessageId || undefined,
+        // reply_wamid: m.reply_wamid || undefined,
+        // reply_text: m.reply_text || undefined,
+        // reply_name: m.reply_name || undefined,
+        // emoji: emoji || undefined,
+        // created_at: m.timestamp,
+        // message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000)
     };
 };
 
@@ -312,7 +337,7 @@ export const getMessages = async (
     search?: string,
     message_type?: string,
     direction?: string
-): Promise<ApiResponse<PagedResponse<ChatMessage>>> => {
+): Promise<ApiResponse<PagedResponse<Bubble>>> => {
     try {
         const params: Record<string, string | number> = { limit };
         if (cursor_ts) params.cursor_ts = cursor_ts;
@@ -335,7 +360,7 @@ export const getMessages = async (
             status: true,
             message: 'Success',
             data: {
-                 items,
+                items,
                 limit,
                 has_more: hasMore
             }
@@ -366,7 +391,7 @@ export const ensureConversation = async (
         const conv: Conversation = {
             id: `${wa_channel_id}_${customer_wa_id}`, // temporary composite ID or we can find it
             wa_channel_id,
-            app_id: wa_channel_id,
+            app_id: '',
             waba_id: '',
             customer_wa_id,
             customer_name: customer_name || contactResponse?.data?.company_custom_name || contactResponse?.data?.profile_name || customer_wa_id,
@@ -498,7 +523,7 @@ export const sendMessage = async (
             status_code: 201,
             status: true,
             message: 'Success',
-            data: mapMessage(response.data)
+            data: response.data
         };
     } catch (error: any) {
         const errMsg = error.response?.data?.error || error.message || 'Gagal mengirim pesan';
