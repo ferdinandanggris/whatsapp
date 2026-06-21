@@ -1,6 +1,6 @@
 
 import { ExternalLink, Phone } from 'lucide-react';
-import type { Bubble, Button, ChatMessage, Component, ErrorDetails } from '../../types/chat';
+import type { Bubble,  ButtonMsg,  ChatMessage, ContextMsg, ErrorDetails } from '../../types/chat';
 import {Button as ButtonComp} from '@/components/ui/button';
 
 
@@ -135,7 +135,7 @@ export const renderTemplateMessage = (msg: Bubble) => {
 };
 
 export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void, onImageClick?: (msg: Bubble) => void) => {
-    const renderQuotedMessage = (context?: Component) => {
+    const renderQuotedMessage = (context?: ContextMsg) => {
         // find messages with the contextMessageId
         if (!context) return null;
         return (
@@ -149,7 +149,7 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
             >
                 <div className="flex items-center gap-1.5 mb-0.5">
                     <div className="w-0.5 h-3 bg-indigo-500/50 rounded-full" />
-                    <span className="text-[10px] font-bold text-indigo-600/70 uppercase tracking-widest">{context?.text || 'Whatsapp User'}</span>
+                    <span className="text-[10px] font-bold text-indigo-600/70 uppercase tracking-widest">{context?.name || 'Whatsapp User'}</span>
                 </div>
                 <p className="text-[11px] opacity-60 truncate">
                     {context?.text || 'Quoted message'}
@@ -191,7 +191,7 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
 
                 {msg.buttons && msg.buttons.length && (
                     <div className="border-t border-slate-100/20 pt-2 mt-2 flex flex-col gap-1.5">
-                        {msg.buttons.map((btn: Button, idx: number) => (
+                        {msg.buttons.map((btn: ButtonMsg, idx: number) => (
                             <ButtonComp
                                 key={idx}
                                 variant="outline"

@@ -95,7 +95,7 @@ export const useChatActions = ({
                 
         setMessages(prev => [...prev, newBubble]);
         clearInput();
-        const context_id = replyingTo?.wa_message_id;
+        const context_id = replyingTo?.id;
 
         sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, text, "text", undefined, undefined, user?.display_name, id, context_id)
             .then((res: any) => {
