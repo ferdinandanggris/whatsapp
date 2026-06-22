@@ -15,24 +15,18 @@ export interface PagedResponse<T> {
 }
 
 export interface Conversation {
-    id: string | number;
-    wa_channel_id: string | number;
-    app_id: string ;
-    waba_id: string;
-    customer_wa_id: string;
-    customer_name: string;
-    kode_reseller: string;
-    nama_reseller: string;
-    display_phone_number?: string;
-    app_name?: string;
-    wa_channel_display_name?: string;
-    is_template_required: boolean;
-    last_message_timestamp?: number;
-    platform: string;
+    id : string;
+    phone_number_id:string;
+    wa_id: string;
+    profile_name: string;
+    custom_name: string;
+    last_message_at: string;
+    conversation_timestamp: number;
     last_message_preview: string;
     unread_count: number;
-    status: string;
-    updated_at: string;
+    display_name: string;
+    display_phone_number: string;
+    is_template_required: boolean;
 }
 
 export interface ErrorDetails {
@@ -76,16 +70,19 @@ export interface Bubble{
     conversation_id: string | number;
     phone_number_id: string;
     wa_message_id: string;
+    wa_id: string;
     direction: 'INBOUND' | 'OUTBOUND';
     created_at: string;
     error_details?: ErrorDetails;
     message_timestamp?: number;
+    timestamp?: Date;
     message_type: string;
     status : string;
     sender_name : string;
     error_message?: string;
 
     raw_message? : string;
+    content? : MessageContent;
     header? : ContentMsg;
     body? : ContentMsg;
     footer? : ContentMsg;
@@ -146,7 +143,7 @@ export interface ApplicationSummary {
 }
 
 export interface WaChannel {
-    id: string | number;
+    id: string;
     app_id: string ;
     phone_number_id: string;
     waba_id: string;

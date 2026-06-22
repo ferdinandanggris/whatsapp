@@ -87,138 +87,28 @@ apiClient.interceptors.response.use(
 
 // Helper to convert Go conversation model to WaMeta UI model
 // is_template_required is computed by the backend via subquery on messages table.
-const mapConversation = (c: any): Conversation => {
-    return {
-        id: c.id,
-        wa_channel_id: c.phone_number_id,
-        app_id: c.phone_number_id,
-        waba_id: '',
-        customer_wa_id: c.wa_id,
-        customer_name: c.company_custom_name || c.profile_name || c.wa_id,
-        kode_reseller: '',
-        nama_reseller: '',
-        display_phone_number: c.display_phone_number || String(c.phone_number_id),
-        app_name: c.display_name || 'WA Number',
-        wa_channel_display_name: c.display_name || 'WA Number',
-        is_template_required: c.is_template_required,
-        platform: 'whatsapp',
-        last_message_preview: c.last_message_preview || '',
-        unread_count: c.unread_count || 0,
-        status: c.is_blocked ? 'BLOCKED' : 'ACTIVE',
-        updated_at: c.last_message_at || new Date().toISOString(),
-        last_message_timestamp: c.last_message_at ? Math.floor(new Date(c.last_message_at).getTime() / 1000) : undefined
-    };
-};
-
-// Helper to convert Go message model to WaMeta UI model
-const mapMessage = (m: MessageResponse): Bubble => {
-    let text = '';
-    let mediaId = '';
-    let caption = '';
-    let filename = '';
-    let contextMessageId = '';
-    let emoji = '';
-    // each map will set the text, mediaId, caption, filename, contextMessageId, emoji
-
-    // New format (inbound): content
-    
-
-    // Raw Meta format (inbound): content.text, content.image, content.video, etc.
-    // Old format (outbound): content.body, content.id, content.caption, etc.
-    // if (m.type === 'text') {
-    //     text = content.text?.body || content.body || '';
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'image') {
-    //     const img = content.image || content;
-    //     mediaId = img.id || '';
-    //     caption = img.caption || '';
-    //     text = caption;
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'video') {
-    //     const vid = content.video || content;
-    //     mediaId = vid.id || '';
-    //     caption = vid.caption || '';
-    //     text = caption;
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'audio') {
-    //     const aud = content.audio || content;
-    //     mediaId = aud.id || '';
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'document') {
-    //     const doc = content.document || content;
-    //     mediaId = doc.id || '';
-    //     caption = doc.caption || '';
-    //     filename = doc.filename || 'file';
-    //     text = caption;
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'location') {
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // } else if (m.type === 'reaction') {
-    //     const react = content.reaction || content;
-    //     emoji = react.emoji || '';
-    //     contextMessageId = react.message_id || content.context?.id || content.context?.message_id || '';
-    //     text = emoji ? `${emoji}` : '';
-    // } else {
-    //     text = content.text?.body || content.body || '';
-    //     mediaId = content.image?.id || content.video?.id || content.audio?.id || content.document?.id || content.id || '';
-    //     caption = content.image?.caption || content.video?.caption || content.document?.caption || content.caption || '';
-    //     filename = content.document?.filename || content.filename || 'file';
-    //     text = text || caption;
-    //     contextMessageId = content.context?.id || content.context?.message_id || '';
-    // }
-
-
-    return {
-        id: m.id,
-        conversation_id: m.conversation_id,
-        phone_number_id: m.phone_number_id,
-        direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
-        created_at : m.timestamp,
-        message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000),
-        error_details: m.error_details,
-        raw_message: JSON.stringify(m.raw_message),
-        wa_message_id: m.wamid,
-        message_type: m.type,
-        status: m.status,
-        sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
-
-        body: m.content.body,
-        header: m.content.header,
-        footer: m.content.footer,
-        buttons: m.content.buttons,
-        context: m.content.context,
-
-
-
-        // id: m.id,
-        // conversation_id: m.phone_number_id + '_' + m.wa_id,
-        // app_id: m.phone_number_id,
-        // wa_message_id: m.wamid,
-        // sender_name: m.direction === 'inbound' ? 'Customer' : (m.agent_name || (m.agent_id ? 'Agent' : 'System')),
-        // message_text: text,
-        // message_type: m.type,
-        // media_id: mediaId,
-        // file_path: mediaId ? `${import.meta.env.VITE_BASE_URL}/api/v1/media/${mediaId}` : undefined,
-        // file_name: filename,
-        // file_type: m.type,
-        // direction: m.direction === 'inbound' ? 'INBOUND' : 'OUTBOUND',
-        // status: m.status,
-        // platform: 'whatsapp',
-        // raw_payload: JSON.stringify({
-        //     ...content,
-        //     ...(m.template_definition ? { template_definition: m.template_definition } : {}),
-        //     ...(m.error_message ? { error_message: m.error_message } : {}),
-        // }),
-        // content : m.content,
-        // context_message_id: contextMessageId || undefined,
-        // reply_wamid: m.reply_wamid || undefined,
-        // reply_text: m.reply_text || undefined,
-        // reply_name: m.reply_name || undefined,
-        // emoji: emoji || undefined,
-        // created_at: m.timestamp,
-        // message_timestamp: Math.floor(new Date(m.timestamp).getTime() / 1000)
-    };
-};
+// const mapConversation = (c: any): Conversation => {
+//     return {
+//         id: c.id,
+//         wa_channel_id: c.phone_number_id,
+//         app_id: c.phone_number_id,
+//         waba_id: '',
+//         customer_wa_id: c.wa_id,
+//         customer_name: c.company_custom_name || c.profile_name || c.wa_id,
+//         kode_reseller: '',
+//         nama_reseller: '',
+//         display_phone_number: c.display_phone_number || String(c.phone_number_id),
+//         app_name: c.display_name || 'WA Number',
+//         wa_channel_display_name: c.display_name || 'WA Number',
+//         is_template_required: c.is_template_required,
+//         platform: 'whatsapp',
+//         last_message_preview: c.last_message_preview || '',
+//         unread_count: c.unread_count || 0,
+//         status: c.is_blocked ? 'BLOCKED' : 'ACTIVE',
+//         updated_at: c.last_message_at || new Date().toISOString(),
+//         last_message_timestamp: c.last_message_at ? Math.floor(new Date(c.last_message_at).getTime() / 1000) : undefined
+//     };
+// };
 
 export const getConversations = async (
     limit = 50,
@@ -238,7 +128,7 @@ export const getConversations = async (
         const response = await apiClient.get<ApiResponse<{conversations: Conversation[], has_more: boolean}>>('/api/v1/conversations', { params });
         const data = response.data.data;
 
-        const items = (data.conversations || []).map(mapConversation);
+        const items = (data.conversations || []);
         const hasMore = data.has_more;
 
         return {
@@ -352,7 +242,7 @@ export const getMessages = async (
         // Backend returns { data: [], has_more: bool, next_cursor_ts, next_cursor_id }
         const body = response.data.data;
         const rawMessages: any[] = body.messages || [];
-        const items = rawMessages.map(mapMessage);
+        const items = rawMessages;
         const hasMore = body.has_more ?? false;
 
         return {
@@ -377,38 +267,35 @@ export const getMessages = async (
 
 export const ensureConversation = async (
     display_phone_number: string,
-    wa_channel_id: string | number,
+    phone_number_id: string ,
     customer_wa_id: string,
     customer_name?: string
 ): Promise<ApiResponse<Conversation>> => {
     try {
         // First try to check if we can get contact details
         const contactResponse = await apiClient.get(`/api/v1/contacts/${customer_wa_id}`, {
-            params: { phone_number_id: String(wa_channel_id) }
+            params: { phone_number_id: String(phone_number_id) }
         }).catch(() => null);
 
         // Map contact to a conversation layout
         const conv: Conversation = {
-            id: `${wa_channel_id}_${customer_wa_id}`, // temporary composite ID or we can find it
-            wa_channel_id,
-            app_id: '',
-            waba_id: '',
-            customer_wa_id,
-            customer_name: customer_name || contactResponse?.data?.company_custom_name || contactResponse?.data?.profile_name || customer_wa_id,
-            kode_reseller: '',
-            nama_reseller: '',
+            id: `${phone_number_id}_${customer_wa_id}`, // temporary composite ID or we can find it
+            phone_number_id,
+            wa_id : customer_wa_id,
+            custom_name: customer_name || contactResponse?.data?.company_custom_name || contactResponse?.data?.profile_name || customer_wa_id,
             display_phone_number: display_phone_number,
             is_template_required: true, // assume template required for new chats
-            platform: 'whatsapp',
             last_message_preview: '',
+            conversation_timestamp: Date.now(),
             unread_count: 0,
-            status: 'ACTIVE',
-            updated_at: new Date().toISOString()
+            display_name: contactResponse?.data?.display_name || contactResponse?.data?.display_phone_number || customer_wa_id,
+            last_message_at: new Date().toISOString(),
+            profile_name: contactResponse?.data?.profile_name
         };
 
         // Let's also check if there is an existing conversation in the backend list
         const listResponse = await apiClient.get<any>('/api/v1/conversations', {
-            params: { phone_number_id: String(wa_channel_id), limit: 100 }
+            params: { phone_number_id: phone_number_id, limit: 100 }
         }).catch(() => null);
 
         if (listResponse && listResponse.data && listResponse.data.data) {
@@ -418,7 +305,7 @@ export const ensureConversation = async (
                     status_code: 200,
                     status: true,
                     message: 'Success',
-                    data: mapConversation(existing)
+                    data:existing
                 };
             }
         }
@@ -490,21 +377,18 @@ export const uploadMedia = async (
 };
 
 export const sendMessage = async (
-    wa_channel_id: string | number,
-    conversation_id: string | number,
+    phone_number_id: string,
     target: string,
-    text: string,
+    text: string, 
     message_type = 'text',
     media_id?: string,
-    file_name?: string,
-    sender_name?: string,
     wa_message_id?: string,
     context_message_id?: string
 ): Promise<ApiResponse<any>> => {
     try {
         const payload: any = {
             to: target,
-            phone_number_id: String(wa_channel_id),
+            phone_number_id: phone_number_id,
             type: message_type,
             id:wa_message_id,
         };
@@ -600,7 +484,7 @@ export const sendTemplate = async (
             status_code: 201,
             status: true,
             message: 'Success',
-            data: mapMessage(response.data)
+            data: response.data
         };
     } catch (error: any) {
         const errMsg = error.response?.data?.error || error.message || 'Gagal mengirim template';
@@ -615,11 +499,9 @@ export const sendTemplate = async (
 
 export const sendReaction = async (
     wa_channel_id: string | number,
-    conversation_id: string | number,
     target: string,
     emoji: string,
     message_id: string,
-    sender_name?: string
 ): Promise<ApiResponse<any>> => {
     try {
         const payload = {
@@ -633,7 +515,7 @@ export const sendReaction = async (
             status_code: 201,
             status: true,
             message: 'Reaksi berhasil dikirim',
-            data: mapMessage(response.data)
+            data: response.data
         };
     } catch (error: any) {
         const errMsg = error.response?.data?.error || error.message || 'Gagal mengirim reaksi';

@@ -9,15 +9,15 @@ import type { WaChannel } from "@/types/chat";
 interface NewChatDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onStartChat: (waId: string, name: string, channelId: string | number) => void;
+    onStartChat: (waId: string, name: string, phone_number_id: string) => void;
     channels: WaChannel[];
-    defaultChannelId?: string | number | null;
+    defaultChannelId?: string | null;
 }
 
 const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange, onStartChat, channels, defaultChannelId }) => {
     const [waId, setWaId] = useState('');
     const [name, setName] = useState('');
-    const [selectedChannelId, setSelectedChannelId] = useState<string | number>(defaultChannelId || (channels[0]?.id || ''));
+    const [selectedChannelId, setSelectedChannelId] = useState<string>(defaultChannelId || (channels[0]?.id || ''));
 
     // Update selected channel when default changes or dialog opens
     React.useEffect(() => {

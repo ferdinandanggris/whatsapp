@@ -236,15 +236,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     >
                         <Avatar className="w-10 h-10 border-2 border-white shadow-sm ring-1 ring-slate-100">
                             <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
-                                {getInitials(activeConversation.customer_name)}
+                                {getInitials(activeConversation.custom_name)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                            <h2 className="text-sm font-bold text-slate-900 truncate">{activeConversation.customer_name}</h2>
+                            <h2 className="text-sm font-bold text-slate-900 truncate">{activeConversation.custom_name}</h2>
                             <div className="flex items-center gap-2">
                                 <div className={cn("w-2 h-2 rounded-full", currentTyping ? "bg-green-500 animate-pulse" : "bg-slate-200")} />
                                 <span className={cn("text-[11px] font-medium transition-colors", currentTyping ? "text-green-600 italic" : "text-slate-500")}>
-                                    {currentTyping ? `${currentTyping.name} sedang mengetik...` : activeConversation.customer_wa_id}
+                                    {currentTyping ? `${currentTyping.name} sedang mengetik...` : activeConversation.wa_id}
                                 </span>
                             </div>
                         </div>

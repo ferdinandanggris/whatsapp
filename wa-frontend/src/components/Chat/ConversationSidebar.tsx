@@ -126,9 +126,9 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             onContextMenu={(e) => handleContextMenu(e, conv)}
                         >
                             <div className="flex justify-end pr-1 gap-1 flex-wrap">
-                                {conv.app_name && (
+                                {conv.display_name && (
                                     <span className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-600 rounded-md font-medium border border-emerald-100 capitalize">
-                                        {conv.app_name}
+                                        {conv.display_name}
                                     </span>
                                 )}
                                 {conv.display_phone_number && (
@@ -139,15 +139,15 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             </div>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-12 w-12 text-white border flex-shrink-0">
-                                    <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.customer_name)}</AvatarFallback>
+                                    <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.custom_name)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                                     <div className="flex justify-between items-baseline gap-2">
                                         <span className="font-semibold text-[#111b21] truncate min-w-0 flex-1 ">
-                                            {truncateText(conv.customer_name || 'Unknown', 22)}
+                                            {truncateText(conv.custom_name || 'Unknown', 22)}
                                         </span>
                                         <span className="text-[11px] text-[#667781] whitespace-nowrap flex-shrink-0">
-                                            {formatTimeConversation(conv.updated_at, conv.last_message_timestamp)}
+                                            {formatTimeConversation(conv.conversation_timestamp)}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center gap-2 mt-0.5">

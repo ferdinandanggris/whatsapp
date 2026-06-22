@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { getMessages, markAsRead } from '../../../services/chatService';
 import type { Bubble,  Conversation } from '../../../types/chat';
+import { StatusUpdatePayload, WebsocketEvent } from '@/types/wsEvent';
 
 interface UseMessagesProps {
     activeConversation: Conversation | null;
@@ -31,7 +32,7 @@ export const useMessages = ({
 
     // Fetch messages on conversation switch or search change
     useEffect(() => {
-        if (!activeConversation || activeConversation.id === 0) {
+        if (!activeConversation || activeConversation.id == "") {
             setMessages([]);
             setHasMore(false);
             return;
@@ -131,20 +132,16 @@ export const useMessages = ({
         const handleReceiveMessage = (message: any) => {
             const chatMsg = message as Bubble;
             const conv = activeConversationRef.current;
-            const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
-            if (!conv || (chatMsg.conversation_id !== conv.id && chatMsg.conversation_id !== compositeId)) return;
+            // const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
+            // if (!conv || (chatMsg.conversation_id !== conv.id && chatMsg.conversation_id !== compositeId)) return;
 
             // console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
-            const convId = conv.id;
-            const tempMatch = (m: Bubble) =>
-                typeof m.wa_message_id === 'string' &&
-                m.wa_message_id.startsWith('temp_') &&
-                (String(m.conversation_id) === String(convId) || String(m.conversation_id) === compositeId);
-
             setMessages(prev => {
-                const existing = prev.find(m => m.wa_message_id === chatMsg.wa_message_id);
+                const existing = prev.find(m => m.id === chatMsg.id);
+
                 if (existing) {
-                    return prev.map(m => m.wa_message_id === chatMsg.wa_message_id ? {
+                    console.log(`is existing`, existing, chatMsg);
+                    return prev.map(m => m.id === chatMsg.id ? {
                         ...existing, ...chatMsg,
                         // reply_wamid: chatMsg.reply_wamid || existing.reply_wamid,
                         // reply_text: chatMsg.reply_text || existing.reply_text,
@@ -154,22 +151,23 @@ export const useMessages = ({
                     } : m);
                 }
 
-                const hasPending = prev.some(tempMatch);
-                if (hasPending) {
-                    return prev.map(m => tempMatch(m) ? { ...m, status: chatMsg.status || m.status } : m);
-                }
-
                 // New inbound message: append and sort by timestamp
+                console.log(`is new`, chatMsg);
                 return [...prev, chatMsg].sort((a, b) => (a.message_timestamp ?? 0) - (b.message_timestamp ?? 0));
             });
         };
 
-        const handleMessageStatusUpdated = (waMessageId: string, status: string, oldId?: string) => {
+        const handleMessageStatusUpdated = (res : StatusUpdatePayload) => {
             const conv = activeConversationRef.current;
+            console.log('[WS] MessageStatusUpdated', res);
+            console.log('Conversation', conv);
             if (!conv) return;
             setMessages(prev => prev.map(m => {
-                if (m.wa_message_id === waMessageId) return { ...m, status };
-                if (oldId && m.wa_message_id === oldId) return { ...m, wa_message_id: waMessageId, status };
+                if (m.id === res.message_id) {
+                    console.log('Status update', m, res);
+                    return { ...m, status : res.status };
+                }
+                // if (oldId && m.wa_message_id === oldId) return { ...m, wa_message_id: waMessageId, status };
                 return m;
             }));
         };

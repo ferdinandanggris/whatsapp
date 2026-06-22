@@ -34,10 +34,10 @@ const MessageBubble = React.memo(function MessageBubble({
     conversation,
 }: MessageBubbleProps) {
     const [showErrorInfo, setShowErrorInfo] = React.useState(false);
-    const isOutbound = msg.direction === 'OUTBOUND';
+    const isOutbound = msg.direction.toUpperCase() === 'OUTBOUND';
     const isFailed = msg.status === 'failed';
     // const errorDetails = isFailed ? parseErrorDetails(msg) : null;
-    const showDateDivider = !prevMsg || !isSameDay(new Date(msg.message_timestamp ? msg.message_timestamp * 1000 : msg.created_at), new Date(prevMsg.message_timestamp ? prevMsg.message_timestamp * 1000 : prevMsg.created_at));
+    const showDateDivider = !prevMsg || !isSameDay(new Date(msg.message_timestamp), new Date(prevMsg.message_timestamp));
 
     const renderStatusIcon = (status?: string) => {
         switch (status?.toLowerCase()) {
@@ -58,7 +58,7 @@ const MessageBubble = React.memo(function MessageBubble({
             {showDateDivider && (
                 <div className="flex justify-center my-6 sticky top-2 z-10">
                     <span className="bg-slate-100/80 backdrop-blur-sm text-slate-500 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-sm border border-slate-200/50 transition-all">
-                        {formatDividerDate(msg.created_at, msg.message_timestamp)}
+                        {formatDividerDate(msg.message_timestamp)}
                     </span>
                 </div>
             )}
@@ -71,7 +71,7 @@ const MessageBubble = React.memo(function MessageBubble({
                     <Avatar className="w-8 h-8 mr-2 mt-1 shrink-0 shadow-sm border-2 border-white">
                         <AvatarFallback className="bg-slate-200 text-slate-600 text-[10px] font-bold uppercase">
                             {/* {getInitials(msg.sender_name || 'C')} */}
-                            {getInitials(conversation?.customer_name || 'C')}
+                            {getInitials(conversation?.custom_name || 'C')}
                         </AvatarFallback>
                     </Avatar>
                 )}
@@ -89,7 +89,7 @@ const MessageBubble = React.memo(function MessageBubble({
                         {(
                             <div className={cn("text-[10px] font-bold mb-1 flex items-center gap-1.5", isOutbound ? "text-slate-200" : "text-[#00a884]")}>
                                 {/* {msg.sender_name} */}
-                                {isOutbound ? msg.sender_name : conversation?.customer_name}
+                                {isOutbound ? msg.sender_name : conversation?.custom_name}
                                 {/* {msg.platform === 'whatsapp' && <span className="w-1 h-1 bg-slate-300 rounded-full" />} */}
                                 {/* {msg.platform === 'whatsapp' && <span className="font-normal text-slate-400 capitalize">{msg.platform}</span>} */}
                             </div>
@@ -114,7 +114,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                 "text-[9px] font-medium tracking-tight opacity-70",
                                 isOutbound ? "text-indigo-100" : "text-slate-400"
                             )}>
-                                {formatTime(msg.created_at, msg.message_timestamp)}
+                                {formatTime(msg.message_timestamp)}
                             </span>
                             {isOutbound && renderStatusIcon(msg.status)}
                         </div>

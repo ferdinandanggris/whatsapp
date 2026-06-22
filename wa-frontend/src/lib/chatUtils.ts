@@ -7,13 +7,13 @@ export const normalizeTo62 = (input: string): string => {
     return input;
 };
 
-export const formatTime = (dateStr: string, timestamp?: number) => {
-    const date = timestamp ? new Date(timestamp * 1000) : new Date(dateStr);
+export const formatTime = (timestamp?: number) => {
+    const date = new Date(timestamp);
     return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 };
 
-export const formatTimeConversation = (dateStr: string, timestamp?: number) => {
-    const date = timestamp ? new Date(timestamp * 1000) : new Date(dateStr);
+export const formatTimeConversation = (timestamp: number) => {
+    const date = new Date(timestamp);
 
     // if date is today return time
     if (isSameDay(date, new Date())) {
@@ -39,12 +39,13 @@ export const isSameDay = (d1: Date, d2: Date) => {
         d1.getDate() === d2.getDate();
 };
 
-export const formatDividerDate = (dateStr: string, timestamp?: number) => {
-    const date = timestamp ? new Date(timestamp * 1000) : new Date(dateStr);
+export const formatDividerDate = (timestamp: number) => {
+    const date = new Date(timestamp);
     const now = new Date();
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
 
+    console.log(date, now, yesterday);
     if (isSameDay(date, now)) return 'Hari Ini';
     if (isSameDay(date, yesterday)) return 'Kemarin';
 
@@ -53,6 +54,8 @@ export const formatDividerDate = (dateStr: string, timestamp?: number) => {
         month: 'long',
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
+
+    
 };
 
 export const getInitials = (name: string) => {

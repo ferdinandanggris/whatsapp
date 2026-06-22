@@ -1,0 +1,36 @@
+export enum EventType {
+    NEW_MESSAGE   = "NEW_MESSAGE",
+    UPDATE_STATUS = "UPDATE_STATUS"
+}
+
+export interface WebsocketEvent{
+    event_type: EventType;
+    company_id: string;
+    data: PayloadNewMessage | StatusUpdatePayload;
+}
+
+export interface PayloadNewMessage{
+    message_id: string;
+    to: string;
+    content: string;
+    status: string;
+}
+
+export interface StatusUpdatePayload{
+    message_id: string;
+    status: string;
+}
+
+export interface PayloadConversationUpdate{
+    id : string;
+    phone_number_id:string;
+    wa_id: string;
+    profile_name: string;
+    custom_name: string;
+    last_message_at: string;
+    last_message_preview: string;
+    unread_count: number;
+    display_name: string;
+    display_phone_number: string;
+    is_template_required: boolean;
+}

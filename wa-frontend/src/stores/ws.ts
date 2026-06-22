@@ -14,8 +14,9 @@ export const useWS = create<WSState>((set, get) => {
   function connect(token: string) {
     if (ws) ws.close()
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const host = (window as any).__WS_HOST__ || window.location.host
-    ws = new WebSocket(`${proto}//${host}/ws?token=${token}`)
+    // const host = (window as any).__WS_HOST__ || window.location.host
+    const host = "localhost:8081"
+    ws = new WebSocket(`${proto}//${host}/ws?company_id=1&token=${token}`)
 
     ws.onopen = () => set({ connected: true })
     ws.onclose = () => set({ connected: false })
@@ -24,6 +25,7 @@ export const useWS = create<WSState>((set, get) => {
     ws.onmessage = (msg) => {
       try {
         const ev: WSEvent = JSON.parse(msg.data)
+        console.log(ev)
         get().onEvent?.(ev)
       } catch {
         /* ignore malformed */

@@ -32,6 +32,7 @@ import { useMessages } from './Chat/hooks/useMessages';
 import { useChatActions } from './Chat/hooks/useChatActions';
 import { renderMessageContent, renderTemplateMessage } from './Chat/MessageRenderer';
 import { User } from '@/types';
+import { Guid } from 'guid-ts';
 
 interface ChatLayoutProps {
     user?: User;
@@ -477,24 +478,23 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
             <NewChatDialog
                 open={isNewChatDialogOpen}
                 onOpenChange={setIsNewChatDialogOpen}
-                onStartChat={(waId, name, channelId) => {
+                onStartChat={(waId, name, phone_number_id) => {
                     const normalizedWaId = normalizeTo62(waId.trim());
-                    const existing = conversations.find(c => c.customer_wa_id === normalizedWaId && c.wa_channel_id === channelId);
+                    const existing = conversations.find(c => c.wa_id === normalizedWaId && c.phone_number_id === phone_number_id);
                     if (existing) {
                         setActiveConversation(existing);
                         setShowTemplateQuickAction(true);
                     } else {
-                        const selectedChannel = channels.find(c => c.id === channelId);
+                        const selectedChannel = channels.find(c => c.id === phone_number_id);
+                        const id = Guid.newGuid().toString();
                         const tempConv: Conversation = {
-                            id: 0,
-                            wa_channel_id: channelId,
-                            app_id: selectedChannel?.app_id,
-                            waba_id: selectedChannel?.waba_id || '',
-                            customer_wa_id: normalizedWaId,
-                            customer_name: name || normalizedWaId,
-                            kode_reseller: '', nama_reseller: '', display_phone_number: selectedChannel?.display_phone_number || '',
-                            last_message_preview: '', unread_count: 0, status: 'NEW', is_template_required: true, platform: 'whatsapp',
-                            updated_at: new Date().toISOString()
+                            id: id,
+                            phone_number_id: phone_number_id,
+                            wa_id: normalizedWaId,
+                            custom_name: name || normalizedWaId, display_phone_number: selectedChannel?.display_phone_number || '',
+                            last_message_preview: '', unread_count: 0, is_template_required: true,conversation_timestamp: Date.now(),
+                            display_name: selectedChannel?.display_name || selectedChannel?.display_phone_number || 'WA Number',last_message_at: Date(),
+                            profile_name: selectedChannel?.display_name
                         };
                         setActiveConversation(tempConv);
                         setMessages([]);
@@ -540,7 +540,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                         onClick={(e) => {
                             e.stopPropagation();
                             setRenamingConv(contextMenu.conversation);
-                            setRenameName(contextMenu.conversation?.customer_name || '');
+                            setRenameName(contextMenu.conversation?.display_name || '');
                             setIsRenameDialogOpen(true);
                             setContextMenu({ ...contextMenu, conversation: null });
                         }}

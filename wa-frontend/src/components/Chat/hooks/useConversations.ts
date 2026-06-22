@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getConversations, getApplicationSummary } from '../../../services/chatService';
-import type { Conversation, ChatMessage, ApplicationSummary } from '../../../types/chat';
+import type { Conversation, ChatMessage, ApplicationSummary, Bubble } from '../../../types/chat';
+import { PayloadConversationUpdate } from '@/types/wsEvent';
 
 interface UseConversationsProps {
     activeAppId: string | number | null;
@@ -108,14 +109,14 @@ export const useConversations = ({
                 if (res.status) setApplications(res.data);
             });
 
-            if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
-                setActiveConversation({
-                    ...conv,
-                    unread_count: activeConversationRef.current.unread_count === 0 ? 0 : conv.unread_count
-                });
-            }
+            // if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
+            //     setActiveConversation({
+            //         ...conv,
+            //         unread_count: activeConversationRef.current.unread_count === 0 ? 0 : conv.unread_count
+            //     });
+            // }
 
-            if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
+            // if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
 
             setConversations(prev => {
                 const index = prev.findIndex(c => c.id === conv.id);
@@ -174,8 +175,8 @@ export const useConversations = ({
         }
 
         const handleReceiveMessage = (message: any) => {
-            const chatMsg = message as ChatMessage;
-            if (activeAppIdRef.current !== null && chatMsg.app_id !== activeAppIdRef.current) return;
+            const chatMsg = message as Bubble;
+            if (activeAppIdRef.current !== null && chatMsg.phone_number_id !== activeAppIdRef.current) return;
 
              // Cek INBOUND + kirim notification DI LUAR setConversations
             let shouldNotify = false;
@@ -183,7 +184,7 @@ export const useConversations = ({
             setConversations(prev => {
                 const index = prev.findIndex(c =>
                     c.id === chatMsg.conversation_id ||
-                    `${c.wa_channel_id}_${c.customer_wa_id}` === chatMsg.conversation_id
+                    (c.wa_id === chatMsg.wa_id && c.phone_number_id === chatMsg.phone_number_id)
                 );
                 if (index !== -1) {
 
@@ -196,19 +197,19 @@ export const useConversations = ({
                     const updated = [...prev];
                     const conv = { ...updated[index] };
 
-                    let preview = chatMsg.message_text;
-                    if (chatMsg.message_type === 'image') preview = (chatMsg.message_text == "") ? "📷 Foto" : `📷 ${chatMsg.message_text}`;
-                    else if (chatMsg.message_type === 'video') preview = (chatMsg.message_text == "") ? "🎥 Video" : `🎥 ${chatMsg.message_text}`;
-                    else if (chatMsg.message_type === 'audio') preview = (chatMsg.message_text == "") ? "🎵 Audio" : `🎵 ${chatMsg.message_text}`;
-                    else if (chatMsg.message_type === 'document') preview = (chatMsg.message_text == "") ? "📄 Dokumen" : `📄 ${chatMsg.message_text}`;
-                    else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} sent a sticker`;
-                    else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} reacted to a message`;
-                    else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'INBOUND' ? conv.customer_name : 'Me'} shared a location`;
-                    else if (chatMsg.message_type === 'template') preview =  templatePreview(chatMsg) || 'Template Message';
+                    let preview = chatMsg.body?.text;
+                    if (chatMsg.message_type === 'image') preview = (chatMsg.body?.text == "") ? "📷 Foto" : `📷 ${chatMsg.body?.text}`;
+                    else if (chatMsg.message_type === 'video') preview = (chatMsg.body?.text == "") ? "🎥 Video" : `🎥 ${chatMsg.body?.text}`;
+                    else if (chatMsg.message_type === 'audio') preview = (chatMsg.body?.text == "") ? "🎵 Audio" : `🎵 ${chatMsg.body?.text}`;
+                    else if (chatMsg.message_type === 'document') preview = (chatMsg.body?.text == "") ? "📄 Dokumen" : `📄 ${chatMsg.body?.text}`;
+                    else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} sent a sticker`;
+                    else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} reacted to a message`;
+                    else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} shared a location`;
+                    else if (chatMsg.message_type === 'template') preview =  chatMsg.body?.text || 'Template Message';
 
                     conv.last_message_preview = preview;
-                    conv.last_message_timestamp = chatMsg.message_timestamp;
-                    conv.updated_at = chatMsg.created_at;
+                    // conv.last_message_timestamp = chatMsg.message_timestamp;
+                    // conv.updated_at = chatMsg.created_at;
 
                     if (chatMsg.direction === 'INBOUND') {
 
@@ -216,7 +217,7 @@ export const useConversations = ({
                         if (!shouldNotify && (window as any).chrome?.webview) {
                             (window as any).chrome.webview.postMessage({
                                 type: 'SHOW_NOTIFICATION',
-                                title: conv.customer_name,
+                                title: conv.custom_name,
                                 message: preview || 'Pesan baru'
                             });
                         }

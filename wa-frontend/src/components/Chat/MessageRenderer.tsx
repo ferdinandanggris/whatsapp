@@ -47,7 +47,7 @@ export const parseErrorDetails = (msg: ChatMessage): ErrorDetails | null => {
 
 export const renderTemplateMessage = (msg: Bubble) => {
     // try {
-    //     const payload = typeof msg.raw_payload === 'string' ? JSON.parse(msg.raw_payload) : msg.raw_payload;
+    //     const payload = typeof msg.content?.raw_payload === 'string' ? JSON.parse(msg.content?.raw_payload) : msg.content?.raw_payload;
 
     //     // Template definition from backend JOIN (uppercase types: BODY, HEADER, BUTTONS)
     //     const definition: any[] = payload.template_definition;
@@ -129,7 +129,7 @@ export const renderTemplateMessage = (msg: Bubble) => {
     //         </div>
     //     );
     // } catch (e) {
-    //     return <div className="text-sm italic opacity-50">{msg.message_text || 'Template'}</div>;
+    //     return <div className="text-sm italic opacity-50">{msg.content?.message_text || 'Template'}</div>;
     // }
     return <></>
 };
@@ -160,38 +160,38 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
 
     return (
             <div className="space-y-2 py-1">
-                {renderQuotedMessage(msg.context)}
-                {msg.header && msg.header.format === 'text' && (
+                {renderQuotedMessage(msg.content?.context)}
+                {msg.content?.header && msg.content?.header.format === 'text' && (
                     <div className="font-bold text-sm mb-1 leading-tight tracking-tight">
-                        {msg.header.text}
+                        {msg.content?.header.text}
                     </div>
                 )}
-                {msg.header && msg.header.format === 'image' && (
-                    <img src={msg.header.url} alt="Header" className="rounded-lg w-full mb-2 shadow-sm border border-slate-100" />
+                {msg.content?.header && msg.content?.header.format === 'image' && (
+                    <img src={msg.content?.header.url} alt="Header" className="rounded-lg w-full mb-2 shadow-sm border border-slate-100" />
                 )}
 
                 {/* BODY */}
-                {msg.body && msg.body.format === 'text' && (
+                {msg.content?.body && msg.content?.body.format === 'text' && (
                 // <div className="flex flex-col gap-1">
                 //     <p className="text-[14px] leading-relaxed whitespace-pre-wrap select-text">
-                //         {msg.body.text}
+                //         {msg.content?.body.text}
                 //     </p>
                 // </div>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {msg.body.text}
+                    {msg.content?.body.text}
                 </div>
                 )}
                 
 
-                {msg.footer && (
+                {msg.content?.footer && (
                     <div className="text-[10px] opacity-60 mt-1 tracking-wider">
-                        {msg.footer.text}
+                        {msg.content?.footer.text}
                     </div>
                 )}
 
-                {msg.buttons && msg.buttons.length && (
+                {msg.content?.buttons && msg.content?.buttons.length && (
                     <div className="border-t border-slate-100/20 pt-2 mt-2 flex flex-col gap-1.5">
-                        {msg.buttons.map((btn: ButtonMsg, idx: number) => (
+                        {msg.content?.buttons.map((btn: ButtonMsg, idx: number) => (
                             <ButtonComp
                                 key={idx}
                                 variant="outline"
@@ -213,18 +213,18 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
     return <></>
     
 
-    // switch (msg.message_type) {
+    // switch (msg.content?.message_type) {
     //     case 'image':
     //         return (
     //             <div className="space-y-2 max-w-[330px] ">
-    //                 {renderQuotedMessage(msg.context_message_id)}
+    //                 {renderQuotedMessage(msg.content?.context_message_id)}
     //                 <div
     //                     className="relative group/img overflow-hidden rounded-lg shadow-sm cursor-pointer"
     //                     onContextMenu={(e) => handleContextMenuImage(e, msg)}
     //                     onClick={() => onImageClick?.(msg)}
     //                 >
     //                     <img
-    //                         src={msg.file_path || ''}
+    //                         src={msg.content?.file_path || ''}
     //                         alt="Media"
     //                         className="mx-auto max-w-full min-w-[300px] min-h-[100px] max-h-[400px] rounded-lg transition-transform duration-500 group-hover/img:scale-105 object-cover"
     //                         loading="lazy"
@@ -233,60 +233,60 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
     //                         <Button variant="secondary" size="sm" className="rounded-full shadow-lg" onClick={(e) => { e.stopPropagation(); onImageClick?.(msg); }}>Buka</Button>
     //                     </div>
     //                 </div>
-    //                 {msg.message_text && <p className="text-sm leading-relaxed px-1 whitespace-pre-wrap">{msg.message_text}</p>}
+    //                 {msg.content?.message_text && <p className="text-sm leading-relaxed px-1 whitespace-pre-wrap">{msg.content?.message_text}</p>}
     //             </div>
     //         );
     //     case 'video':
     //         return (
     //             <div className="space-y-2 w-full max-w-[330px]">
-    //                 {renderQuotedMessage(msg.context_message_id)}
-    //                 <video src={msg.file_path} controls className="max-w-full rounded-lg shadow-sm w-full max-h-[400px] " />
-    //                 {msg.message_text && <p className="text-sm px-1 whitespace-pre-wrap">{msg.message_text}</p>}
+    //                 {renderQuotedMessage(msg.content?.context_message_id)}
+    //                 <video src={msg.content?.file_path} controls className="max-w-full rounded-lg shadow-sm w-full max-h-[400px] " />
+    //                 {msg.content?.message_text && <p className="text-sm px-1 whitespace-pre-wrap">{msg.content?.message_text}</p>}
     //             </div>
     //         );
     //     case 'audio':
     //         return (
     //             <div className="space-y-2 py-1">
-    //                 {renderQuotedMessage(msg.context_message_id)}
-    //                 <audio src={msg.file_path} controls className="max-w-[240px] h-8" />
+    //                 {renderQuotedMessage(msg.content?.context_message_id)}
+    //                 <audio src={msg.content?.file_path} controls className="max-w-[240px] h-8" />
     //             </div>
     //         );
     //     case 'document':
     //         return (
     //             <div className="space-y-2">
-    //                 {renderQuotedMessage(msg.context_message_id)}
+    //                 {renderQuotedMessage(msg.content?.context_message_id)}
     //                 <a
-    //                     target='_blank' href={msg.file_path || '#'}
+    //                     target='_blank' href={msg.content?.file_path || '#'}
     //                     onClick={(e) => {
     //                         e.preventDefault();
     //                         if (onImageClick) {
     //                             onImageClick(msg);
     //                         } else {
-    //                             window.open(msg.file_path || '#', '_blank');
+    //                             window.open(msg.content?.file_path || '#', '_blank');
     //                         }
     //                     }}
     //                     className="flex items-center gap-3 p-3 bg-black/5 hover:bg-black/10 rounded-xl border border-black/5 transition-all group/doc cursor-pointer"
     //                 >
     //                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover/doc:text-indigo-600 transition-colors">
-    //                         {msg.file_type?.includes('pdf') ? 'PDF' : 'DOC'}
+    //                         {msg.content?.file_type?.includes('pdf') ? 'PDF' : 'DOC'}
     //                     </div>
     //                     <div className="flex-1 min-w-0">
-    //                         <p className="text-sm font-semibold truncate">{msg.file_name || 'Document'}</p>
-    //                         <p className="text-[10px] opacity-50 uppercase font-bold">{msg.file_type}</p>
+    //                         <p className="text-sm font-semibold truncate">{msg.content?.file_name || 'Document'}</p>
+    //                         <p className="text-[10px] opacity-50 uppercase font-bold">{msg.content?.file_type}</p>
     //                     </div>
     //                 </a>
-    //                 {msg.message_text && <p className="text-sm px-1 whitespace-pre-wrap">{msg.message_text}</p>}
+    //                 {msg.content?.message_text && <p className="text-sm px-1 whitespace-pre-wrap">{msg.content?.message_text}</p>}
     //             </div>
     //         );
     //     case 'sticker':
     //         return (
     //             <div className="relative group/sticker p-2 hover:bg-black/5 rounded-2xl transition-colors">
-    //                 <img src={msg.file_path} alt="Sticker" className="w-32 h-32 object-contain transition-transform group-hover/sticker:scale-110 duration-500" />
+    //                 <img src={msg.content?.file_path} alt="Sticker" className="w-32 h-32 object-contain transition-transform group-hover/sticker:scale-110 duration-500" />
     //             </div>
     //         );
     //     case 'contacts':
     //         try {
-    //             const payload = JSON.parse(msg.raw_payload || '[]');
+    //             const payload = JSON.parse(msg.content?.raw_payload || '[]');
     //             // Extract contact from either standard payload or webhook structure
     //             let contacts = [];
     //             if (payload.contacts && Array.isArray(payload.contacts)) {
@@ -296,7 +296,7 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
     //             }
 
     //             if (contacts.length === 0) {
-    //                 return <p className="text-slate-800 pr-10 font-medium">{msg.message_text || "[Kontak]"}</p>;
+    //                 return <p className="text-slate-800 pr-10 font-medium">{msg.content?.message_text || "[Kontak]"}</p>;
     //             }
     //             return (
     //                 <div className="space-y-2 p-1">
@@ -319,9 +319,9 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
     //     default:
     //         return (
     //             <div className="flex flex-col gap-1">
-    //                 {renderQuotedMessage(msg.context_message_id)}
+    //                 {renderQuotedMessage(msg.content?.context_message_id)}
     //                 <p className="text-[14px] leading-relaxed whitespace-pre-wrap select-text">
-    //                     {msg.message_text}
+    //                     {msg.content?.message_text}
     //                 </p>
     //             </div>
     //         );
