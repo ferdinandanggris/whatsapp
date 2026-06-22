@@ -1,12 +1,15 @@
+import { Conversation } from "./chat";
+
 export enum EventType {
     NEW_MESSAGE   = "NEW_MESSAGE",
-    UPDATE_STATUS = "UPDATE_STATUS"
+    UPDATE_STATUS = "UPDATE_STATUS",
+    CONVERSATION_UPDATE = "CONVERSATION_UPDATE"
 }
 
 export interface WebsocketEvent{
     event_type: EventType;
     company_id: string;
-    data: PayloadNewMessage | StatusUpdatePayload;
+    data: PayloadNewMessage | StatusUpdatePayload | Conversation;
 }
 
 export interface PayloadNewMessage{

@@ -175,7 +175,7 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
                     console.log('WS Event received [UPDATE_STATUS]:', ev);
                     emitterRef.current.emit('MessageStatusUpdated', payload.data);
                 }
-                else if (ev.type === 'CONVERSATION_UPDATE') {
+                else if (ev.type === EventType.CONVERSATION_UPDATE) {
                     console.log('WS Event received [CONVERSATION_UPDATE]:', ev);
                     emitterRef.current.emit('UpdateConversation', payload.data);
                 }

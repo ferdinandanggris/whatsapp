@@ -104,11 +104,11 @@ export const useConversations = ({
     useEffect(() => {
         if (!connection) return;
 
-        const handleUpdateConversation = (conv: Conversation) => {
+        const handleUpdateConversation = (conv: any) => {
+            var res: Conversation = conv;
             getApplicationSummary().then(res => {
                 if (res.status) setApplications(res.data);
             });
-
             // if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
             //     setActiveConversation({
             //         ...conv,

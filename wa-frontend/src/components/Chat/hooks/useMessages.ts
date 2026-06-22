@@ -133,7 +133,7 @@ export const useMessages = ({
             const chatMsg = message as Bubble;
             const conv = activeConversationRef.current;
             // const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
-            // if (!conv || (chatMsg.conversation_id !== conv.id && chatMsg.conversation_id !== compositeId)) return;
+            if (!conv || (chatMsg.wa_id !== conv.wa_id && chatMsg.phone_number_id !== conv.phone_number_id)) return;
 
             // console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
             setMessages(prev => {
