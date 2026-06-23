@@ -4,11 +4,11 @@ import { X, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { ApplicationSummary } from '../../types/chat';
+import type { PhoneNumber } from '../../types/chat';
 import { getInitials } from '../../lib/chatUtils';
 
 interface ChatSidebarProps {
-    applications: ApplicationSummary[];
+    applications: PhoneNumber[];
     totalUnread: number;
     activeAppId: string | number | null;
     setActiveAppId: (id: string | number | null) => void;
@@ -61,9 +61,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         size="icon"
                         className={`w-12 h-12 rounded-xl transition-all duration-200 ${activeAppId === app.id ? 'bg-[#00a884] text-white rounded-lg' : 'bg-white text-slate-600 hover:bg-[#00a884] hover:text-white'}`}
                         onClick={() => setActiveAppId(app.id)}
-                        title={app.app_name}
+                        title={app.display_name}
                     >
-                        <span className="text-sm font-bold">{getInitials(app.app_name)}</span>
+                        <span className="text-sm font-bold">{getInitials(app.display_name)}</span>
                     </Button>
                     {app.unread_count > 0 && (
                         <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1.5 h-5 flex items-center justify-center font-bold border-2 border-[#f0f2f5] shadow-sm">

@@ -15,34 +15,31 @@ interface ContactSidebarProps {
 }
 
 const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, onConversationUpdated }) => {
-    const [customName, setCustomName] = useState(conversation.customer_name);
+    const [customName, setCustomName] = useState(conversation.custom_name);
     const [isEditing, setIsEditing] = useState(false);
-    const [isBlocked, setIsBlocked] = useState(conversation.status === 'BLOCKED');
     const [loading, setLoading] = useState(false);
     const [contactDetails, setContactDetails] = useState<any>(null);
 
     useEffect(() => {
-        setCustomName(conversation.customer_name);
-        setIsBlocked(conversation.status === 'BLOCKED');
+        setCustomName(conversation.custom_name);
 
         // Fetch deep contact details from our Go backend
         const fetchContact = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`/api/v1/contacts/${conversation.customer_wa_id}`, {
-                    params: { phone_number_id: conversation.wa_channel_id },
+                const response = await axios.get(`/api/v1/contacts/${conversation.wa_id}`, {
+                    params: { phone_number_id: conversation.phone_number_id },
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (response.data) {
                     setContactDetails(response.data);
-                    setIsBlocked(response.data.is_blocked);
                 }
             } catch (error) {
                 console.error("Gagal mengambil detail kontak:", error);
             }
         };
 
-        if (conversation.customer_wa_id) {
+        if (conversation.wa_id) {
             fetchContact();
         }
     }, [conversation]);
@@ -59,32 +56,6 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
             }
         } catch (error) {
             console.error("Gagal menyimpan nama:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleToggleBlock = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const action = isBlocked ? 'unblock' : 'block';
-            const response = await axios.post(`/api/v1/contacts/${conversation.customer_wa_id}/${action}`, null, {
-                params: { phone_number_id: conversation.wa_channel_id },
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (response.data) {
-                const newBlockedState = !isBlocked;
-                setIsBlocked(newBlockedState);
-                const updated = { 
-                    ...conversation, 
-                    status: newBlockedState ? 'BLOCKED' : 'ACTIVE' 
-                };
-                if (onConversationUpdated) onConversationUpdated(updated);
-            }
-        } catch (error) {
-            console.error(`Gagal ${isBlocked ? 'membuka blokir' : 'memblokir'} kontak:`, error);
         } finally {
             setLoading(false);
         }
@@ -172,7 +143,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                                 </Button>
                             </div>
                         )}
-                        <p className="text-xs text-slate-500 font-medium">+{conversation.customer_wa_id}</p>
+                        <p className="text-xs text-slate-500 font-medium">+{conversation.wa_id}</p>
                     </div>
                 </div>
 
@@ -187,7 +158,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                     {/* Channel */}
                     <div className="space-y-1">
                         <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Nomor Layanan (Channel)</span>
-                        <p className="text-xs font-semibold text-slate-700">{conversation.app_name} ({conversation.display_phone_number})</p>
+                        <p className="text-xs font-semibold text-slate-700">{conversation.display_name} ({conversation.display_phone_number})</p>
                     </div>
                 </div>
 
@@ -204,40 +175,6 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
                         </span>
                     </div>
                 </div>
-
-                {/* Danger Actions Section 
-                    // Comment dulu, karena fitur blokir kontak masih dalam tahap pengujian internal. Nantinya akan ada opsi untuk memblokir kontak langsung dari sidebar ini, lengkap dengan konfirmasi dan penjelasan konsekuensinya.
-                */}
-                {/* <div className="space-y-2 pt-4">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-1">Kontrol Kontak</span>
-                    <div className="flex flex-col gap-2">
-                        <Button 
-                            onClick={handleToggleBlock}
-                            disabled={loading}
-                            variant="outline"
-                            className={`w-full h-10 text-xs font-bold rounded-xl border flex items-center justify-center gap-2 shadow-sm transition-all ${isBlocked ? 'text-green-600 border-green-100 hover:bg-green-50/50' : 'text-red-500 border-red-100 hover:bg-red-50/50'}`}
-                        >
-                            {isBlocked ? (
-                                <>
-                                    <UserCheck className="w-4 h-4" />
-                                    <span>Buka Blokir Kontak</span>
-                                </>
-                            ) : (
-                                <>
-                                    <UserMinus className="w-4 h-4" />
-                                    <span>Blokir Kontak</span>
-                                </>
-                            )}
-                        </Button>
-                        
-                        {isBlocked && (
-                            <div className="p-3 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-[10px] leading-relaxed flex gap-2">
-                                <ShieldAlert className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
-                                <span>Kontak ini diblokir. Agen tidak akan dapat membalas atau mengirimkan template ke nomor ini.</span>
-                            </div>
-                        )}
-                    </div>
-                </div> */}
             </div>
         </div>
     );

@@ -80,6 +80,7 @@ export interface Bubble{
     status : string;
     sender_name : string;
     error_message?: string;
+    agent_name?: string;
 
     raw_message? : string;
     content? : MessageContent;
@@ -136,9 +137,9 @@ export interface MessageResponse{
     error_details : ErrorDetails    
 }
 
-export interface ApplicationSummary {
+export interface PhoneNumber {
     id: string | number;
-    app_name: string;
+    display_name: string;
     unread_count: number;
 }
 

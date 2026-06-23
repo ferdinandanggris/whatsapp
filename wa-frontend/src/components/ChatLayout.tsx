@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Edit2, Send, Smile } from "lucide-react";
 
-import type { Conversation, ChatMessage, ApplicationSummary, WaChannel, Bubble } from '../types/chat';
-import { getApplicationSummary, getChannels, getPingInfo } from '../services/chatService';
+import type { Conversation, ChatMessage, PhoneNumber, WaChannel, Bubble } from '../types/chat';
+import { getPhoneNumbers, getChannels, getPingInfo } from '../services/chatService';
 import { normalizeTo62 } from '../lib/chatUtils';
 
 import TemplatePickerDialog from './TemplatePickerDialog';
@@ -41,7 +41,7 @@ interface ChatLayoutProps {
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // --- Global Data State ---
-    const [applications, setApplications] = useState<ApplicationSummary[]>([]);
+    const [applications, setApplications] = useState<PhoneNumber[]>([]);
     const [channels, setChannels] = useState<WaChannel[]>([]);
     const [activeAppId, setActiveAppId] = useState<string | number | null>(null);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
@@ -122,7 +122,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [appResp, channelResp, pingResp] = await Promise.all([getApplicationSummary(), getChannels(), getPingInfo()]);
+                const [appResp, channelResp, pingResp] = await Promise.all([getPhoneNumbers(), getChannels(), getPingInfo()]);
                 if (appResp.status) setApplications(appResp.data);
                 if (channelResp.status) setChannels(channelResp.data);
                 const canSendTemplate = pingResp.allowSendTemplate;
@@ -250,7 +250,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const handleGlobalRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const [appResp, channelResp] = await Promise.all([getApplicationSummary(), getChannels()]);
+            const [appResp, channelResp] = await Promise.all([getPhoneNumbers(), getChannels()]);
             if (appResp.status) setApplications(appResp.data);
             if (channelResp.status) setChannels(channelResp.data);
             await fetchConvs(true);

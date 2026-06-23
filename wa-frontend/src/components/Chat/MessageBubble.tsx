@@ -89,7 +89,7 @@ const MessageBubble = React.memo(function MessageBubble({
                         {(
                             <div className={cn("text-[10px] font-bold mb-1 flex items-center gap-1.5", isOutbound ? "text-slate-200" : "text-[#00a884]")}>
                                 {/* {msg.sender_name} */}
-                                {isOutbound ? msg.sender_name : conversation?.custom_name}
+                                {isOutbound ? msg.agent_name : conversation?.custom_name}
                                 {/* {msg.platform === 'whatsapp' && <span className="w-1 h-1 bg-slate-300 rounded-full" />} */}
                                 {/* {msg.platform === 'whatsapp' && <span className="font-normal text-slate-400 capitalize">{msg.platform}</span>} */}
                             </div>

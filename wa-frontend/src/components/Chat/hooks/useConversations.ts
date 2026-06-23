@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { getConversations, getApplicationSummary } from '../../../services/chatService';
-import type { Conversation, ChatMessage, ApplicationSummary, Bubble } from '../../../types/chat';
+import { getConversations, getPhoneNumbers } from '../../../services/chatService';
+import type { Conversation, ChatMessage, PhoneNumber, Bubble } from '../../../types/chat';
 import { PayloadConversationUpdate } from '@/types/wsEvent';
 
 interface UseConversationsProps {
@@ -11,7 +11,7 @@ interface UseConversationsProps {
     connection: any;
     activeConversation: Conversation | null;
     setActiveConversation: (conv: Conversation | null) => void;
-    setApplications: (apps: ApplicationSummary[]) => void;
+    setApplications: (apps: PhoneNumber[]) => void;
 }
 
 export const useConversations = ({
@@ -105,18 +105,22 @@ export const useConversations = ({
         if (!connection) return;
 
         const handleUpdateConversation = (conv: any) => {
+            console.log(`[WS] UpdateConversation`, conv);   
             var res: Conversation = conv;
-            getApplicationSummary().then(res => {
+            getPhoneNumbers().then(res => {
                 if (res.status) setApplications(res.data);
             });
-            // if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
-            //     setActiveConversation({
-            //         ...conv,
-            //         unread_count: activeConversationRef.current.unread_count === 0 ? 0 : conv.unread_count
-            //     });
-            // }
 
             // if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
+
+
+            if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
+                setActiveConversation({
+                    ...conv,
+                    unread_count: activeConversationRef.current.unread_count === 0 ? 0 : conv.unread_count
+                });
+            }
+
 
             setConversations(prev => {
                 const index = prev.findIndex(c => c.id === conv.id);
@@ -225,7 +229,7 @@ export const useConversations = ({
                         
 
                         // Refresh app badges in sidebar
-                        getApplicationSummary().then(res => {
+                        getPhoneNumbers().then(res => {
                             if (res.status) setApplications(res.data);
                         });
                     }

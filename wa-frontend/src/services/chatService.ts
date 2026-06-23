@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ApiResponse, PagedResponse, Conversation, ChatMessage, ApplicationSummary, WaChannel, MessageResponse, Bubble } from '../types/chat';
+import type { ApiResponse, PagedResponse, Conversation, ChatMessage, PhoneNumber, WaChannel, MessageResponse, Bubble } from '../types/chat';
 import { isDesktop, postToDesktop } from '../api/desktopBridge';
 
 
@@ -85,31 +85,6 @@ apiClient.interceptors.response.use(
     },
 );
 
-// Helper to convert Go conversation model to WaMeta UI model
-// is_template_required is computed by the backend via subquery on messages table.
-// const mapConversation = (c: any): Conversation => {
-//     return {
-//         id: c.id,
-//         wa_channel_id: c.phone_number_id,
-//         app_id: c.phone_number_id,
-//         waba_id: '',
-//         customer_wa_id: c.wa_id,
-//         customer_name: c.company_custom_name || c.profile_name || c.wa_id,
-//         kode_reseller: '',
-//         nama_reseller: '',
-//         display_phone_number: c.display_phone_number || String(c.phone_number_id),
-//         app_name: c.display_name || 'WA Number',
-//         wa_channel_display_name: c.display_name || 'WA Number',
-//         is_template_required: c.is_template_required,
-//         platform: 'whatsapp',
-//         last_message_preview: c.last_message_preview || '',
-//         unread_count: c.unread_count || 0,
-//         status: c.is_blocked ? 'BLOCKED' : 'ACTIVE',
-//         updated_at: c.last_message_at || new Date().toISOString(),
-//         last_message_timestamp: c.last_message_at ? Math.floor(new Date(c.last_message_at).getTime() / 1000) : undefined
-//     };
-// };
-
 export const getConversations = async (
     limit = 50,
     cursor_updated_at?: string,
@@ -164,12 +139,12 @@ export const getPingInfo = async () => {
     }
 };
 
-export const getApplicationSummary = async (): Promise<ApiResponse<ApplicationSummary[]>> => {
+export const getPhoneNumbers = async (): Promise<ApiResponse<PhoneNumber[]>> => {
     try {
         const response = await apiClient.get<ApiResponse<any[]>>('/api/v1/phone-numbers');
-        const items: ApplicationSummary[] = response.data.data.map(p => ({
+        const items: PhoneNumber[] = response.data.data.map(p => ({
             id: p.phone_number_id,
-            app_name: p.display_name || p.display_phone_number || 'WA Number',
+            display_name: p.display_name || p.display_phone_number || 'WA Number',
             unread_count: p.unread_count || 0
         }));
 

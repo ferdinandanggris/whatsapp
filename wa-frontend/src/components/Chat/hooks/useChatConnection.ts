@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWS } from '../../../stores/ws';
-import { getApplicationSummary } from '../../../services/chatService';
-import type { ApplicationSummary } from '../../../types/chat';
+import { getPhoneNumbers } from '../../../services/chatService';
+import type { PhoneNumber } from '../../../types/chat';
 import { EventType, WebsocketEvent } from '@/types/wsEvent';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
@@ -142,7 +142,7 @@ const mapMessage = (m: any) => {
 };
 
 interface UseChatConnectionProps {
-    setApplications: (apps: ApplicationSummary[]) => void;
+    setApplications: (apps: PhoneNumber[]) => void;
 }
 
 export const useChatConnection = ({ setApplications }: UseChatConnectionProps) => {
@@ -175,7 +175,7 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
                     console.log('WS Event received [UPDATE_STATUS]:', ev);
                     emitterRef.current.emit('MessageStatusUpdated', payload.data);
                 }
-                else if (ev.type === EventType.CONVERSATION_UPDATE) {
+                else if (payload.event_type === EventType.CONVERSATION_UPDATE) {
                     console.log('WS Event received [CONVERSATION_UPDATE]:', ev);
                     emitterRef.current.emit('UpdateConversation', payload.data);
                 }
