@@ -377,7 +377,7 @@ export const sendMessage = async (
 
         if (context_message_id) payload.context_message_id = context_message_id;
 
-        const response = await apiClient.post<any>('/api/v1/messages', payload);
+        const response = await apiClient.post<any>('/api/v1/messages/text', payload);
         return {
             status_code: 201,
             status: true,
