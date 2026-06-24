@@ -201,15 +201,15 @@ export const useConversations = ({
                     const updated = [...prev];
                     const conv = { ...updated[index] };
 
-                    let preview = chatMsg.body?.text;
-                    if (chatMsg.message_type === 'image') preview = (chatMsg.body?.text == "") ? "📷 Foto" : `📷 ${chatMsg.body?.text}`;
-                    else if (chatMsg.message_type === 'video') preview = (chatMsg.body?.text == "") ? "🎥 Video" : `🎥 ${chatMsg.body?.text}`;
-                    else if (chatMsg.message_type === 'audio') preview = (chatMsg.body?.text == "") ? "🎵 Audio" : `🎵 ${chatMsg.body?.text}`;
-                    else if (chatMsg.message_type === 'document') preview = (chatMsg.body?.text == "") ? "📄 Dokumen" : `📄 ${chatMsg.body?.text}`;
+                    let preview = chatMsg.content?.body?.text;
+                    if (chatMsg.message_type === 'image') preview = (chatMsg.content?.body?.text == "") ? "📷 Foto" : `📷 ${chatMsg.content?.body?.text}`;
+                    else if (chatMsg.message_type === 'video') preview = (chatMsg.content?.body?.text == "") ? "🎥 Video" : `🎥 ${chatMsg.content?.body?.text}`;
+                    else if (chatMsg.message_type === 'audio') preview = (chatMsg.content?.body?.text == "") ? "🎵 Audio" : `🎵 ${chatMsg.content?.body?.text}`;
+                    else if (chatMsg.message_type === 'document') preview = (chatMsg.content?.body?.text == "") ? "📄 Dokumen" : `📄 ${chatMsg.content?.body?.text}`;
                     else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} sent a sticker`;
                     else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} reacted to a message`;
                     else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} shared a location`;
-                    else if (chatMsg.message_type === 'template') preview =  chatMsg.body?.text || 'Template Message';
+                    else if (chatMsg.message_type === 'template') preview =  chatMsg.content?.body?.text || 'Template Message';
 
                     conv.last_message_preview = preview;
                     // conv.last_message_timestamp = chatMsg.message_timestamp;

@@ -4,7 +4,6 @@ export interface Conversation {
   wa_id: string
   profile_name: string
   company_custom_name?: string
-  is_blocked: boolean
   last_message_at?: string
   last_message_preview: string
   unread_count: number

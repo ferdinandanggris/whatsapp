@@ -664,10 +664,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 </div>
             )}
             {/* Image Viewer Overlay */}
-            {/* <ImageViewer
+            <ImageViewer
                 message={viewingMedia}
                 onClose={() => setViewingMedia(null)}
-            /> */}
+            />
         </div>
     );
 };

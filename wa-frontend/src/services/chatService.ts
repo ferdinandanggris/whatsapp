@@ -395,6 +395,56 @@ export const sendMessage = async (
     }
 };
 
+
+export const sendMedia = async (
+    phone_number_id: string,
+    target: string,
+    text: string, 
+    message_type = 'text',
+    media_file: File,
+    wa_message_id?: string,
+    context_message_id?: string
+): Promise<ApiResponse<any>> => {
+    try {
+        const payload: any = {
+            to: target,
+            phone_number_id: phone_number_id,
+            type: message_type,
+            id:wa_message_id,
+        };
+
+        if (message_type === 'text') {
+            payload.body = text;
+        } else {
+            payload.media_file = media_file;
+            payload.filename = media_file.name;
+            payload.body = text;
+        }
+
+        if (context_message_id) payload.context_message_id = context_message_id;
+
+        const response = await apiClient.post<any>('/api/v1/messages/media', payload, {
+            headers :{
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return {
+            status_code: 201,
+            status: true,
+            message: 'Success',
+            data: response.data
+        };
+    } catch (error: any) {
+        const errMsg = error.response?.data?.error || error.message || 'Gagal mengirim pesan';
+        return {
+            status_code: error.response?.status || 500,
+            status: false,
+            message: errMsg,
+            data: null
+        };
+    }
+};
+
 export const sendTemplate = async (
     wa_channel_id: string | number,
     conversation_id: string | number,

@@ -135,7 +135,6 @@ export const useMessages = ({
             // const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
             if (!conv || (chatMsg.wa_id !== conv.wa_id && chatMsg.phone_number_id !== conv.phone_number_id)) return;
 
-            // console.log('[WS] ReceiveMessage', { type: chatMsg.message_type, wamid: chatMsg.wa_message_id, text: chatMsg.message_text?.slice(0,30), file_path: chatMsg.file_path, conv_id: conv.id, compositeId });
             setMessages(prev => {
                 const existing = prev.find(m => m.id === chatMsg.id);
 
@@ -152,22 +151,18 @@ export const useMessages = ({
                 }
 
                 // New inbound message: append and sort by timestamp
-                console.log(`is new`, chatMsg);
                 return [...prev, chatMsg].sort((a, b) => (a.message_timestamp ?? 0) - (b.message_timestamp ?? 0));
             });
         };
 
         const handleMessageStatusUpdated = (res : StatusUpdatePayload) => {
             const conv = activeConversationRef.current;
-            console.log('[WS] MessageStatusUpdated', res);
-            console.log('Conversation', conv);
             if (!conv) return;
             setMessages(prev => prev.map(m => {
                 if (m.id === res.message_id) {
                     console.log('Status update', m, res);
                     return { ...m, status : res.status };
                 }
-                // if (oldId && m.wa_message_id === oldId) return { ...m, wa_message_id: waMessageId, status };
                 return m;
             }));
         };

@@ -36,7 +36,7 @@ const MessageBubble = React.memo(function MessageBubble({
     const [showErrorInfo, setShowErrorInfo] = React.useState(false);
     const isOutbound = msg.direction.toUpperCase() === 'OUTBOUND';
     const isFailed = msg.status === 'failed';
-    // const errorDetails = isFailed ? parseErrorDetails(msg) : null;
+    const errorDetails = isFailed ? msg.error_message : null;
     const showDateDivider = !prevMsg || !isSameDay(new Date(msg.message_timestamp), new Date(prevMsg.message_timestamp));
 
     const renderStatusIcon = (status?: string) => {
@@ -88,23 +88,19 @@ const MessageBubble = React.memo(function MessageBubble({
                     )}>
                         {(
                             <div className={cn("text-[10px] font-bold mb-1 flex items-center gap-1.5", isOutbound ? "text-slate-200" : "text-[#00a884]")}>
-                                {/* {msg.sender_name} */}
                                 {isOutbound ? msg.agent_name : conversation?.custom_name}
-                                {/* {msg.platform === 'whatsapp' && <span className="w-1 h-1 bg-slate-300 rounded-full" />} */}
-                                {/* {msg.platform === 'whatsapp' && <span className="font-normal text-slate-400 capitalize">{msg.platform}</span>} */}
                             </div>
                         )}
 
                         {msg.message_type === 'template' ? renderTemplateMessage(msg) : renderMessageContent(msg, handleContextMenuImage)}
 
-                        {/* {isFailed && errorDetails && showErrorInfo && (
+                        {isFailed && errorDetails && showErrorInfo && (
                             <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-[10px] text-red-100 font-medium">
-                                    {errorDetails.message_local || "Gagal mengirim pesan."}
-                                    {errorDetails.code && <span className="ml-1 opacity-60">({errorDetails.code})</span>}
+                                    {errorDetails || "Gagal mengirim pesan."}
                                 </p>
                             </div>
-                        )} */}
+                        )}
 
                         <div className={cn(
                             "flex items-center gap-1.5 mt-1",

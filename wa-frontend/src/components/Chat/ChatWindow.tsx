@@ -387,6 +387,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     replyingTo={replyingTo}
                     setReplyingTo={setReplyingTo}
                     handleFiles={handleFiles}
+                    conversation={activeConversation}
                 />
             )}
         </div>

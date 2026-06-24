@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead } from '../../../services/chatService';
+import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead, sendMedia } from '../../../services/chatService';
 import type { Conversation, ChatMessage, Bubble } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
@@ -61,10 +61,11 @@ export const useChatActions = ({
             message_timestamp: Math.floor(Date.now() / 1000),
             created_at: new Date().toISOString(),
             sender_name: user?.display_name || 'Me',
-            body: {
-                format: 'text',
-                text : text
-            } 
+            content: {
+                body: {
+                    text: text,
+                }
+            }
             // : replyingTo?.wa_message_id || undefined
         }
 
@@ -72,7 +73,7 @@ export const useChatActions = ({
             newBubble.context = {
                 context_id : replyingTo.id,
                 name : replyingTo.sender_name,
-                text : replyingTo.body?.text
+                text : replyingTo.content?.body?.text
             }
         }
                 
@@ -90,6 +91,7 @@ export const useChatActions = ({
                 setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
             });
     };
+
 
     const handleSendTemplate = async (template: any, params: { body: string[], buttons: string[], header: string[] }) => {
         if (!activeConversation) return;
@@ -198,27 +200,74 @@ export const useChatActions = ({
         //     context_message_id: context_id
         // };
 
-        // setMessages(prev => [...prev, newMessage]);
+        const id = Guid.newGuid().toString();
+        const newBubble : Bubble = {
+            id: id,
+            wa_id: currentConv.wa_id,
+            conversation_id: currentConv.id,
+            phone_number_id: currentConv.phone_number_id,
+            wa_message_id: id,
+            message_type: 'text',
+            direction: 'OUTBOUND',
+            status: 'pending',
+            message_timestamp: Math.floor(Date.now() / 1000),
+            created_at: new Date().toISOString(),
+            sender_name: user?.display_name || 'Me',
+            content: {}
+            
+        }
 
+         switch(type) {
+             case 'image':
+                 newBubble.content.body = {
+                     format: type,
+                     text : caption,
+                     url : previewUrl,
+                     filename : file.name
+                 }
+             case 'video':
+                 newBubble.content.body = {
+                     format: type,
+                     text : caption,
+                     url : previewUrl,
+                     filename : file.name
+                 }
+             case 'audio':
+                 newBubble.content.body = {
+                     format: type,
+                     text : caption,
+                     url : previewUrl,
+                     filename : file.name
+                 }
+             case 'document':
+                 newBubble.content.body = {
+                     format: type,
+                     text : caption,
+                     url : previewUrl,
+                     filename : file.name
+                 }
+         }
+
+          if(replyingTo) {
+            newBubble.context = {
+                context_id : replyingTo.id,
+                name : replyingTo.sender_name,
+                text : replyingTo.content?.body?.text
+            }
+        }
+
+        setMessages(prev => [...prev, newBubble]);
         try {
-            // const { uploadMedia } = await import('../../../services/chatService');
-            // const resp = await uploadMedia(file, currentConv.wa_channel_id);
-            // if (!resp.status) {
-            //     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: resp.message }) } : m));
-            //     return;
-            // }
 
-            // sendMessage(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, caption, type, resp.data.media_id, file.name, user?.display_name, tempId, context_id)
-            // .then((res: any) => {
-            //     if (res.status) {
-            //         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data, reply_wamid: res.data.reply_wamid || m.reply_wamid, reply_text: res.data.reply_text || m.reply_text, reply_name: res.data.reply_name || m.reply_name } : m));
-            //     } else {
-            //         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
-            //     }
-            // }).catch((err: any) => {
-            //     const errMsg = err?.response?.data?.error || err?.message || '';
-            //     setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
-            // });
+           sendMedia(currentConv.phone_number_id, currentConv.wa_id, caption, type, file, id, context_id)
+             .then((res: any) => {
+                if (!res.status) {
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
+                } 
+            }).catch((err: any) => {
+                const errMsg = err?.response?.data?.error || err?.message || '';
+                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+            });
         } catch (error: any) {
             const errMsg = error?.message || '';
             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));

@@ -73,7 +73,6 @@ export interface Bubble{
     wa_id: string;
     direction: 'INBOUND' | 'OUTBOUND';
     created_at: string;
-    error_details?: ErrorDetails;
     message_timestamp?: number;
     timestamp?: Date;
     message_type: string;
@@ -84,10 +83,6 @@ export interface Bubble{
 
     raw_message? : string;
     content? : MessageContent;
-    header? : ContentMsg;
-    body? : ContentMsg;
-    footer? : ContentMsg;
-    buttons? : ButtonMsg[];
     context? : ContextMsg;
 }
 
@@ -95,6 +90,7 @@ export interface ContentMsg {
     format?: string;
     text?: string;
     url?: string;
+    filename?: string;
 }
 
 export interface ButtonMsg {

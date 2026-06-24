@@ -8,8 +8,8 @@ import (
 )
 
 type WebhookOverrideHandler struct {
-	client  wapi.Client
-	wabaID  string
+	client      wapi.Client
+	wabaID      string
 	verifyToken string
 }
 

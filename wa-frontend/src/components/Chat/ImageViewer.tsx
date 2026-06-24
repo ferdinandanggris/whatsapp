@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, ZoomIn, ZoomOut, Maximize, Copy, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { ChatMessage } from '../../types/chat';
+import type { Bubble } from '../../types/chat';
 
 interface ImageViewerProps {
-    message: ChatMessage | null;
+    message: Bubble | null;
     onClose: () => void;
 }
 
@@ -65,21 +65,21 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ message, onClose }) => {
     };
 
     const handleCopy = () => {
-        if (!message?.file_path) return;
+        if (!message?.content?.body?.url) return;
         if ((window as any).chrome?.webview) {
             (window as any).chrome.webview.postMessage({
                 type: 'COPY_IMAGE',
-                url: message.file_path,
+                url: message.content?.body.url,
             });
         }
     };
 
     const handleSave = () => {
-        if (!message?.file_path) return;
+        if (!message?.content?.body?.url) return;
         if ((window as any).chrome?.webview) {
             (window as any).chrome.webview.postMessage({
                 type: 'SAVE_IMAGE',
-                url: message.file_path,
+                url: message.content?.body.url,
             });
         }
     };
@@ -97,7 +97,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ message, onClose }) => {
                 <div className="flex items-center gap-3">
                     <div className="text-white/90">
                         <p className="text-sm font-bold">{message.sender_name || (message.message_type === 'document' ? 'Document Preview' : 'Image Preview')}</p>
-                        <p className="text-[10px] opacity-60">{new Date(message.message_timestamp ? message.message_timestamp * 1000 : message.created_at).toLocaleString()}</p>
+                        <p className="text-[10px] opacity-60">{new Date(message.message_timestamp ? message.message_timestamp  : message.created_at).toLocaleString()}</p>
                     </div>
                 </div>
 
@@ -148,18 +148,18 @@ const ImageViewer: React.FC<ImageViewerProps> = ({ message, onClose }) => {
                     handleZoom(delta);
                 }}
             >
-                {message.message_type === 'document' && (message.file_type?.includes('pdf') || message.file_path?.toLowerCase().endsWith('.pdf')) ? (
+                {message.message_type === 'document' && (message.content?.body.url?.includes('pdf') || message?.content?.body?.url?.toLowerCase().endsWith('.pdf')) ? (
                     <div className="w-full h-full pt-16 pb-4 px-4 flex items-center justify-center">
                         <iframe
-                            // src={`${message.file_path}#toolbar=0`}
-                            src={`${message.file_path}`}
+                            // src={`${message.content?.body.url}#toolbar=0`}
+                            src={`${message?.content?.body?.url}`}
                             className="w-full h-full max-w-5xl rounded-lg shadow-2xl bg-white"
-                            title={message.file_name || 'Document'}
+                            title={message?.content?.body?.url || 'Document'}
                         />
                     </div>
                 ) : (
                     <img
-                        src={message.file_path || ''}
+                        src={message?.content?.body?.url || ''}
                         alt="Current media"
                         className="max-w-full max-h-full transition-transform duration-75 ease-out shadow-2xl"
                         style={{
