@@ -26,8 +26,6 @@ export const useConversations = ({
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreConvs, setHasMoreConvs] = useState(false);
-    const [nextConvCursorId, setNextConvCursorId] = useState<string | number | null>(null);
-    const [nextConvCursorUpdatedAt, setNextConvCursorUpdatedAt] = useState<string | null>(null);
     const [isFetchingMoreConvs, setIsFetchingMoreConvs] = useState(false);
 
     const activeAppIdRef = useRef(activeAppId);
@@ -44,17 +42,14 @@ export const useConversations = ({
         try {
             const response = await getConversations(
                 50,
-                undefined,
-                undefined,
-                activeAppId || undefined,
+                1,
+                
+                convFilter === 'all' ? undefined : convFilter,
                 debouncedSearchTerm || undefined,
-                convFilter === 'all' ? undefined : convFilter
             );
             if (response.status) {
                 setConversations(response.data.items);
                 setHasMoreConvs(response.data.has_more);
-                setNextConvCursorId(response.data.next_cursor_id || null);
-                setNextConvCursorUpdatedAt(response.data.next_cursor_updated_at || null);
 
                 if (activeConversation && !response.data.items.some(c => c.id === activeConversation.id)) {
                     setActiveConversation(null);
@@ -78,9 +73,8 @@ export const useConversations = ({
         try {
             const response = await getConversations(
                 50,
-                nextConvCursorUpdatedAt || undefined,
-                nextConvCursorId || undefined,
-                activeAppId || undefined,
+                1,
+
                 debouncedSearchTerm || undefined,
                 convFilter === 'all' ? undefined : convFilter
             );
@@ -91,8 +85,6 @@ export const useConversations = ({
                     return [...prev, ...newItems];
                 });
                 setHasMoreConvs(response.data.has_more);
-                setNextConvCursorId(response.data.next_cursor_id || null);
-                setNextConvCursorUpdatedAt(response.data.next_cursor_updated_at || null);
             }
         } catch (error) {
             console.error("Failed to fetch more conversations", error);

@@ -10,8 +10,8 @@ import { getInitials } from '../../lib/chatUtils';
 interface ChatSidebarProps {
     applications: PhoneNumber[];
     totalUnread: number;
-    activeAppId: string | number | null;
-    setActiveAppId: (id: string | number | null) => void;
+    activeAppId: string ;
+    setActiveAppId: (id: string ) => void;
     user: any;
     enableLogin?: boolean;
     handleLogout: () => void;

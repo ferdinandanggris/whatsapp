@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { ApiResponse, PagedResponse, Conversation, ChatMessage, PhoneNumber, WaChannel, MessageResponse, Bubble } from '../types/chat';
 import { isDesktop, postToDesktop } from '../api/desktopBridge';
+import { StringDecoder } from 'string_decoder';
 
 
 const getBaseUrl = () => {
@@ -87,17 +88,15 @@ apiClient.interceptors.response.use(
 
 export const getConversations = async (
     limit = 50,
-    cursor_updated_at?: string,
-    cursor_id?: string | number,
-    application_id?: string | number,
+    page = 1,
+    phone_number_id?: String,
     search?: string,
     filter?: string
 ): Promise<ApiResponse<PagedResponse<Conversation>>> => {
     try {
-        const page = cursor_id ? Number(cursor_id) : 1;
         const params: any = { page, limit };
         if (filter) params.filter = filter;
-        if (application_id) params.phone_number_id = String(application_id);
+         params.phone_number_id = phone_number_id;
         if (search) params.q = search; // Search queries map to contact search in List
 
         const response = await apiClient.get<ApiResponse<{conversations: Conversation[], has_more: boolean}>>('/api/v1/conversations', { params });
@@ -113,7 +112,7 @@ export const getConversations = async (
             data: {
                 items,
                 limit,
-                next_cursor_id: hasMore ? page + 1 : undefined,
+                page,
                 has_more: hasMore
             }
         };
@@ -122,7 +121,7 @@ export const getConversations = async (
             status_code: error.response?.status || 500,
             status: false,
             message: error.message || 'Gagal mengambil data percakapan',
-            data: { items: [], limit, has_more: false }
+            data: { items: [], limit, has_more: false,page: 1 }
         };
     }
 };
@@ -197,18 +196,15 @@ export const getChannels = async (): Promise<ApiResponse<WaChannel[]>> => {
 export const getMessages = async (
     conversation_id: string | number,
     limit = 30,
-    cursor_ts?: string,
-    cursor_id?: string | number,
+    page = 1,
     search?: string,
     message_type?: string,
     direction?: string
 ): Promise<ApiResponse<PagedResponse<Bubble>>> => {
     try {
         const params: Record<string, string | number> = { limit };
-        if (cursor_ts) params.cursor_ts = cursor_ts;
-        if (cursor_id !== undefined && cursor_id !== null) {
-            params.cursor_id = Number(cursor_id);
-        }
+
+        if (page) params.page = page;
         if (search) params.q = search;
         if (message_type) params.type = message_type;
         if (direction) params.direction = direction;
@@ -227,6 +223,7 @@ export const getMessages = async (
             data: {
                 items,
                 limit,
+                page,
                 has_more: hasMore
             }
         };
@@ -235,7 +232,7 @@ export const getMessages = async (
             status_code: error.response?.status || 500,
             status: false,
             message: error.message || 'Gagal mengambil pesan',
-            data: { items: [], limit, has_more: false }
+            data: { items: [], limit, has_more: false, page }
         };
     }
 };

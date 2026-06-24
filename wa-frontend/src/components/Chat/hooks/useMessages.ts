@@ -24,6 +24,7 @@ export const useMessages = ({
     const [isFetchingMore, setIsFetchingMore] = useState(false);
     const [nextCursorTs, setNextCursorTs] = useState<string | undefined>(undefined);
     const [nextCursorId, setNextCursorId] = useState<number | undefined>(undefined);
+    const [page, setPage] = useState(1);
 
     const activeConversationRef = useRef(activeConversation);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
@@ -53,8 +54,6 @@ export const useMessages = ({
                     // Backend returns newest-first; reverse for display (oldest-first)
                     setMessages([...res.data.items].reverse());
                     setHasMore(res.data.has_more);
-                    setNextCursorTs(res.data.next_cursor_ts);
-                    setNextCursorId(res.data.next_cursor_id as number | undefined);
                 }
             })
             .catch(console.error)
@@ -103,15 +102,13 @@ export const useMessages = ({
         setIsFetchingMore(true);
         try {
             const previousScrollHeight = scrollViewport?.scrollHeight || 0;
-            const res = await getMessages(activeConversation.id, 50, nextCursorTs, nextCursorId, searchTerm || undefined);
+            const res = await getMessages(activeConversation.id, 50, nextCursorId, searchTerm || undefined);
             if (activeConversationRef.current?.id !== convIdAtStart) return;
             if (res.status) {
                 // Backend returns newest-first; older messages get reversed + prepended
                 const olderItems = [...res.data.items].reverse();
                 setMessages(prev => [...olderItems, ...prev]);
                 setHasMore(res.data.has_more);
-                setNextCursorTs(res.data.next_cursor_ts);
-                setNextCursorId(res.data.next_cursor_id as number | undefined);
                 if (scrollViewport) {
                     setTimeout(() => {
                         scrollViewport.scrollTop = scrollViewport.scrollHeight - previousScrollHeight;
@@ -132,7 +129,6 @@ export const useMessages = ({
         const handleReceiveMessage = (message: any) => {
             const chatMsg = message as Bubble;
             const conv = activeConversationRef.current;
-            // const compositeId = conv ? `${conv.wa_channel_id}_${conv.customer_wa_id}` : '';
             if (!conv || (chatMsg.wa_id !== conv.wa_id && chatMsg.phone_number_id !== conv.phone_number_id)) return;
 
             setMessages(prev => {
@@ -142,11 +138,6 @@ export const useMessages = ({
                     console.log(`is existing`, existing, chatMsg);
                     return prev.map(m => m.id === chatMsg.id ? {
                         ...existing, ...chatMsg,
-                        // reply_wamid: chatMsg.reply_wamid || existing.reply_wamid,
-                        // reply_text: chatMsg.reply_text || existing.reply_text,
-                        // reply_name: chatMsg.reply_name || existing.reply_name,
-                        // emoji: chatMsg.emoji || existing.emoji,
-                        // file_path: chatMsg.file_path || existing.file_path,
                     } : m);
                 }
 

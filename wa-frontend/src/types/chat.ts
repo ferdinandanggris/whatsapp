@@ -8,9 +8,7 @@ export interface ApiResponse<T> {
 export interface PagedResponse<T> {
     items: T[];
     limit: number;
-    next_cursor_updated_at?: string;
-    next_cursor_id?: string | number;
-    next_cursor_ts?: string;
+    page: number;
     has_more: boolean;
 }
 
@@ -105,8 +103,6 @@ export interface ContextMsg {
     name: string;
     text: string;
 }
-
-
 
 export interface MessageContent {
     header?: ContentMsg;
