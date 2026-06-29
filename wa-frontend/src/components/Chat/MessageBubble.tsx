@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import type { Bubble, ChatMessage, Conversation } from '../../types/chat';
 import { formatTime, formatDividerDate, isSameDay, getInitials } from '../../lib/chatUtils';
 import { cn } from '@/lib/utils';
-import { parseErrorDetails } from './MessageRenderer';
 
 interface MessageBubbleProps {
     msg: Bubble;

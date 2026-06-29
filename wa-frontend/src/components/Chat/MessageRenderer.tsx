@@ -4,34 +4,6 @@ import type { Bubble, ButtonMsg, ChatMessage, ContextMsg, ErrorDetails } from '.
 import { Button, Button as ButtonComp } from '@/components/ui/button';
 import { JSX } from 'react';
 
-
-/** Parse `"<message>(<code>)"` format into ErrorDetails */
-function parseErrorMessageString(raw: string): ErrorDetails | null {
-    if (!raw) return null;
-    const lastParen = raw.lastIndexOf('(');
-    if (lastParen > 0 && raw.endsWith(')')) {
-        return {
-            message_local: raw.substring(0, lastParen),
-            code: raw.substring(lastParen + 1, raw.length - 1),
-        };
-    }
-    return { message_local: raw };
-}
-
-export const parseErrorDetails = (msg: ChatMessage): ErrorDetails | null => {
-    if (!msg.raw_payload) return null;
-    try {
-        const payload = JSON.parse(msg.raw_payload);
-        // Old format: structured error_details object
-        if (payload.error_details) return payload.error_details;
-        // New format: error_message string "<msg>(<code>)"
-        if (payload.error_message) return parseErrorMessageString(payload.error_message);
-        return null;
-    } catch (e) {
-        return null;
-    }
-};
-
 /**
  * Opens a URL/file using the OS default application when running inside
  * the WaMeta Desktop client (WebView2 bridge). Falls back to window.open

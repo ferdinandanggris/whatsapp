@@ -6,9 +6,11 @@ namespace WaDesktop.Domain.Entities
     {
         [JsonProperty("id")]
         public string Id { get; set; }
+        [JsonProperty("username")]
+        public string Username { get; set; }
         [JsonProperty("email")]
         public string Email { get; set; }
-        [JsonProperty("display_name")]
+        [JsonProperty("name")]
         public string DisplayName { get; set; }
         [JsonProperty("role")]
         public string Role { get; set; }

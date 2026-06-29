@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using WaDesktop.Domain.Entities;
 using WaDesktop.Domain.Interfaces;
 
@@ -44,9 +45,9 @@ namespace WaDesktop.Infrastructure.Services
 
         // ── Auth ──
 
-        public async Task<AuthResult> LoginAsync(string email, string password)
+        public async Task<AuthResult> LoginAsync(string username, string password)
         {
-            var body = JsonConvert.SerializeObject(new { email, password });
+            var body = JsonConvert.SerializeObject(new { username, password });
             var res = await _http.PostAsync($"{_baseUrl}/api/v1/auth/login",
                 new StringContent(body, Encoding.UTF8, "application/json"));
 
@@ -57,7 +58,7 @@ namespace WaDesktop.Infrastructure.Services
             }
 
             var json = await res.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<AuthResult>(json);
+            var result = UnwrapData<AuthResult>(json);
             if (result != null)
                 SetSession(result.AccessToken, result.RefreshToken);
             return result;
@@ -440,7 +441,7 @@ namespace WaDesktop.Infrastructure.Services
                         return false;
 
                     var json = await res.Content.ReadAsStringAsync();
-                    var result = JsonConvert.DeserializeObject<AuthResult>(json);
+                    var result = UnwrapData<AuthResult>(json);
                     if (result == null || string.IsNullOrEmpty(result.AccessToken))
                         return false;
 
@@ -482,6 +483,13 @@ namespace WaDesktop.Infrastructure.Services
         {
             [JsonProperty("data")]
             public List<T> Data { get; set; }
+        }
+
+        private static T UnwrapData<T>(string json)
+        {
+            var wrapper = JObject.Parse(json);
+            var data = wrapper["data"];
+            return data != null ? data.ToObject<T>() : default;
         }
     }
 }

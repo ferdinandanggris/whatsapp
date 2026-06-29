@@ -7,13 +7,8 @@ import TemplateCreator from "./components/TemplateCreator"
 import { TooltipProvider } from "./components/ui/tooltip"
 
 function RootRedirect() {
-  // const hasToken = typeof window !== "undefined" && !!localStorage.getItem("token")
-
-  // force to hasToken and set token /refresh token to localstorage
-  const hasToken = true
-  localStorage.setItem("token", "token")
-  localStorage.setItem("refresh_token", "refresh_token")
-
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem("token")
+  
   return <Navigate to={hasToken ? "/inbox" : "/login"} replace />
 }
 

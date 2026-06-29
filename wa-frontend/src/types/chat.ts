@@ -130,7 +130,7 @@ export interface MessageResponse{
 }
 
 export interface PhoneNumber {
-    id: string | number;
+    id: string ;
     display_name: string;
     unread_count: number;
 }

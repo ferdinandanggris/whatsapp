@@ -5,7 +5,7 @@ import type { Conversation, ChatMessage, PhoneNumber, Bubble } from '../../../ty
 import { PayloadConversationUpdate } from '@/types/wsEvent';
 
 interface UseConversationsProps {
-    activeAppId: string | number | null;
+    activeAppId: string | null;
     debouncedSearchTerm: string;
     convFilter: 'all' | 'unread' | 'read';
     connection: any;
@@ -27,6 +27,7 @@ export const useConversations = ({
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreConvs, setHasMoreConvs] = useState(false);
     const [isFetchingMoreConvs, setIsFetchingMoreConvs] = useState(false);
+    const [convPage, setConvPage] = useState(1);
 
     const activeAppIdRef = useRef(activeAppId);
     const activeConversationRef = useRef(activeConversation);
@@ -39,13 +40,14 @@ export const useConversations = ({
 
     const fetchConvs = async (silent = false) => {
         if (!silent) setIsLoading(true);
+        setConvPage(1);
         try {
             const response = await getConversations(
                 50,
                 1,
-                
-                convFilter === 'all' ? undefined : convFilter,
+                activeAppId,
                 debouncedSearchTerm || undefined,
+                convFilter === 'all' ? undefined : convFilter,
             );
             if (response.status) {
                 setConversations(response.data.items);
@@ -70,20 +72,19 @@ export const useConversations = ({
         if (!hasMoreConvs || isFetchingMoreConvs) return;
 
         setIsFetchingMoreConvs(true);
+        const nextPage = convPage + 1;
         try {
             const response = await getConversations(
                 50,
-                1,
-
+                nextPage,
+                activeAppId,
                 debouncedSearchTerm || undefined,
                 convFilter === 'all' ? undefined : convFilter
             );
 
             if (response.status) {
-                setConversations(prev => {
-                    const newItems = response.data.items.filter(item => !prev.some(p => p.id === item.id));
-                    return [...prev, ...newItems];
-                });
+                setConvPage(nextPage);
+                setConversations(prev => [...prev, ...response.data.items]);
                 setHasMoreConvs(response.data.has_more);
             }
         } catch (error) {
@@ -105,6 +106,7 @@ export const useConversations = ({
 
             // if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
 
+            if (convFilterRef.current === 'read' && res.unread_count > 0) return;
 
             if (activeConversationRef.current && activeConversationRef.current.id === conv.id) {
                 setActiveConversation({
@@ -115,7 +117,7 @@ export const useConversations = ({
 
 
             setConversations(prev => {
-                const index = prev.findIndex(c => c.id === conv.id);
+                const index = prev.findIndex(c => c.id === conv.id || (c.wa_id === conv.wa_id && c.phone_number_id === conv.phone_number_id));
                 if (index !== -1) {
                     const updated = [...prev];
                     updated[index] = conv;

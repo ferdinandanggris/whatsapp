@@ -24,9 +24,9 @@ export interface Message {
 
 export interface User {
   id: string
-  email: string
+  username: string
   role: string
-  display_name: string
+  name: string
   is_active: boolean
 }
 

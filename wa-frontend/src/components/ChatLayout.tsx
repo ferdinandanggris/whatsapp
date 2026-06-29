@@ -43,7 +43,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // --- Global Data State ---
     const [applications, setApplications] = useState<PhoneNumber[]>([]);
     const [channels, setChannels] = useState<WaChannel[]>([]);
-    const [activeAppId, setActiveAppId] = useState<string | number | null>(null);
+    const [activeAppId, setActiveAppId] = useState<string | null>(null);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [allowSendTemplate, setAllowSendTemplate] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -176,7 +176,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
             // connection.off("AgentTyping", handleAgentTyping);
             connection.off("UpdateAllowSendTemplate", handleUpdateAllowSendTemplate);
         };
-    }, [connection, user?.display_name]);
+    }, [connection, user?.name]);
 
     // Fix for emoji-picker-react crash: ensure suggested history is not null in localStorage
     useEffect(() => {

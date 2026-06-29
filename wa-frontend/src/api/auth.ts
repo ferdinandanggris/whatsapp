@@ -7,8 +7,14 @@ export interface LoginResponse {
   user: User
 }
 
-export function login(email: string, password: string): Promise<LoginResponse> {
-  return post<LoginResponse>("/api/v1/auth/login", { email, password })
+export interface Meta<T>{
+  success: boolean
+  message: string
+  data ?: T
+}
+
+export function login(username: string, password: string): Promise<Meta<LoginResponse>> {
+  return post<Meta<LoginResponse>>("/api/v1/auth/login", { username, password })
 }
 
 export function getMe(): Promise<User> {

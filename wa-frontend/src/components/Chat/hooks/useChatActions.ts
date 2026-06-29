@@ -26,7 +26,7 @@ export const useChatActions = ({
 }: UseChatActionsProps) => {
 
     const [typingAgents, setTypingAgents] = useState<Record<string, { name: string; timeout: any }>>({});
-    user.display_name = user.display_name;
+    user.name = user.name;
 
     const lastTypingSentRef = useRef<Record<string | number, number>>({});
 
@@ -60,7 +60,7 @@ export const useChatActions = ({
             status: 'pending',
             message_timestamp: Math.floor(Date.now() / 1000),
             created_at: new Date().toISOString(),
-            sender_name: user?.display_name || 'Me',
+            sender_name: user?.name || 'Me',
             content: {
                 body: {
                     text: text,
@@ -148,7 +148,7 @@ export const useChatActions = ({
         //     conversation_id: currentConv.id,
         //     app_id: currentConv.app_id,
         //     wa_message_id: tempId,
-        //     sender_name: user?.display_name || 'Me',
+        //     sender_name: user?.name || 'Me',
         //     message_text: '',
         //     message_type: 'template',
         //     direction: 'OUTBOUND',
@@ -163,7 +163,7 @@ export const useChatActions = ({
 
         // // setMessages(prev => [...prev, newMessage]);
 
-        // sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, buttonTypes, params.header, user?.display_name, tempId)
+        // sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, buttonTypes, params.header, user?.name, tempId)
         //     .then((res: any) => {
         //         if (res.status) {
         //             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
@@ -187,7 +187,7 @@ export const useChatActions = ({
         //     conversation_id: currentConv.id,
         //     phone_number_id: currentConv.phone_number_id,
         //     wa_message_id: tempId,
-        //     sender_name: user?.display_name || 'Me',
+        //     sender_name: user?.name || 'Me',
         //     message_text: caption,
         //     message_type: type,
         //     file_path: previewUrl,
@@ -212,7 +212,7 @@ export const useChatActions = ({
             status: 'pending',
             message_timestamp: Math.floor(Date.now() / 1000),
             created_at: new Date().toISOString(),
-            sender_name: user?.display_name || 'Me',
+            sender_name: user?.name || 'Me',
             content: {}
             
         }
@@ -315,7 +315,7 @@ export const useChatActions = ({
             }
 
             lastTypingSentRef.current[activeConversation.id] = now;
-            sendTypingIndicator(activeConversation.id, activeConversation.wa_id, user?.display_name || 'System')
+            sendTypingIndicator(activeConversation.id, activeConversation.wa_id, user?.name || 'System')
                 .catch(err => console.error("Failed to send typing indicator", err));
         }
     };
@@ -327,7 +327,7 @@ export const useChatActions = ({
                 console.log(`${sender_name} is typing in conversation ${conversation_id}`);
             }
 
-            if (sender_name === user?.display_name) return;
+            if (sender_name === user?.name) return;
             setTypingAgents(prev => {
                 if (prev[conversation_id]) clearTimeout(prev[conversation_id].timeout);
                 const timeout = setTimeout(() => {

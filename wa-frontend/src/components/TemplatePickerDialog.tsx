@@ -289,20 +289,20 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                               className="h-6 px-2 text-[10px] bg-slate-50 border-slate-200 text-slate-600 hover:bg-[#00a884] hover:text-white hover:border-[#00a884] rounded-full transition-all"
                               onClick={() => {
                                 const newHeader = [...params.header];
-                                newHeader[idx] = conversation.customer_name;
+                                newHeader[idx] = conversation.custom_name;
                                 setParams({ ...params, header: newHeader });
                               }}
                             >
                               Nama Customer
                             </Button>
-                            {conversation.app_name && (
+                            {conversation.display_name && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="h-6 px-2 text-[10px] bg-slate-50 border-slate-200 text-slate-600 hover:bg-[#00a884] hover:text-white hover:border-[#00a884] rounded-full transition-all"
                                 onClick={() => {
                                   const newHeader = [...params.header];
-                                  newHeader[idx] = conversation.app_name || '';
+                                  newHeader[idx] = conversation.display_name || '';
                                   setParams({ ...params, header: newHeader });
                                 }}
                               >
@@ -341,20 +341,20 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                               className="h-6 px-2 text-[10px] bg-slate-50 border-slate-200 text-slate-600 hover:bg-[#00a884] hover:text-white hover:border-[#00a884] rounded-full transition-all"
                               onClick={() => {
                                 const newBody = [...params.body];
-                                newBody[idx] = conversation.customer_name;
+                                newBody[idx] = conversation.custom_name;
                                 setParams({ ...params, body: newBody });
                               }}
                             >
                               Nama Customer
                             </Button>
-                            {conversation.app_name && (
+                            {conversation.display_name && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="h-6 px-2 text-[10px] bg-slate-50 border-slate-200 text-slate-600 hover:bg-[#00a884] hover:text-white hover:border-[#00a884] rounded-full transition-all"
                                 onClick={() => {
                                   const newBody = [...params.body];
-                                  newBody[idx] = conversation.app_name || '';
+                                  newBody[idx] = conversation.display_name || '';
                                   setParams({ ...params, body: newBody });
                                 }}
                               >

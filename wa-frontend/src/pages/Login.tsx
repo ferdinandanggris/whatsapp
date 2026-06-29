@@ -7,7 +7,7 @@ import { login } from "../api/auth"
 export default function Login() {
   const navigate = useNavigate()
   const { setAuth } = useAuth()
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -17,8 +17,9 @@ export default function Login() {
     setError("")
     setSubmitting(true)
     try {
-      const res = await login(email, password)
-      setAuth(res.access_token, res.refresh_token, res.user)
+      const res = await login(username, password)
+      setAuth(res.data.access_token, res.data.refresh_token, res.data.user)
+      
       navigate("/inbox", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
@@ -42,17 +43,17 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
             </label>
             <input
-              id="email"
-              type="email"
+              id="username"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="admin@wa.com"
+              placeholder="superadmin"
               autoFocus
             />
           </div>

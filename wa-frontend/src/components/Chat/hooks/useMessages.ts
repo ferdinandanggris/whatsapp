@@ -22,9 +22,7 @@ export const useMessages = ({
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
-    const [nextCursorTs, setNextCursorTs] = useState<string | undefined>(undefined);
-    const [nextCursorId, setNextCursorId] = useState<number | undefined>(undefined);
-    const [page, setPage] = useState(1);
+    const [messagePage, setMessagePage] = useState(1);
 
     const activeConversationRef = useRef(activeConversation);
     useEffect(() => { activeConversationRef.current = activeConversation; }, [activeConversation]);
@@ -48,7 +46,8 @@ export const useMessages = ({
         }
 
         setIsLoading(true);
-        getMessages(activeConversation.id, 50, undefined, undefined, searchTerm || undefined)
+        setMessagePage(1);
+        getMessages(activeConversation.id, 50, 1, searchTerm || undefined)
             .then(res => {
                 if (res.status) {
                     // Backend returns newest-first; reverse for display (oldest-first)
@@ -100,14 +99,16 @@ export const useMessages = ({
         if (!activeConversation || !hasMore || isFetchingMore) return;
         const convIdAtStart = activeConversation.id;
         setIsFetchingMore(true);
+        const nextPage = messagePage + 1;
         try {
             const previousScrollHeight = scrollViewport?.scrollHeight || 0;
-            const res = await getMessages(activeConversation.id, 50, nextCursorId, searchTerm || undefined);
+            const res = await getMessages(activeConversation.id, 50, nextPage, searchTerm || undefined);
             if (activeConversationRef.current?.id !== convIdAtStart) return;
             if (res.status) {
                 // Backend returns newest-first; older messages get reversed + prepended
                 const olderItems = [...res.data.items].reverse();
                 setMessages(prev => [...olderItems, ...prev]);
+                setMessagePage(nextPage);
                 setHasMore(res.data.has_more);
                 if (scrollViewport) {
                     setTimeout(() => {

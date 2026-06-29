@@ -91,11 +91,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 <div className="relative group">
                     <Avatar className="h-10 w-10 border-2 border-white shadow-md">
                         <AvatarFallback className="bg-[#00a884] text-white font-bold text-xs">
-                            {user?.display_name ? getInitials(user.display_name) : 'CS'}
+                            {user?.name ? getInitials(user.name) : 'CS'}
                         </AvatarFallback>
                     </Avatar>
                     <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-white px-3 py-1.5 rounded-lg shadow-xl border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                        <p className="text-xs font-bold text-slate-800">{user?.display_name || 'Agent'}</p>
+                        <p className="text-xs font-bold text-slate-800">{user?.name || 'Agent'}</p>
                         <p className="text-[10px] text-slate-500">{user?.username || 'default'}</p>
                     </div>
                 </div>
