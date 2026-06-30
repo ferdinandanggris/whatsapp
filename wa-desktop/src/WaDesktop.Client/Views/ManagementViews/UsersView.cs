@@ -15,14 +15,14 @@ namespace WaDesktop.Client.Views.ManagementViews
         {
             ["super_admin"] = "super_admin",
             ["company_admin"] = "admin",
-            ["agent"] = "agent"
+            ["cs"] = "agent"
         };
 
         private static readonly Dictionary<string, string> RoleReverseMap = new Dictionary<string, string>()
         {
             ["super_admin"] = "super_admin",
             ["admin"] = "company_admin",
-            ["agent"] = "agent"
+            ["agent"] = "cs"
         };
 
         private readonly HashSet<string> _deletedIds = new HashSet<string>();
@@ -49,7 +49,7 @@ namespace WaDesktop.Client.Views.ManagementViews
                     {
                         string displayRole = RoleMap.TryGetValue(u.Role ?? "", out var r) ? r : u.Role;
 
-                        int idx = dataGridView.Rows.Add(u.Id, u.Email, u.DisplayName, displayRole, u.IsActive, u.CompanyId);
+                        int idx = dataGridView.Rows.Add(u.Id, u.Username, u.DisplayName, displayRole, u.IsActive, u.CompanyId);
                         dataGridView.Rows[idx].DefaultCellStyle.BackColor = Color.White;
                         dataGridView.Rows[idx].Tag = null;
                     }
@@ -106,7 +106,7 @@ namespace WaDesktop.Client.Views.ManagementViews
                     list.Add(new User
                     {
                         Id = row.Cells["Id"].Value?.ToString() ?? "",
-                        Email = row.Cells["Email"].Value?.ToString() ?? "",
+                        Username = row.Cells["Email"].Value?.ToString() ?? "",
                         DisplayName = row.Cells["Name"].Value?.ToString() ?? "",
                         Role = backendRole,
                         CompanyId = row.Cells["Company"].Value as long?,

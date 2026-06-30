@@ -37,7 +37,8 @@ async function handleTokenRefresh(): Promise<string | null> {
       body: JSON.stringify({ refresh_token: refreshToken }),
     })
     if (!res.ok) throw new Error("Refresh failed")
-    const data = await res.json()
+    const wrapper = await res.json()
+    const data = wrapper.data
     localStorage.setItem("token", data.access_token)
     localStorage.setItem("refresh_token", data.refresh_token)
     return data.access_token
@@ -71,9 +72,12 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${getBase()}${path}`, { ...opts, headers })
   if (res.status === 401) {
+    console.error("[auth] token expired")
     if (isRefreshing) {
+      console.error("[auth] token refresh in progress")
       return new Promise<T>((resolve, reject) => {
         subscribeTokenRefresh((newToken) => {
+          console.log("[auth] token refreshed")
           headers["Authorization"] = `Bearer ${newToken}`
           fetch(`${getBase()}${path}`, { ...opts, headers })
             .then((r) => {

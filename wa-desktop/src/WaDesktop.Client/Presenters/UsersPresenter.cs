@@ -59,7 +59,7 @@ namespace WaDesktop.Client.Presenters
                 foreach (User u in _view.GetModifiedRows())
                 {
                     if (string.IsNullOrEmpty(u.Id))
-                        await Task.Run(() => _api.CreateUserAsync(u.Email, DefaultPassword, u.DisplayName, u.Role, u.CompanyId));
+                        await Task.Run(() => _api.CreateUserAsync(u.Username, DefaultPassword, u.DisplayName, u.Role, u.CompanyId));
                     else
                         await Task.Run(() => _api.UpdateUserAsync(u.Id, u.DisplayName, u.Role, u.CompanyId, u.IsActive));
                 }

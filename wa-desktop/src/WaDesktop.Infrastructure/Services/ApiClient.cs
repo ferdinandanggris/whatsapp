@@ -23,6 +23,7 @@ namespace WaDesktop.Infrastructure.Services
         public event EventHandler TokenRefreshed;
 
         public string AccessToken => _accessToken;
+        public string RefreshToken => _refreshToken;
 
         public ApiClient(string baseUrl = "http://localhost:8080")
         {
@@ -120,7 +121,7 @@ namespace WaDesktop.Infrastructure.Services
             }
 
             var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<Company>(json);
+            return UnwrapData<Company>(json);
         }
 
         public async Task<Company> UpdateCompanyAsync(long id, string name)
@@ -136,8 +137,7 @@ namespace WaDesktop.Infrastructure.Services
                 throw new HttpRequestException($"Update company failed: {err}");
             }
 
-            var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<Company>(json);
+            return null;
         }
 
         public async Task DeleteCompanyAsync(long id)
@@ -157,16 +157,16 @@ namespace WaDesktop.Infrastructure.Services
         public async Task<List<User>> GetUsersAsync(string search = null)
         {
             var json = await GetStringAsync("/api/v1/users");
-            var data = JsonConvert.DeserializeObject<List<User>>(json) ?? new List<User>();
+            var data = UnwrapData<List<User>>(json) ?? new List<User>();
             if (!string.IsNullOrEmpty(search))
                 data = data.Where(u => u.DisplayName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0
-                    || u.Email.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+                    || u.Username.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
             return data;
         }
 
-        public async Task<User> CreateUserAsync(string email, string password, string displayName, string role, long? companyId)
+        public async Task<User> CreateUserAsync(string username, string password, string name, string role, long? companyId)
         {
-            var body = JsonConvert.SerializeObject(new { email, password, display_name = displayName, role, company_id = companyId });
+            var body = JsonConvert.SerializeObject(new { username, password, name, role, company_id = companyId });
             var res = await SendWithRefreshAsync(() =>
                 _http.PostAsync($"{_baseUrl}/api/v1/users",
                     new StringContent(body, Encoding.UTF8, "application/json")));
@@ -178,14 +178,14 @@ namespace WaDesktop.Infrastructure.Services
             }
 
             var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<User>(json);
+            return UnwrapData<User>(json);
         }
 
         public async Task UpdateUserAsync(string id, string displayName, string role, long? companyId, bool? isActive = null)
         {
             var payload = new Dictionary<string, object>
             {
-                ["display_name"] = displayName,
+                ["name"] = displayName,
                 ["role"] = role,
                 ["company_id"] = companyId
             };

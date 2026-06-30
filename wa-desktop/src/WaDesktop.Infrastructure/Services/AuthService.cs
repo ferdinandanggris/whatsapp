@@ -19,6 +19,7 @@ namespace WaDesktop.Infrastructure.Services
             _api.TokenRefreshed += (s, e) =>
             {
                 _state.AccessToken = _api.AccessToken;
+                _state.RefreshToken = _api.RefreshToken;
             };
         }
 

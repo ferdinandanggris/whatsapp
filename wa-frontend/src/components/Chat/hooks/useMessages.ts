@@ -59,42 +59,6 @@ export const useMessages = ({
             .finally(() => setIsLoading(false));
     }, [activeConversation?.id, searchTerm]);
 
-    // const processedMessages = useMemo(() => {
-    //     const reactionsMap: Record<string, Record<string, string>> = {};
-    //     messages.forEach(msg => {
-    //         if (msg.message_type === 'reaction' && msg.context_message_id) {
-    //             if (!reactionsMap[msg.context_message_id]) reactionsMap[msg.context_message_id] = {};
-    //             const sideKey = msg.direction;
-    //             if (msg.message_text && msg.message_text.trim()) {
-    //                 reactionsMap[msg.context_message_id][sideKey] = msg.message_text;
-    //             } else {
-    //                 delete reactionsMap[msg.context_message_id][sideKey];
-    //             }
-    //         }
-    //     });
-
-    //     return [...new Map(messages.map((item) => [item.id, item])).values()]
-    //         .filter(msg => msg.message_type !== 'reaction')
-    //         .map(msg => {
-    //             const senderMap = reactionsMap[msg.wa_message_id] || {};
-    //             const activeReactions = Object.values(senderMap);
-    //             const uniqueEmojis = Array.from(new Set(activeReactions));
-
-    //             if (activeReactions.length === 0 && !msg.reactionData) {
-    //                 return msg;
-    //             }
-
-    //             return {
-    //                 ...msg,
-    //                 reactions: activeReactions,
-    //                 reactionData: activeReactions.length > 0 ? {
-    //                     emojis: uniqueEmojis,
-    //                     total: activeReactions.length
-    //                 } : null
-    //             };
-    //         });
-    // }, [messages]);
-
     const handleLoadMore = async (scrollViewport: HTMLDivElement | null) => {
         if (!activeConversation || !hasMore || isFetchingMore) return;
         const convIdAtStart = activeConversation.id;

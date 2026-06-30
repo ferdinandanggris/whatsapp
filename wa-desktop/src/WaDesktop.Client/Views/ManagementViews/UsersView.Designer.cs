@@ -51,7 +51,7 @@ namespace WaDesktop.Client.Views.ManagementViews
 
             // Columns
             this.dataGridView.Columns.Add("Id", "ID");
-            this.dataGridView.Columns.Add("Email", "Email");
+            this.dataGridView.Columns.Add("Email", "Username");
             this.dataGridView.Columns.Add("Name", "Name");
             this.dataGridView.Columns.Add(this.colRole);
             this.dataGridView.Columns.Add(this.colStatus);
