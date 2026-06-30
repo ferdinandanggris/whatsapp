@@ -20,6 +20,7 @@ namespace WaDesktop.Domain.Interfaces
         Task LogoutAsync();
 
         Task<List<PhoneNumberNode>> GetPhoneNumbersAsync();
+        Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync();
         Task<List<Company>> GetCompaniesAsync(string search = null);
         Task<Company> CreateCompanyAsync(string name);
         Task<Company> UpdateCompanyAsync(long id, string name);

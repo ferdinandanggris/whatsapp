@@ -7,6 +7,7 @@ namespace WaDesktop.Client.Views
         private System.Windows.Forms.ToolStripMenuItem dashboardToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem companyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem usersToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem phoneNumbersToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem templatesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem appSettingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem logoutToolStripMenuItem;
@@ -31,6 +32,7 @@ namespace WaDesktop.Client.Views
             this.dashboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.companyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.phoneNumbersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.templatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.appSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logoutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,6 +56,7 @@ namespace WaDesktop.Client.Views
             this.dashboardToolStripMenuItem,
             this.companyToolStripMenuItem,
             this.usersToolStripMenuItem,
+            this.phoneNumbersToolStripMenuItem,
             this.templatesToolStripMenuItem,
             this.appSettingsToolStripMenuItem,
             this.logoutToolStripMenuItem});
@@ -78,12 +81,19 @@ namespace WaDesktop.Client.Views
             this.companyToolStripMenuItem.Click += new System.EventHandler(this.companyToolStripMenuItem_Click);
             // 
             // usersToolStripMenuItem
-            // 
+            //
             this.usersToolStripMenuItem.Name = "usersToolStripMenuItem";
             this.usersToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.usersToolStripMenuItem.Text = "Users";
             this.usersToolStripMenuItem.Click += new System.EventHandler(this.usersToolStripMenuItem_Click);
-            // 
+            //
+            // phoneNumbersToolStripMenuItem
+            //
+            this.phoneNumbersToolStripMenuItem.Name = "phoneNumbersToolStripMenuItem";
+            this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
+            this.phoneNumbersToolStripMenuItem.Text = "Nomor HP";
+            this.phoneNumbersToolStripMenuItem.Click += new System.EventHandler(this.phoneNumbersToolStripMenuItem_Click);
+            //
             // templatesToolStripMenuItem
             // 
             this.templatesToolStripMenuItem.Name = "templatesToolStripMenuItem";

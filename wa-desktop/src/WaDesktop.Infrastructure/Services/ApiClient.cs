@@ -97,6 +97,11 @@ namespace WaDesktop.Infrastructure.Services
             public string CompanyName { get; set; }
         }
 
+        public async Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync()
+        {
+            return await GetListAsync<PhoneNumberDetail>("/api/v1/phone-numbers");
+        }
+
         // ── Companies ──
 
         public async Task<List<Company>> GetCompaniesAsync(string search = null)
@@ -302,7 +307,7 @@ namespace WaDesktop.Infrastructure.Services
         public async Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId)
         {
             var json = await GetStringAsync($"/api/v1/phone-numbers/{phoneNumberId}");
-            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+            return UnwrapData<PhoneNumberDetail>(json);
         }
 
         public async Task<byte[]> GetPhoneProfilePictureAsync(string url)
@@ -368,7 +373,7 @@ namespace WaDesktop.Infrastructure.Services
                 throw new HttpRequestException($"Sync failed ({res.StatusCode}): {err}");
             }
             var json = await res.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+            return UnwrapData<PhoneNumberDetail>(json);
         }
 
         public async Task SyncPhoneNumbersFromMetaAsync()
@@ -399,7 +404,7 @@ namespace WaDesktop.Infrastructure.Services
                     throw new HttpRequestException($"Upload failed ({res.StatusCode}): {body}");
                 }
                 var json = await res.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<PhoneNumberDetail>(json);
+                return UnwrapData<PhoneNumberDetail>(json);
             }
         }
 

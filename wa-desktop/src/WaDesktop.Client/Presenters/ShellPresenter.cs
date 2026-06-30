@@ -41,6 +41,7 @@ namespace WaDesktop.Client.Presenters
             view.MessagesClicked += (s, e) => OpenMessages();
             view.CompanyClicked += (s, e) => OpenCompany();
             view.UsersClicked += (s, e) => OpenUsers();
+            view.PhoneNumbersClicked += (s, e) => OpenPhoneNumbers();
             view.TemplatesClicked += (s, e) => OpenTemplates();
             view.AppSettingsClicked += (s, e) => OpenAppSettings();
             view.LogoutClicked += OnLogout;
@@ -50,6 +51,7 @@ namespace WaDesktop.Client.Presenters
             view.SidebarCollapsed = isAgent;
             view.CompanyVisible = !isAgent;
             view.UsersVisible = !isAgent;
+            view.PhoneNumbersVisible = !isAgent;
             view.TemplatesVisible = !isAgent;
             view.StatusText = $"Logged in as {_auth.DisplayName}";
 
@@ -85,6 +87,13 @@ namespace WaDesktop.Client.Presenters
                     usrPresenter.LoadData();
                     return usrView;
 
+                case "phonenumbers":
+                    var pnView = new PhoneNumberView();
+                    var pnPresenter = new PhoneNumbersPresenter(pnView, ServiceLocator.Resolve<IApiClient>(), _bus);
+                    ServiceLocator.Register(pnPresenter);
+                    pnPresenter.LoadData();
+                    return pnView;
+
                 case "templates":
                     var tplView = new TemplatesView();
                     var tplPresenter = new TemplatesPresenter(tplView, ServiceLocator.Resolve<IApiClient>(), _bus);
@@ -116,6 +125,7 @@ namespace WaDesktop.Client.Presenters
         private void OpenMessages() => OnRequestOpenTab(new RequestOpenTabMessage("dashboard", "Messages"));
         private void OpenCompany() => OnRequestOpenTab(new RequestOpenTabMessage("company", "Company"));
         private void OpenUsers() => OnRequestOpenTab(new RequestOpenTabMessage("users", "Users"));
+        private void OpenPhoneNumbers() => OnRequestOpenTab(new RequestOpenTabMessage("phonenumbers", "Nomor HP"));
         private void OpenTemplates() => OnRequestOpenTab(new RequestOpenTabMessage("templates", "Templates"));
         private void OpenAppSettings() => OnRequestOpenTab(new RequestOpenTabMessage("appsettings", "App Settings"));
 
