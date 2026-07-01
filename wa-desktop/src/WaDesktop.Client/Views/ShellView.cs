@@ -58,6 +58,11 @@ namespace WaDesktop.Client.Views
             set { this.InvokeIfRequired(() => { phoneNumbersToolStripMenuItem.Visible = value; }); }
         }
 
+        public bool WabaVisible
+        {
+            set { this.InvokeIfRequired(() => { wabaToolStripMenuItem.Visible = value; }); }
+        }
+
         public bool TemplatesVisible
         {
             set { this.InvokeIfRequired(() => { templatesToolStripMenuItem.Visible = value; }); }
@@ -67,6 +72,7 @@ namespace WaDesktop.Client.Views
         public event EventHandler CompanyClicked;
         public event EventHandler UsersClicked;
         public event EventHandler PhoneNumbersClicked;
+        public event EventHandler WabaClicked;
         public event EventHandler TemplatesClicked;
         public event EventHandler AppSettingsClicked;
         public event EventHandler LogoutClicked;
@@ -241,6 +247,9 @@ namespace WaDesktop.Client.Views
 
         private void phoneNumbersToolStripMenuItem_Click(object sender, EventArgs e)
             => PhoneNumbersClicked?.Invoke(sender, e);
+
+        private void wabaToolStripMenuItem_Click(object sender, EventArgs e)
+            => WabaClicked?.Invoke(sender, e);
 
         private void templatesToolStripMenuItem_Click(object sender, EventArgs e)
             => TemplatesClicked?.Invoke(sender, e);

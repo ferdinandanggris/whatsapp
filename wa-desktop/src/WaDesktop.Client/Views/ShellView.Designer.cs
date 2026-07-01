@@ -8,6 +8,7 @@ namespace WaDesktop.Client.Views
         private System.Windows.Forms.ToolStripMenuItem companyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem usersToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem phoneNumbersToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem wabaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem templatesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem appSettingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem logoutToolStripMenuItem;
@@ -33,6 +34,7 @@ namespace WaDesktop.Client.Views
             this.companyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.phoneNumbersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.wabaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.templatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.appSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logoutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,6 +59,7 @@ namespace WaDesktop.Client.Views
             this.companyToolStripMenuItem,
             this.usersToolStripMenuItem,
             this.phoneNumbersToolStripMenuItem,
+            this.wabaToolStripMenuItem,
             this.templatesToolStripMenuItem,
             this.appSettingsToolStripMenuItem,
             this.logoutToolStripMenuItem});
@@ -93,6 +96,13 @@ namespace WaDesktop.Client.Views
             this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
             this.phoneNumbersToolStripMenuItem.Text = "Nomor HP";
             this.phoneNumbersToolStripMenuItem.Click += new System.EventHandler(this.phoneNumbersToolStripMenuItem_Click);
+            //
+            // wabaToolStripMenuItem
+            //
+            this.wabaToolStripMenuItem.Name = "wabaToolStripMenuItem";
+            this.wabaToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.wabaToolStripMenuItem.Text = "WABA";
+            this.wabaToolStripMenuItem.Click += new System.EventHandler(this.wabaToolStripMenuItem_Click);
             //
             // templatesToolStripMenuItem
             // 

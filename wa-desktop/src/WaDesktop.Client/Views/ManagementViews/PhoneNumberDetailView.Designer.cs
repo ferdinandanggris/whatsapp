@@ -10,12 +10,10 @@ namespace WaDesktop.Client.Views.ManagementViews
         private System.Windows.Forms.Label lblQuality;
         private System.Windows.Forms.TextBox txtDisplayName;
         private System.Windows.Forms.TextBox txtDescription;
-        private System.Windows.Forms.ComboBox cboCompany;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TextBox txtPhoneId;
         private System.Windows.Forms.TextBox txtQuality;
@@ -50,12 +48,10 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.lblQuality = new System.Windows.Forms.Label();
             this.txtDisplayName = new System.Windows.Forms.TextBox();
             this.txtDescription = new System.Windows.Forms.TextBox();
-            this.cboCompany = new System.Windows.Forms.ComboBox();
             this.btnSave = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.txtPhoneId = new System.Windows.Forms.TextBox();
             this.txtQuality = new System.Windows.Forms.TextBox();
@@ -133,14 +129,6 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.txtDescription.Size = new System.Drawing.Size(260, 56);
             this.txtDescription.TabIndex = 8;
             // 
-            // cboCompany
-            // 
-            this.cboCompany.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboCompany.Location = new System.Drawing.Point(160, 214);
-            this.cboCompany.Name = "cboCompany";
-            this.cboCompany.Size = new System.Drawing.Size(260, 21);
-            this.cboCompany.TabIndex = 10;
-            // 
             // btnSave
             // 
             this.btnSave.BackColor = System.Drawing.Color.White;
@@ -179,15 +167,6 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.label3.Size = new System.Drawing.Size(60, 13);
             this.label3.TabIndex = 7;
             this.label3.Text = "Description";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(160, 198);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(51, 13);
-            this.label4.TabIndex = 9;
-            this.label4.Text = "Company";
             // 
             // label5
             // 
@@ -352,8 +331,6 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.Controls.Add(this.lblEmail);
             this.Controls.Add(this.txtQuality);
             this.Controls.Add(this.label5);
-            this.Controls.Add(this.cboCompany);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.txtDescription);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.txtDisplayName);

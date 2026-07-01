@@ -73,14 +73,34 @@ namespace WaDesktop.Client.Views.ManagementViews
         public void SetCompanies(IList<Company> companies)
         {
             _companies = companies.ToList();
+
             this.InvokeIfRequired(() =>
             {
-                colCompany.Items.Clear();
-                foreach (var c in companies)
-                    colCompany.Items.Add(c);
-                colCompany.DisplayMember = "Name";
-                colCompany.ValueMember = "Id";
+                if(Company != null)
+                {
+                    Company.Items.Clear();
+                    Company.DisplayMember = "Name";
+                    Company.ValueMember = "Id";
+                    foreach (var c in companies)
+                    Company.Items.Add(c);
+
+                }
             });
+        }
+
+        // on error 
+        private void DataGridView_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            // if is a combo box column, likely the value is not in the list, so we can ignore it
+            if (dataGridView.Columns[e.ColumnIndex] is DataGridViewComboBoxColumn)
+            {
+                e.ThrowException = false;
+            }
+            else
+            {
+            e.ThrowException = true;
+            }
+
         }
 
         // ── Yellow Highlight ──
@@ -109,7 +129,7 @@ namespace WaDesktop.Client.Views.ManagementViews
                         Username = row.Cells["Email"].Value?.ToString() ?? "",
                         DisplayName = row.Cells["Name"].Value?.ToString() ?? "",
                         Role = backendRole,
-                        CompanyId = row.Cells["Company"].Value as long?,
+                        CompanyId = row.Cells["Company"].Value?.ToString() ?? "",
                         IsActive = row.Cells["Status"].Value as bool? ?? false
                     });
                 }

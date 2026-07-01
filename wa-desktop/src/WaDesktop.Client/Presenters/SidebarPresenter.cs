@@ -71,30 +71,9 @@ namespace WaDesktop.Client.Presenters
 
         private static IList<PhoneNumberNode> BuildTree(List<PhoneNumberNode> phones)
         {
-            var root = new PhoneNumberNode { DisplayName = "Phone Numbers", CompanyName = null };
-
-            // Group: null company_id → "No Company" first, then rest sorted by name
-            var noCompany = phones.Where(p => p.CompanyId == null).ToList();
-            var withCompany = phones.Where(p => p.CompanyId != null)
-                .GroupBy(p => new { p.CompanyId, p.CompanyName })
-                .OrderBy(g => g.Key.CompanyName).ToList();
-
-            if (noCompany.Count > 0)
-            {
-                var ncNode = new PhoneNumberNode { DisplayName = "No Company", CompanyName = "No Company" };
-                foreach (var p in noCompany.OrderBy(p => p.DisplayName))
-                    ncNode.Children.Add(p);
-                root.Children.Add(ncNode);
-            }
-
-            foreach (var group in withCompany)
-            {
-                var coNode = new PhoneNumberNode { DisplayName = group.Key.CompanyName, CompanyId = group.Key.CompanyId, CompanyName = group.Key.CompanyName };
-                foreach (var p in group.OrderBy(p => p.DisplayName))
-                    coNode.Children.Add(p);
-                root.Children.Add(coNode);
-            }
-
+            var root = new PhoneNumberNode { DisplayName = "Phone Numbers" };
+            foreach (var p in phones.OrderBy(p => p.DisplayName))
+                root.Children.Add(p);
             return new[] { root };
         }
 

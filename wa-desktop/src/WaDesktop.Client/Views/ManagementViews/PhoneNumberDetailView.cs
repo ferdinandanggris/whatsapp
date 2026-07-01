@@ -1,20 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Domain.Entities;
 using WaDesktop.Client.Extensions;
-using System.Threading.Tasks;
 
 namespace WaDesktop.Client.Views.ManagementViews
 {
     public partial class PhoneNumberDetailView : UserControl, IPhoneNumberDetailView
     {
-        private List<Company> _companies;
-
         public PhoneNumberDetailView()
         {
             InitializeComponent();
@@ -39,16 +34,6 @@ namespace WaDesktop.Client.Views.ManagementViews
         public string Website1 => txtWebsite1.Text.Trim();
         public string Website2 => txtWebsite2.Text.Trim();
         public string PendingUploadPath { get; private set; }
-        public long? SelectedCompanyId
-        {
-            get
-            {
-                if (this.InvokeRequired)
-                    return (long?)this.Invoke(new Func<long?>(() =>
-                        cboCompany.SelectedItem is CompanyItem item ? item.Id : null));
-                return cboCompany.SelectedItem is CompanyItem item2 ? item2.Id : null;
-            }
-        }
 
         public bool IsSaving
         {
@@ -83,20 +68,6 @@ namespace WaDesktop.Client.Views.ManagementViews
                 cboVertical.Text = detail.Vertical ?? "";
                 txtWebsite1.Text = detail.Websites != null && detail.Websites.Count > 0 ? detail.Websites[0] : "";
                 txtWebsite2.Text = detail.Websites != null && detail.Websites.Count > 1 ? detail.Websites[1] : "";
-
-                SelectCompany(detail.CompanyId);
-            });
-        }
-
-        public void LoadCompanies(IList<Company> companies)
-        {
-            this.InvokeIfRequired(() =>
-            {
-                _companies = companies.ToList();
-                cboCompany.Items.Clear();
-                cboCompany.Items.Add(new CompanyItem(null, "(No Company)"));
-                foreach (var c in companies)
-                    cboCompany.Items.Add(new CompanyItem(c.Id, c.Name));
             });
         }
 
@@ -111,19 +82,6 @@ namespace WaDesktop.Client.Views.ManagementViews
             {
                 // Ignore image load failures
             }
-        }
-
-        private void SelectCompany(long? companyId)
-        {
-            for (int i = 0; i < cboCompany.Items.Count; i++)
-            {
-                if (cboCompany.Items[i] is CompanyItem item && item.Id == companyId)
-                {
-                    cboCompany.SelectedIndex = i;
-                    return;
-                }
-            }
-            cboCompany.SelectedIndex = 0; // No Company
         }
 
         public void ShowError(string message) => MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -148,12 +106,5 @@ namespace WaDesktop.Client.Views.ManagementViews
             }
         }
 
-        private class CompanyItem
-        {
-            public long? Id { get; }
-            public string Name { get; }
-            public CompanyItem(long? id, string name) { Id = id; Name = name; }
-            public override string ToString() => Name;
-        }
     }
 }

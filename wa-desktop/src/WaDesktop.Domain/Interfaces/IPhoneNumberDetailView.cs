@@ -8,7 +8,6 @@ namespace WaDesktop.Domain.Interfaces
     {
         // ── Data ──
         void LoadDetail(PhoneNumberDetail detail);
-        void LoadCompanies(IList<Company> companies);
 
         // ── Field accessors for save ──
         string DisplayName { get; }
@@ -19,7 +18,6 @@ namespace WaDesktop.Domain.Interfaces
         string Vertical { get; }
         string Website1 { get; }
         string Website2 { get; }
-        long? SelectedCompanyId { get; }
 
         // ── Picture ──
         void LoadProfilePicture(byte[] imageData);

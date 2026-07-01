@@ -55,7 +55,7 @@ namespace WaDesktop.Client.Presenters
                 // Create new / update existing
                 foreach (Company c in _view.GetModifiedRows())
                 {
-                    if (c.Id == 0)
+                    if (string.IsNullOrEmpty(c.Id))
                         await Task.Run(() => _api.CreateCompanyAsync(c.Name));
                     else
                         await Task.Run(() => _api.UpdateCompanyAsync(c.Id, c.Name));

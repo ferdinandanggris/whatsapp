@@ -37,6 +37,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\Waba.cs" />
     <Compile Include="Interfaces\IPhoneNumberDetailView.cs" />
     <Compile Include="Interfaces\IViewBase.cs" />
     <Compile Include="Interfaces\IShellView.cs" />

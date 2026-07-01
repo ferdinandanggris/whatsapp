@@ -15,7 +15,7 @@ namespace WaDesktop.Domain.Entities
         [JsonProperty("role")]
         public string Role { get; set; }
         [JsonProperty("company_id")]
-        public long? CompanyId { get; set; }
+        public string CompanyId { get; set; }
         [JsonProperty("is_active")]
         public bool IsActive { get; set; }
     }

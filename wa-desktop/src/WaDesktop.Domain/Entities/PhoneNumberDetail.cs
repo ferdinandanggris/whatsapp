@@ -8,6 +8,8 @@ namespace WaDesktop.Domain.Entities
     {
         [JsonProperty("phone_number_id")]
         public string PhoneNumberId { get; set; }
+        [JsonProperty("waba_id")]
+        public string WabaId { get; set; }
         [JsonProperty("display_name")]
         public string DisplayName { get; set; }
         [JsonProperty("display_phone_number")]
@@ -26,12 +28,8 @@ namespace WaDesktop.Domain.Entities
         public string Vertical { get; set; }
         [JsonProperty("websites")]
         public List<string> Websites { get; set; }
-        [JsonProperty("profile_picture_url")]
+        [JsonProperty("profile_picture")]
         public string ProfilePictureUrl { get; set; }
-        [JsonProperty("company_id")]
-        public long? CompanyId { get; set; }
-        [JsonProperty("company_name")]
-        public string CompanyName { get; set; }
         [JsonProperty("created_at")]
         public string CreatedAt { get; set; }
         [JsonProperty("updated_at")]

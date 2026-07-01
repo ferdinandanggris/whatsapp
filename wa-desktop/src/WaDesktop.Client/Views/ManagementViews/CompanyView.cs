@@ -67,11 +67,10 @@ namespace WaDesktop.Client.Views.ManagementViews
                 if (row.IsNewRow) continue;
                 if (row.Tag != null && (bool)row.Tag)
                 {
-                    var idCell = row.Cells["Id"].Value;
-                    long id = (idCell != null && long.TryParse(idCell.ToString(), out var parsed)) ? parsed : 0;
+                    var idCell = row.Cells["Id"].Value?.ToString() ?? "";
                     list.Add(new Company
                     {
-                        Id = id,
+                        Id = idCell,
                         Name = row.Cells["Name"].Value?.ToString() ?? ""
                     });
                 }

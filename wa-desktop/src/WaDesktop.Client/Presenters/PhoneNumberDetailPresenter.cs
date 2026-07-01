@@ -31,10 +31,6 @@ namespace WaDesktop.Client.Presenters
             _view.IsSaving = true;
             try
             {
-
-                var companies = await Task.Run(() => _api.GetCompaniesAsync());
-                _view.LoadCompanies(companies);
-
                 var detail = await Task.Run(() => _api.GetPhoneDetailAsync(_phoneNumberId));
                 _view.LoadDetail(detail);
 
@@ -68,7 +64,6 @@ namespace WaDesktop.Client.Presenters
                         _phoneNumberId,
                         _view.DisplayName,
                         _view.Description,
-                        _view.SelectedCompanyId,
                         _view.Email,
                         _view.About,
                         _view.Address,

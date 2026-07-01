@@ -7,22 +7,22 @@ using WaDesktop.Client.Extensions;
 
 namespace WaDesktop.Client.Views.ManagementViews
 {
-    public partial class PhoneNumberView : UserControl, IManagementView<PhoneNumberDetail>
+    public partial class WabaView : UserControl, IManagementView<Waba>
     {
-        public PhoneNumberView()
+        public WabaView()
         {
             InitializeComponent();
         }
 
-        public IList<PhoneNumberDetail> DataSource
+        public IList<Waba> DataSource
         {
             set
             {
                 this.InvokeIfRequired(() =>
                 {
                     dataGridView.Rows.Clear();
-                    foreach (var p in value)
-                        dataGridView.Rows.Add(p.DisplayPhone, p.DisplayName, p.QualityRating, p.CreatedAt);
+                    foreach (var w in value)
+                        dataGridView.Rows.Add(w.WabaId, w.Name, w.CompanyId, w.CreatedAt);
                 });
             }
         }
@@ -44,11 +44,6 @@ namespace WaDesktop.Client.Views.ManagementViews
         private void txtSearch_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == (char)Keys.Enter) SearchClicked?.Invoke(this, txtSearch.Text);
-        }
-
-        private void dataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0) EditClicked?.Invoke(this, EventArgs.Empty);
         }
     }
 }

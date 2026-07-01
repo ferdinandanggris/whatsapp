@@ -78,8 +78,6 @@ namespace WaDesktop.Infrastructure.Services
                 PhoneNumberId = dto.PhoneNumberId,
                 DisplayName = dto.DisplayName,
                 DisplayPhoneNumber = dto.DisplayPhone,
-                CompanyId = dto.CompanyId,
-                CompanyName = dto.CompanyName,
             }).ToList();
         }
 
@@ -91,10 +89,6 @@ namespace WaDesktop.Infrastructure.Services
             public string DisplayName { get; set; }
             [JsonProperty("display_phone_number")]
             public string DisplayPhone { get; set; }
-            [JsonProperty("company_id")]
-            public long? CompanyId { get; set; }
-            [JsonProperty("company_name")]
-            public string CompanyName { get; set; }
         }
 
         public async Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync()
@@ -129,7 +123,7 @@ namespace WaDesktop.Infrastructure.Services
             return UnwrapData<Company>(json);
         }
 
-        public async Task<Company> UpdateCompanyAsync(long id, string name)
+        public async Task<Company> UpdateCompanyAsync(string id, string name)
         {
             var body = JsonConvert.SerializeObject(new { name });
             var res = await SendWithRefreshAsync(() =>
@@ -169,7 +163,7 @@ namespace WaDesktop.Infrastructure.Services
             return data;
         }
 
-        public async Task<User> CreateUserAsync(string username, string password, string name, string role, long? companyId)
+        public async Task<User> CreateUserAsync(string username, string password, string name, string role, string companyId)
         {
             var body = JsonConvert.SerializeObject(new { username, password, name, role, company_id = companyId });
             var res = await SendWithRefreshAsync(() =>
@@ -186,7 +180,7 @@ namespace WaDesktop.Infrastructure.Services
             return UnwrapData<User>(json);
         }
 
-        public async Task UpdateUserAsync(string id, string displayName, string role, long? companyId, bool? isActive = null)
+        public async Task UpdateUserAsync(string id, string displayName, string role, string companyId, bool? isActive = null)
         {
             var payload = new Dictionary<string, object>
             {
@@ -323,7 +317,7 @@ namespace WaDesktop.Infrastructure.Services
             return await res.Content.ReadAsByteArrayAsync();
         }
 
-        public async Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, long? companyId, string email, string about, string address, string vertical, List<string> websites)
+        public async Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, string email, string about, string address, string vertical, List<string> websites)
         {
             if (websites != null && websites.Count > 2)
                 websites = websites.GetRange(0, 2);
@@ -332,7 +326,6 @@ namespace WaDesktop.Infrastructure.Services
             {
                 display_name = displayName,
                 description,
-                company_id = companyId,
                 email,
                 about,
                 address,
@@ -405,6 +398,25 @@ namespace WaDesktop.Infrastructure.Services
                 }
                 var json = await res.Content.ReadAsStringAsync();
                 return UnwrapData<PhoneNumberDetail>(json);
+            }
+        }
+
+        // ── WABA ──
+
+        public async Task<List<Waba>> GetWabasAsync()
+        {
+            return await GetListAsync<Waba>("/api/v1/waba");
+        }
+
+        public async Task SyncWabasFromMetaAsync()
+        {
+            var res = await SendWithRefreshAsync(() =>
+                _http.PostAsync($"{_baseUrl}/api/v1/waba/sync", null));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Sync failed ({res.StatusCode}): {err}");
             }
         }
 

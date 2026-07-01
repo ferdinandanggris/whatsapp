@@ -14,6 +14,7 @@ namespace WaDesktop.Domain.Interfaces
         event EventHandler CompanyClicked;
         event EventHandler UsersClicked;
         event EventHandler PhoneNumbersClicked;
+        event EventHandler WabaClicked;
         event EventHandler TemplatesClicked;
         event EventHandler AppSettingsClicked;
         event EventHandler LogoutClicked;
@@ -23,6 +24,7 @@ namespace WaDesktop.Domain.Interfaces
         bool CompanyVisible { set; }
         bool UsersVisible { set; }
         bool PhoneNumbersVisible { set; }
+        bool WabaVisible { set; }
         bool TemplatesVisible { set; }
 
         void AddOrSelectTab(string key, string title, IViewBase content);

@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Presenters\PhoneNumbersPresenter.cs" />
+    <Compile Include="Presenters\WabasPresenter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Extensions\ControlExtensions.cs" />
     <Compile Include="Views\LoginView.cs">
@@ -68,6 +69,12 @@
     </Compile>
     <Compile Include="Views\ManagementViews\PhoneNumberView.Designer.cs">
       <DependentUpon>PhoneNumberView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ManagementViews\WabaView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Views\ManagementViews\WabaView.Designer.cs">
+      <DependentUpon>WabaView.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\ShellView.cs">
       <SubType>Form</SubType>
@@ -147,6 +154,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Views\ManagementViews\PhoneNumberDetailView.resx">
       <DependentUpon>PhoneNumberDetailView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ManagementViews\UsersView.resx">
+      <DependentUpon>UsersView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\ShellView.resx">
       <DependentUpon>ShellView.cs</DependentUpon>
