@@ -3,6 +3,7 @@ import { useWS } from '../../../stores/ws';
 import { getPhoneNumbers } from '../../../services/chatService';
 import type { PhoneNumber } from '../../../types/chat';
 import { EventType, WebsocketEvent } from '@/types/wsEvent';
+import { useAuth } from '@/stores/auth';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
@@ -40,6 +41,7 @@ interface UseChatConnectionProps {
 export const useChatConnection = ({ setApplications }: UseChatConnectionProps) => {
     const emitterRef = useRef<WebMetaEventEmitter>(new WebMetaEventEmitter());
     const { connected, connect, disconnect } = useWS();
+      const { token, user} = useAuth()
     const [status, setStatus] = useState<ConnectionStatus>('connecting');
 
     useEffect(() => {
@@ -47,9 +49,8 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
     }, [connected]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
         if (token) {
-            connect(token);
+            connect(token, user?.company_id);
         } else {
             setStatus('disconnected');
         }
@@ -112,7 +113,7 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
         setStatus('reconnecting');
         const token = localStorage.getItem('token');
         if (token) {
-            connect(token);
+            connect(token, user?.company_id);
         } else {
             window.location.reload();
         }

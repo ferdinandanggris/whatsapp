@@ -14,7 +14,7 @@ export interface Message {
   wamid: string
   phone_number_id: string
   wa_id: string
-  direction: "inbound" | "outbound"
+  direction: "INBOUND" | "OUTBOUND"
   type: string
   content: Record<string, unknown>
   status: string
@@ -22,11 +22,12 @@ export interface Message {
   agent_id?: string
 }
 
-export interface User {
+export interface  User {
   id: string
   username: string
   role: string
   name: string
+  company_id?: string
   is_active: boolean
 }
 

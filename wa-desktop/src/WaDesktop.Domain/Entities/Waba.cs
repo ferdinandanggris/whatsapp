@@ -8,6 +8,8 @@ namespace WaDesktop.Domain.Entities
         public string WabaId { get; set; }
         [JsonProperty("company_id")]
         public string CompanyId { get; set; }
+        [JsonProperty("company_name")]
+        public string CompanyName { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("created_at")]

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { getMessages, markAsRead } from '../../../services/chatService';
 import type { Bubble,  Conversation } from '../../../types/chat';
-import { StatusUpdatePayload, WebsocketEvent } from '@/types/wsEvent';
+import { StatusUpdatePayload } from '@/types/wsEvent';
 
 interface UseMessagesProps {
     activeConversation: Conversation | null;

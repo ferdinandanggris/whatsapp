@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       navigate("/login", { replace: true })
       return
     }
-    connect(token)
+    connect(token, user?.company_id)
   }, [token, loading, navigate, connect])
 
   if (loading) {

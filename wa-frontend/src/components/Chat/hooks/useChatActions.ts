@@ -58,9 +58,10 @@ export const useChatActions = ({
             message_type: 'text',
             direction: 'OUTBOUND',
             status: 'pending',
-            message_timestamp: Math.floor(Date.now() / 1000),
+            message_timestamp: Math.floor(Date.now()),
             created_at: new Date().toISOString(),
             sender_name: user?.name || 'Me',
+            agent_name: user?.name || 'Me',
             content: {
                 body: {
                     text: text,
@@ -182,24 +183,6 @@ export const useChatActions = ({
         const tempId = `temp_${Guid.newGuid().toString()}`;
         const context_id = replyingTo?.wa_message_id;
 
-        // const newMessage: Bubble = {
-        //     id: Guid.newGuid().toString(),
-        //     conversation_id: currentConv.id,
-        //     phone_number_id: currentConv.phone_number_id,
-        //     wa_message_id: tempId,
-        //     sender_name: user?.name || 'Me',
-        //     message_text: caption,
-        //     message_type: type,
-        //     file_path: previewUrl,
-        //     file_name: file.name,
-        //     file_type: file.type,
-        //     direction: 'OUTBOUND',
-        //     status: 'pending',
-        //     platform: 'whatsapp',
-        //     created_at: new Date().toISOString(),
-        //     context_message_id: context_id
-        // };
-
         const id = Guid.newGuid().toString();
         const newBubble : Bubble = {
             id: id,
@@ -213,8 +196,8 @@ export const useChatActions = ({
             message_timestamp: Math.floor(Date.now() / 1000),
             created_at: new Date().toISOString(),
             sender_name: user?.name || 'Me',
+            agent_name: user?.name || 'Me',
             content: {}
-            
         }
 
          switch(type) {

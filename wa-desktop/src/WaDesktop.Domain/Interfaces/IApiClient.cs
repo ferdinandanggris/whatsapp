@@ -40,6 +40,7 @@ namespace WaDesktop.Domain.Interfaces
         Task SyncPhoneNumbersFromMetaAsync();
         Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath);
         Task<List<Waba>> GetWabasAsync();
+        Task UpdateWabaAsync(string wabaId, string companyId);
         Task SyncWabasFromMetaAsync();
         Task<byte[]> GetPhoneProfilePictureAsync(string url);
     }

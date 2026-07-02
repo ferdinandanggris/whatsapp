@@ -17,6 +17,6 @@ export function login(username: string, password: string): Promise<Meta<LoginRes
   return post<Meta<LoginResponse>>("/api/v1/auth/login", { username, password })
 }
 
-export function getMe(): Promise<User> {
-  return get<User>("/api/v1/auth/me")
+export function getMe(): Promise<Meta<User>> {
+  return get<Meta<User>>("/api/v1/auth/me")
 }

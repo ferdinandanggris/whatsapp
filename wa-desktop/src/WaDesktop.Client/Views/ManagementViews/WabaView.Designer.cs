@@ -10,6 +10,7 @@ namespace WaDesktop.Client.Views.ManagementViews
         private System.Windows.Forms.Button btnAdd;
         private System.Windows.Forms.Button btnEdit;
         private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnSave;
 
         protected override void Dispose(bool disposing)
         {
@@ -27,6 +28,7 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.btnAdd = new System.Windows.Forms.Button();
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.SuspendLayout();
 
@@ -35,14 +37,21 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView.Location = new System.Drawing.Point(12, 44);
             this.dataGridView.Name = "dataGridView";
-            this.dataGridView.ReadOnly = true;
+            this.dataGridView.ReadOnly = false;
             this.dataGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridView.Size = new System.Drawing.Size(860, 500);
             this.dataGridView.TabIndex = 0;
             this.dataGridView.Columns.Add("WabaId", "WABA ID");
             this.dataGridView.Columns.Add("Name", "Name");
-            this.dataGridView.Columns.Add("Company", "Company ID");
+            this.dataGridView.Columns["WabaId"].ReadOnly = true;
+            var companyCol = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            companyCol.Name = "Company";
+            companyCol.HeaderText = "Company";
+            companyCol.DisplayMember = "Name";
+            companyCol.ValueMember = "Id";
+            this.dataGridView.Columns.Add(companyCol);
             this.dataGridView.Columns.Add("Created", "Created At");
+            this.dataGridView.Columns["Created"].ReadOnly = true;
 
             this.txtSearch.Location = new System.Drawing.Point(12, 12);
             this.txtSearch.Name = "txtSearch";
@@ -90,9 +99,19 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
 
+            // btnSave
+            this.btnSave.Location = new System.Drawing.Point(703, 10);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(75, 23);
+            this.btnSave.TabIndex = 7;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.BtnSave_Click);
+
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.btnDelete);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnEdit);
             this.Controls.Add(this.btnAdd);
             this.Controls.Add(this.btnRefresh);

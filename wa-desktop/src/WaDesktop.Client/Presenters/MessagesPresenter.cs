@@ -83,8 +83,9 @@ namespace WaDesktop.Client.Presenters
             System.Diagnostics.Debug.WriteLine("[Messages] InjectToken — setting token in page");
 
             // Parse WS host from API base URL (not embedded server)
-            var apiUri = new Uri(_apiBaseUrl);
-            var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + apiUri.Port;
+            var apiUri = new Uri(_apiBaseUrl); 
+            var wsPort = "8081"; // Default WebSocket port
+            var wsHost = apiUri.IsDefaultPort ? apiUri.Host : apiUri.Host + ":" + wsPort;
 
             var script = $@"
                 window.__DESKTOP_BRIDGE__ = {{'token': '{_auth.AccessToken}','refresh_token':'{_auth.RefreshToken}'}};

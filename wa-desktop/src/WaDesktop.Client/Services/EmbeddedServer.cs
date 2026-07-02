@@ -31,7 +31,8 @@ namespace WaDesktop.Client.Services
             _apiBaseUrl = apiBaseUrl;
 
             var uri = new Uri(apiBaseUrl);
-            _wsHost = uri.IsDefaultPort ? uri.Host : uri.Host + ":" + uri.Port;
+            var wsPort = "8081"; // default WS port
+            _wsHost = uri.IsDefaultPort ? uri.Host : uri.Host + ":" + wsPort;
 
             _listener = new HttpListener();
 

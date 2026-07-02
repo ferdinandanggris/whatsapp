@@ -1,18 +1,20 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WaDesktop.Domain.Interfaces;
 using WaDesktop.Domain.Entities;
+using WaDesktop.Client.Views.ManagementViews;
 
 namespace WaDesktop.Client.Presenters
 {
     public class WabasPresenter : IDisposable
     {
-        private readonly IManagementView<Waba> _view;
+        private readonly WabaView _view;
         private readonly IApiClient _api;
         private bool _disposed;
 
-        public WabasPresenter(IManagementView<Waba> view, IApiClient api)
+        public WabasPresenter(WabaView view, IApiClient api)
         {
             _view = view;
             _api = api;
@@ -22,6 +24,7 @@ namespace WaDesktop.Client.Presenters
             _view.AddClicked += OnAdd;
             _view.EditClicked += OnEdit;
             _view.DeleteClicked += OnDelete;
+            _view.SaveClicked += OnSave;
         }
 
         public async void LoadData(string search = null) => await LoadDataAsync(search);
@@ -31,16 +34,56 @@ namespace WaDesktop.Client.Presenters
             _view.IsLoading = true;
             try
             {
-                var data = await Task.Run(() => _api.GetWabasAsync());
+                var companiesTask = Task.Run(() => _api.GetCompaniesAsync());
+                var wabas = await Task.Run(() => _api.GetWabasAsync());
+
+                var companies = await companiesTask;
+                _view.SetCompanyDataSource(companies);
+
+                var companyMap = companies.ToDictionary(c => c.Id, c => c.Name);
+                foreach (var w in wabas)
+                {
+                    if (!string.IsNullOrEmpty(w.CompanyId) && companyMap.TryGetValue(w.CompanyId, out var name))
+                        w.CompanyName = name;
+                }
+
                 if (!string.IsNullOrEmpty(search))
-                    data = data.FindAll(w =>
+                    wabas = wabas.FindAll(w =>
                         (w.Name ?? "").IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
                         (w.WabaId ?? "").IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
-                _view.DataSource = data;
+
+                _view.DataSource = wabas;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Gagal load WABA: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _view.IsLoading = false;
+            }
+        }
+
+        private async void OnSave(object sender, EventArgs e)
+        {
+            var wabaId = _view.SelectedWabaId;
+            if (wabaId == null)
+            {
+                MessageBox.Show("Pilih baris dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _view.IsLoading = true;
+            try
+            {
+                var companyId = _view.SelectedCompanyId;
+                await Task.Run(() => _api.UpdateWabaAsync(wabaId, companyId ?? ""));
+                await LoadDataAsync();
+                MessageBox.Show("Company updated.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Save failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -95,6 +138,7 @@ namespace WaDesktop.Client.Presenters
                 _view.AddClicked -= null;
                 _view.EditClicked -= null;
                 _view.DeleteClicked -= null;
+                _view.SaveClicked -= null;
                 _disposed = true;
             }
         }

@@ -420,6 +420,20 @@ namespace WaDesktop.Infrastructure.Services
             }
         }
 
+        public async Task UpdateWabaAsync(string wabaId, string companyId)
+        {
+            var body = JsonConvert.SerializeObject(new { company_id = companyId });
+            var res = await SendWithRefreshAsync(() =>
+                _http.PutAsync($"{_baseUrl}/api/v1/waba/{wabaId}",
+                    new StringContent(body, Encoding.UTF8, "application/json")));
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var err = await res.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Update failed ({res.StatusCode}): {err}");
+            }
+        }
+
         // ── Helpers ──
 
         private async Task<string> GetStringAsync(string path)

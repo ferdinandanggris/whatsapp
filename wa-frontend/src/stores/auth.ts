@@ -17,6 +17,7 @@ export const useAuth = create<AuthState>((set) => ({
   loading: !localStorage.getItem("token"),
 
   setAuth: (token, refreshToken, user) => {
+    console.log(`[setAuth] token: ${token}, refreshToken: ${refreshToken}, user: ${JSON.stringify(user)}`)
     localStorage.setItem("token", token)
     localStorage.setItem("refresh_token", refreshToken)
     set({ token, user, loading: false })
@@ -35,8 +36,8 @@ export const useAuth = create<AuthState>((set) => ({
       return
     }
     try {
-      const user = await authApi.getMe()
-      set({ token, user, loading: false })
+      const res = await authApi.getMe()
+      set({ token, user : res.data, loading: false })
     } catch {
       localStorage.removeItem("token")
       localStorage.removeItem("refresh_token")
