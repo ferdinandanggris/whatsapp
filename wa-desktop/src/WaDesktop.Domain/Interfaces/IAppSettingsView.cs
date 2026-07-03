@@ -4,10 +4,10 @@ namespace WaDesktop.Domain.Interfaces
 {
     public interface IAppSettingsView : IViewBase
     {
-        string WebhookUrl { get; set; }
-        string ApiKey { get; set; }
-        string WabaId { get; set; }
+        string WabaToken { get; set; }
         string AppId { get; set; }
+        string BusinessId { get; set; }
+        string VerifyToken { get; set; }
         bool IsSaving { set; }
 
         event EventHandler SaveClicked;

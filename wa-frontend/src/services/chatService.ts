@@ -221,17 +221,15 @@ export const sendMedia = async (
 };
 
 export const sendTemplate = async (
-    wa_channel_id: string | number,
-    conversation_id: string | number,
-    target: string,
+    phone_number_id: string,
+    wa_id: string,
     template_name: string,
     language_code: string,
     body_params: string[],
     button_params: string[],
     button_types: string[],
     header_params: string[],
-    sender_name?: string,
-    wa_message_id?: string
+    id?: string
 ): Promise<ApiResponse<any>> => {
     try {
         const templateParams: Record<string, string> = {};
@@ -252,12 +250,13 @@ export const sendTemplate = async (
         })) : [];
 
         const payload: any = {
-            to: target, phone_number_id: String(wa_channel_id), type: 'template',
-            template_name, template_lang: language_code || 'id', template_params: templateParams
+            to: wa_id, phone_number_id: phone_number_id, type: 'template',
+            template_name, template_lang: language_code || 'id', template_params: templateParams,
+            id
         };
         if (templateButtons.length > 0) payload.template_buttons = templateButtons;
 
-        const res = await post<ApiResponse<any>>('/api/v1/messages', payload);
+        const res = await post<ApiResponse<any>>('/api/v1/messages/template', payload);
         return { status_code: 201, status: true, message: 'Success', data: res };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim template', data: null };

@@ -122,10 +122,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [appResp, channelResp, pingResp] = await Promise.all([getPhoneNumbers(), getChannels(), getPingInfo()]);
+                // const [appResp, channelResp, pingResp] = await Promise.all([getPhoneNumbers(), getChannels(), getPingInfo()]);
+                const [appResp, channelResp] = await Promise.all([getPhoneNumbers(), getChannels()]);
                 if (appResp.status) setApplications(appResp.data);
                 if (channelResp.status) setChannels(channelResp.data);
-                const canSendTemplate = pingResp.allowSendTemplate;
+                // const canSendTemplate = pingResp.allowSendTemplate;
+                const canSendTemplate = true;
                 if (canSendTemplate !== undefined) setAllowSendTemplate(canSendTemplate);
             } catch (error) { console.error("Initial fetch failed", error); }
         };

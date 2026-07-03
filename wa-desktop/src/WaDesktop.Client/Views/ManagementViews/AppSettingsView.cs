@@ -12,28 +12,28 @@ namespace WaDesktop.Client.Views.ManagementViews
             InitializeComponent();
         }
 
-        public string WebhookUrl
+        public string WabaToken
         {
-            get => txtWebhookUrl.Text;
-            set => this.InvokeIfRequired(() => txtWebhookUrl.Text = value);
-        }
-
-        public string ApiKey
-        {
-            get => txtApiKey.Text;
-            set => this.InvokeIfRequired(() => txtApiKey.Text = value);
-        }
-
-        public string WabaId
-        {
-            get => txtWabaId.Text;
-            set => this.InvokeIfRequired(() => txtWabaId.Text = value);
+            get => txtWabaToken.Text;
+            set => this.InvokeIfRequired(() => txtWabaToken.Text = value);
         }
 
         public string AppId
         {
             get => txtAppId.Text;
             set => this.InvokeIfRequired(() => txtAppId.Text = value);
+        }
+
+        public string BusinessId
+        {
+            get => txtBusinessId.Text;
+            set => this.InvokeIfRequired(() => txtBusinessId.Text = value);
+        }
+
+        public string VerifyToken
+        {
+            get => txtVerifyToken.Text;
+            set => this.InvokeIfRequired(() => txtVerifyToken.Text = value);
         }
 
         public bool IsSaving

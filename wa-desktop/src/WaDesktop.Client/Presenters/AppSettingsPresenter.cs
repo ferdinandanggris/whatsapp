@@ -29,10 +29,10 @@ namespace WaDesktop.Client.Presenters
             try
             {
                 var settings = await Task.Run(() => _api.GetAppSettingsAsync());
-                _view.WebhookUrl = settings.WebhookUrl;
-                _view.ApiKey = settings.ApiKey;
-                _view.WabaId = settings.WabaId;
+                _view.WabaToken = settings.WabaToken;
                 _view.AppId = settings.AppId;
+                _view.BusinessId = settings.BusinessId;
+                _view.VerifyToken = settings.VerifyToken;
             }
             catch (Exception ex)
             {
@@ -51,10 +51,10 @@ namespace WaDesktop.Client.Presenters
             {
                 var settings = new AppSetting
                 {
-                    WebhookUrl = _view.WebhookUrl,
-                    ApiKey = _view.ApiKey,
-                    WabaId = _view.WabaId,
-                    AppId = _view.AppId
+                    WabaToken = _view.WabaToken,
+                    AppId = _view.AppId,
+                    BusinessId = _view.BusinessId,
+                    VerifyToken = _view.VerifyToken
                 };
                 var warnings = await Task.Run(() => _api.SaveAppSettingsAsync(settings));
                 if (warnings != null && warnings.Any())

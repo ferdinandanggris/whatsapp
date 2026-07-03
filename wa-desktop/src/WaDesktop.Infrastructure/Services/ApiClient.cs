@@ -249,10 +249,10 @@ namespace WaDesktop.Infrastructure.Services
             {
                 switch (item.Name)
                 {
-                    case "webhook_url":  setting.WebhookUrl = item.Value; break;
-                    case "api_key":      setting.ApiKey = item.Value; break;
-                    case "waba_id":      setting.WabaId = item.Value; break;
-                    case "app_id":       setting.AppId = item.Value; break;
+                    case "wa_waba_token":   setting.WabaToken = item.Value; break;
+                    case "wa_app_id":       setting.AppId = item.Value; break;
+                    case "wa_bussiness_id": setting.BusinessId = item.Value; break;
+                    case "wa_verify_token": setting.VerifyToken = item.Value; break;
                 }
             }
             return setting;
@@ -261,10 +261,10 @@ namespace WaDesktop.Infrastructure.Services
         public async Task<List<string>> SaveAppSettingsAsync(AppSetting settings)
         {
             var payload = new Dictionary<string, string>();
-            if (!string.IsNullOrEmpty(settings.WebhookUrl)) payload["webhook_url"] = settings.WebhookUrl;
-            if (!string.IsNullOrEmpty(settings.ApiKey))     payload["api_key"] = settings.ApiKey;
-            if (!string.IsNullOrEmpty(settings.WabaId))     payload["waba_id"] = settings.WabaId;
-            if (!string.IsNullOrEmpty(settings.AppId))      payload["app_id"] = settings.AppId;
+            if (!string.IsNullOrEmpty(settings.WabaToken))   payload["wa_waba_token"] = settings.WabaToken;
+            if (!string.IsNullOrEmpty(settings.AppId))       payload["wa_app_id"] = settings.AppId;
+            if (!string.IsNullOrEmpty(settings.BusinessId))  payload["wa_bussiness_id"] = settings.BusinessId;
+            if (!string.IsNullOrEmpty(settings.VerifyToken)) payload["wa_verify_token"] = settings.VerifyToken;
 
             var body = JsonConvert.SerializeObject(payload);
             var res = await SendWithRefreshAsync(() =>

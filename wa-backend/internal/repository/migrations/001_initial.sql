@@ -83,13 +83,20 @@ CREATE TABLE media_cache (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+
+CREATE TYPE parameter_format_type AS ENUM ("POSITIONAL", "NAMED");
+CREATE TYPE category AS ENUM ("AUTHENTICATION", "MARKETING", "UTILITY");
+
 -- Templates
 CREATE TABLE templates (
     id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    waba_id         VARCHAR(100) NOT NULL,
     name            VARCHAR(255) NOT NULL,
-    category        VARCHAR(50)  NOT NULL,
+    category        category     NOT NULL,
+    message_send_ttl_seconds INT,
     language        VARCHAR(10)  NOT NULL,
     status          VARCHAR(20)  NOT NULL,
+    parameter_format parameter_format_type NOT NULL DEFAULT 'POSITIONAL',
     components      JSONB        NOT NULL DEFAULT '[]',
     meta_template_id VARCHAR(100),
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),

@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Search, Send, X, LayoutGrid, Phone, ExternalLink } from "lucide-react";
+import { Meta } from '@/api/auth';
 
-interface TemplateComponent {
+export interface TemplateComponent {
   type: string;
   text?: string;
   format?: string;
-  buttons?: { text: string; type: string; url?: string }[];
+  buttons?: ButtonComponent[];
 }
 
-interface WaTemplate {
+export interface ButtonComponent{
+  text: string;
+  type: string;
+  url?: string
+}
+
+export interface WaTemplate {
   id: string;
   name: string;
   category: string;
@@ -85,10 +92,12 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
       const json = await response.json();
       if (response.ok) {
         const data: WaTemplate[] = json.data || [];
+        console.log("Fetched templates:", data);
         // Filter only APPROVED templates with parsed components
         setTemplates(data.filter((t: WaTemplate) => {
           if (t.status !== 'APPROVED') return false;
           // Ensure components is an array
+          console.log("Filtered template:", t);
           if (!Array.isArray(t.components)) return false;
           return true;
         }));
@@ -110,6 +119,7 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
       header: Array(getComponentParamsCount(template.components, 'HEADER')).fill(''),
     });
   };
+
 
   const handleConfirm = () => {
     if (selectedTemplate) {

@@ -4,6 +4,7 @@ import { ensureConversation, sendMessage, sendTemplate, updateConversationName, 
 import type { Conversation, ChatMessage, Bubble } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
+import { ButtonComponent, TemplateComponent, WaTemplate } from '@/components/TemplatePickerDialog';
 
 interface UseChatActionsProps {
     user: User;
@@ -93,8 +94,15 @@ export const useChatActions = ({
             });
     };
 
+     const replaceParams = (text: string, paramsArr: string[], offset: number = 0) => {
+                            if (!text) return "";
+                            return text.replace(/{{\d+}}/g, (match) => {
+                                const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1 - offset;
+                                return paramsArr[idx] || match;
+                            });
+                            };
 
-    const handleSendTemplate = async (template: any, params: { body: string[], buttons: string[], header: string[] }) => {
+    const handleSendTemplate = async (template: WaTemplate, params: { body: string[], buttons: string[], header: string[] }) => {
         if (!activeConversation) return;
         let currentConv = activeConversation;
 
@@ -111,20 +119,24 @@ export const useChatActions = ({
 
         // const tempId = `temp_tpl_${Guid.newGuid().toString()}`;
 
-        // // Extract button types from template definition
-        // const buttonsComp = template.components?.find((c: any) => c.type === 'BUTTONS');
-        // const buttonTypes: string[] = buttonsComp?.buttons?.map((b: any) => b.type || 'QUICK_REPLY') || [];
-        // const mapSubType = (t: string) => {
-        //     switch (t) {
-        //         case 'URL': return 'url';
-        //         case 'PHONE_NUMBER': return 'phone_number';
-        //         case 'QUICK_REPLY': return 'quick_reply';
-        //         case 'COPY_CODE': return 'copy_code';
-        //         default: return 'quick_reply';
-        //     }
-        // };
+        const header = template.components.find((c) => c.type === 'HEADER');
+        const body = template.components.find((c) => c.type === 'BODY');
+        const footer = template.components.find((c) => c.type === 'FOOTER');
 
-        // // Build optimistic raw_payload with template_definition from selected template
+        // Extract button types from template definition
+        const buttonsComp = template.components?.find((c: TemplateComponent) => c.type === 'BUTTONS');
+        const buttonTypes: string[] = buttonsComp?.buttons?.map((b: ButtonComponent) => b.type || 'QUICK_REPLY') || [];
+        const mapSubType = (t: string) => {
+            switch (t) {
+                case 'URL': return 'url';
+                case 'PHONE_NUMBER': return 'phone_number';
+                case 'QUICK_REPLY': return 'quick_reply';
+                case 'COPY_CODE': return 'copy_code';
+                default: return 'quick_reply';
+            }
+        };
+
+        // // // Build optimistic raw_payload with template_definition from selected template
         // const msgComponents: any[] = [];
         // if (params.header.length) msgComponents.push({ type: 'header', parameters: params.header.map((t: string) => ({ type: 'text', text: t })) });
         // if (params.body.length) msgComponents.push({ type: 'body', parameters: params.body.map((t: string) => ({ type: 'text', text: t })) });
@@ -144,25 +156,53 @@ export const useChatActions = ({
         //     });
         // }
 
-        // const newMessage: ChatMessage = {
-        //     id: Guid.newGuid().toString(),
-        //     conversation_id: currentConv.id,
-        //     app_id: currentConv.app_id,
-        //     wa_message_id: tempId,
-        //     sender_name: user?.name || 'Me',
-        //     message_text: '',
-        //     message_type: 'template',
-        //     direction: 'OUTBOUND',
-        //     status: 'pending',
-        //     platform: 'whatsapp',
-        //     created_at: new Date().toISOString(),
-        //     raw_payload: JSON.stringify({
-        //         template: { name: template.name, language: { code: template.language }, components: msgComponents },
-        //         template_definition: template.components,
-        //     }),
-        // };
+        const id = Guid.newGuid().toString();
+        const newBubble : Bubble = {
+            id: id,
+            wa_id: currentConv.wa_id,
+            conversation_id: currentConv.id,
+            phone_number_id: currentConv.phone_number_id,
+            wa_message_id: id,
+            message_type: 'text',
+            direction: 'OUTBOUND',
+            status: 'pending',
+            message_timestamp: Math.floor(Date.now()),
+            created_at: new Date().toISOString(),
+            sender_name: user?.name || 'Me',
+            agent_name: user?.name || 'Me',
+            content: {}
+            // : replyingTo?.wa_message_id || undefined
+        }
 
-        // // setMessages(prev => [...prev, newMessage]);
+        if(header?.text){
+            newBubble.content.header = {
+                text : replaceParams(header.text, params.header)
+            };
+        }
+
+        if(body?.text){
+            newBubble.content.body = {
+                text : replaceParams(body.text, params.body)
+            };
+        }
+
+        if(footer?.text){
+            newBubble.content.footer = {
+                text : footer.text
+            };
+        }
+
+        if(buttonsComp?.buttons){
+            newBubble.content.buttons = buttonsComp.buttons.map((b: ButtonComponent) => {
+                return {
+                    format : b.type,
+                    text : replaceParams(b.text, params.buttons),
+                    url : b.url
+                }
+            })
+        }
+        
+        setMessages(prev => [...prev, newBubble]);
 
         // sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, buttonTypes, params.header, user?.name, tempId)
         //     .then((res: any) => {
