@@ -200,21 +200,36 @@ export const useChatActions = ({
                     url : b.url
                 }
             })
-        }
+        } 
         
+        let template_params : any = {};
+
+        if(params.header.length) template_params.header = params.header.map((t: string) => ({ type: 'text', text: t }));
+        if(params.body.length) template_params.body = params.body.map((t: string) => ({ type: 'text', text: t }));
+        if(buttonsComp?.buttons && params.buttons.length){
+            template_params.button = {};
+            template_params.button.index = 0;
+            template_params.button.type = "button";
+            template_params.button.sub_type = mapSubType(buttonsComp.buttons[0].type);
+               template_params.button.parameters = params.buttons.map((b: string) => ({ type: 'text', text: b }));
+        }
+         
         setMessages(prev => [...prev, newBubble]);
 
-        // sendTemplate(currentConv.wa_channel_id, currentConv.id, currentConv.customer_wa_id, template.name, template.language, params.body, params.buttons, buttonTypes, params.header, user?.name, tempId)
-        //     .then((res: any) => {
-        //         if (res.status) {
-        //             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, ...res.data } : m));
-        //         } else {
-        //             setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
-        //         }
-        //     }).catch((err: any) => {
-        //         const errMsg = err?.response?.data?.error || err?.message || '';
-        //         setMessages(prev => prev.map(m => m.wa_message_id === tempId ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
-        //     });
+        try{
+        sendTemplate(currentConv.phone_number_id,currentConv.wa_id,template.name,template.language,template_params,id)
+            .then((res: any) => {
+                if (!res.status) {
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
+                } 
+            }).catch((err: any) => {
+                const errMsg = err?.response?.data?.error || err?.message || '';
+                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+            });
+        } catch (error: any) {
+            const errMsg = error?.message || '';
+            setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+        }
     };
 
     const handleSendMedia = async (file: File, previewUrl: string, type: 'image' | 'video' | 'audio' | 'document', caption: string, replyingTo: Bubble | null) => {

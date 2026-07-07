@@ -51,7 +51,7 @@ function getComponentParamsCount(components: TemplateComponent[], type: string):
   }
   
   // For BUTTONS, also check button texts
-  if (type === 'BUTTONS' && comp.buttons) {
+  if (type === 'BUTTONS' && comp?.buttons) {
     let btnCount = 0;
     comp.buttons.forEach((btn) => {
       const btnMatch = btn.text.match(/{{\d+}}/g);
@@ -60,8 +60,6 @@ function getComponentParamsCount(components: TemplateComponent[], type: string):
       if (btnUrlMatch) btnCount += new Set(btnUrlMatch).size;
     });
 
-    console.log("Comp buttons:", comp.buttons);
-    console.log("Button params count:", btnCount);
     return btnCount;
   }
   return count;
@@ -214,10 +212,10 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                       const footer = selectedTemplate.components.find((c) => c.type === 'FOOTER');
                       const buttonsComp = selectedTemplate.components.find((c) => c.type === 'BUTTONS');
 
-                      const replaceParams = (text: string, paramsArr: string[], offset: number = 0) => {
+                      const replaceParams = (text: string, paramsArr: string[]) => {
                         if (!text) return "";
                         return text.replace(/{{\d+}}/g, (match) => {
-                          const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1 - offset;
+                          const idx = parseInt(match.match(/\d+/)?.[0] || "1") - 1;
                           return paramsArr[idx] || match;
                         });
                       };
@@ -241,12 +239,12 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                         <>
                           {header && (
                             <div className="p-3 font-bold border-b border-slate-50 text-slate-900">
-                              {header.format === 'TEXT' ? replaceParams(header.text || '', params.header, 0) : `[${header.format} Header]`}
+                              {header.format === 'TEXT' ? replaceParams(header.text || '', params.header) : `[${header.format} Header]`}
                             </div>
                           )}
                           <div className="p-3">
                             <div className="whitespace-pre-wrap text-slate-800">
-                              {replaceParams(body?.text || '', params.body, params.header.length)}
+                              {replaceParams(body?.text || '', params.body)}
                             </div>
                             {footer && (
                               <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">
@@ -257,11 +255,11 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                               {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                          {buttonsComp && buttonsComp.buttons && (
+                          {buttonsComp && buttonsComp?.buttons && (
                             <div className="flex flex-col border-t border-slate-50">
                               {buttonsComp.buttons.map((btn, idx) => (
                                 <div key={idx} className="p-2 text-center text-[#00a884] font-semibold border-b border-slate-50 last:border-0 flex items-center justify-center gap-2">
-                                  {replaceParams(btn.text, buttonParamArrays[idx] || [], 0)}
+                                  {replaceParams(btn.text, buttonParamArrays[idx] || [])}
                                   {btn.type === 'URL' && <ExternalLink className="h-3 w-3 opacity-50" />}
                                   {btn.type === 'PHONE_NUMBER' && <Phone className="h-3 w-3 opacity-50" />}
                                 </div>

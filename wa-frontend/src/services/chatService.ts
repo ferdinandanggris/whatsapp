@@ -207,8 +207,7 @@ export const sendMedia = async (
         formData.append('to', target);
         formData.append('phone_number_id', phone_number_id);
         formData.append('type', message_type);
-        formData.append('media_file', media_file);
-        formData.append('filename', media_file.name);
+        formData.append('file', media_file);
         formData.append('body', text);
         if (wa_message_id) formData.append('id', wa_message_id);
         if (context_message_id) formData.append('context_message_id', context_message_id);
@@ -225,38 +224,23 @@ export const sendTemplate = async (
     wa_id: string,
     template_name: string,
     language_code: string,
-    body_params: string[],
-    button_params: string[],
-    button_types: string[],
-    header_params: string[],
-    id?: string
+    template_params: any = {},
+    id: string
 ): Promise<ApiResponse<any>> => {
     try {
-        const templateParams: Record<string, string> = {};
-        body_params.forEach((param, index) => { templateParams[String(index + 1)] = param; });
-        header_params.forEach((param, index) => { templateParams[`h${index + 1}`] = param; });
-        button_params.forEach((param, index) => { templateParams[`b${index + 1}`] = param; });
+        // formData
 
-        const mapBtnType = (t: string): string => {
-            switch (t) {
-                case 'URL': return 'url';
-                case 'PHONE_NUMBER': return 'phone_number';
-                case 'COPY_CODE': return 'copy_code';
-                default: return 'quick_reply';
-            }
-        };
-        const templateButtons = button_params.length > 0 ? button_params.map((text, index) => ({
-            index, sub_type: mapBtnType(button_types[index] || 'QUICK_REPLY'), params: [text]
-        })) : [];
+        const formData = new FormData();
+        formData.append('to', wa_id);
+        formData.append('phone_number_id', phone_number_id);
+        formData.append('type', 'template');
+        formData.append('template_name', template_name);
+        formData.append('template_lang', language_code || 'id');
 
-        const payload: any = {
-            to: wa_id, phone_number_id: phone_number_id, type: 'template',
-            template_name, template_lang: language_code || 'id', template_params: templateParams,
-            id
-        };
-        if (templateButtons.length > 0) payload.template_buttons = templateButtons;
+        if(template_params && Object.keys(template_params).length > 0) formData.append('template_params', JSON.stringify(template_params));
+        if (id) formData.append('id', id);
 
-        const res = await post<ApiResponse<any>>('/api/v1/messages/template', payload);
+        const res = await post<ApiResponse<any>>('/api/v1/messages/template', formData);
         return { status_code: 201, status: true, message: 'Success', data: res };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim template', data: null };
