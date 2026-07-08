@@ -1,5 +1,5 @@
 import { get, post, patch } from '../api/client';
-import type { ApiResponse, PagedResponse, Conversation, ChatMessage, PhoneNumber, WaChannel, MessageResponse, Bubble } from '../types/chat';
+import type { ApiResponse, PagedResponse, Conversation, PhoneNumber, WaChannel, MessageResponse, Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse } from '../types/chat';
 
 function qs(params: Record<string, string | number | undefined>): string {
     const sp = new URLSearchParams();
@@ -171,76 +171,44 @@ export const uploadMedia = async (
     }
 };
 
-export const sendMessage = async (
-    phone_number_id: string,
-    target: string,
-    text: string,
-    message_type = 'text',
-    media_id?: string,
-    wa_message_id?: string,
-    context_message_id?: string
-): Promise<ApiResponse<any>> => {
+export const sendMessage = async (payload : SendTextRequest): Promise<ApiResponse<SendTextResponse>> => {
     try {
-        const payload: any = { to: target, phone_number_id, type: message_type, id: wa_message_id };
-        if (message_type === 'text') payload.body = text;
-        else { payload.media_id = media_id; payload.caption = text; }
-        if (context_message_id) payload.context_message_id = context_message_id;
-
-        const res = await post<ApiResponse<any>>('/api/v1/messages/text', payload);
-        return { status_code: 201, status: true, message: 'Success', data: res };
+        const res = await post<ApiResponse<SendTextResponse>>('/api/v1/messages/text', payload);
+        return { status_code: res.status_code, status: true, message: 'Success', data: res.data };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim pesan', data: null };
     }
 };
 
-export const sendMedia = async (
-    phone_number_id: string,
-    target: string,
-    text: string,
-    message_type = 'text',
-    media_file: File,
-    wa_message_id?: string,
-    context_message_id?: string
-): Promise<ApiResponse<any>> => {
+export const sendMedia = async (payload : SendMediaRequest): Promise<ApiResponse<any>> => {
     try {
         const formData = new FormData();
-        formData.append('to', target);
-        formData.append('phone_number_id', phone_number_id);
-        formData.append('type', message_type);
-        formData.append('file', media_file);
-        formData.append('body', text);
-        if (wa_message_id) formData.append('id', wa_message_id);
-        if (context_message_id) formData.append('context_message_id', context_message_id);
+        formData.append('to', payload.to);
+        formData.append('phone_number_id', payload.phone_number_id);
+        formData.append('type', payload.type);
+        formData.append('file', payload.file);
+        formData.append('body', payload.body);
+        formData.append('context_message_id', payload.context_message_id);
 
-        const res = await post<ApiResponse<any>>('/api/v1/messages/media', formData);
-        return { status_code: 201, status: true, message: 'Success', data: res };
+        const res = await post<ApiResponse<SendMediaResponse>>('/api/v1/messages/media', formData);
+        return { status_code: 201, status: true, message: 'Success', data: res?.data };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim media', data: null };
     }
 };
 
-export const sendTemplate = async (
-    phone_number_id: string,
-    wa_id: string,
-    template_name: string,
-    language_code: string,
-    template_params: any = {},
-    id: string
-): Promise<ApiResponse<any>> => {
+export const sendTemplate = async (payload : SendTemplateRequest): Promise<ApiResponse<any>> => {
     try {
         // formData
-
         const formData = new FormData();
-        formData.append('to', wa_id);
-        formData.append('phone_number_id', phone_number_id);
+        formData.append('to', payload.to);
+        formData.append('phone_number_id', payload.phone_number_id);
         formData.append('type', 'template');
-        formData.append('template_name', template_name);
-        formData.append('template_lang', language_code || 'id');
+        formData.append('template_name', payload.template_name);
+        formData.append('template_lang', payload.template_lang);
+        if(payload.template_params && Object.keys(payload.template_params).length > 0) formData.append('template_params', JSON.stringify(payload.template_params));
 
-        if(template_params && Object.keys(template_params).length > 0) formData.append('template_params', JSON.stringify(template_params));
-        if (id) formData.append('id', id);
-
-        const res = await post<ApiResponse<any>>('/api/v1/messages/template', formData);
+        const res = await post<ApiResponse<SendTemplateResponse>>('/api/v1/messages/template', formData);
         return { status_code: 201, status: true, message: 'Success', data: res };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim template', data: null };

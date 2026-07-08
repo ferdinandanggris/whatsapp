@@ -14,7 +14,7 @@ export interface TemplateComponent {
   buttons?: ButtonComponent[];
 }
 
-export interface ButtonComponent{
+export interface ButtonComponent {
   text: string;
   type: string;
   url?: string
@@ -49,7 +49,7 @@ function getComponentParamsCount(components: TemplateComponent[], type: string):
     const match = comp.text.match(/{{\d+}}/g);
     count = match ? new Set(match).size : 0;
   }
-  
+
   // For BUTTONS, also check button texts
   if (type === 'BUTTONS' && comp?.buttons) {
     let btnCount = 0;
@@ -58,6 +58,9 @@ function getComponentParamsCount(components: TemplateComponent[], type: string):
       const btnUrlMatch = btn.url?.match(/{{\d+}}/g);
       if (btnMatch) btnCount += new Set(btnMatch).size;
       if (btnUrlMatch) btnCount += new Set(btnUrlMatch).size;
+
+      // is copy_code need to 1 space
+      if (btn.type === 'COPY_CODE') btnCount += 1;
     });
 
     return btnCount;
@@ -227,8 +230,12 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                         buttonsComp.buttons.forEach((btn) => {
                           const btnParams: string[] = [];
                           const btnMatch = btn.text.match(/{{\d+}}/g);
-                          const count = btnMatch ? new Set(btnMatch).size : 0;
-                          for (let j = 0; j < count; j++) {
+                          const textCount = btnMatch ? new Set(btnMatch).size : 0;
+                          const btnUrlMatch = btn.url?.match(/{{\d+}}/g);
+                          const urlCount = btnUrlMatch ? new Set(btnUrlMatch).size : 0;
+                          const copyExtra = btn.type === 'COPY_CODE' ? 1 : 0;
+                          const total = textCount + urlCount + copyExtra;
+                          for (let j = 0; j < total; j++) {
                             btnParams.push(params.buttons[pi++] || '');
                           }
                           buttonParamArrays.push(btnParams);
@@ -425,6 +432,28 @@ const TemplatePickerDialog: React.FC<TemplatePickerDialogProps> = ({ isOpen, onC
                                   setParams({ ...params, buttons: newBtns });
                                 }}
                                 placeholder={`Nilai untuk URL tombol ${bi + 1}`}
+                                className="h-10"
+                              />
+                            </div>
+                          );
+                        }
+
+                        // ── ADD: COPY_CODE extra input ──
+                        if (btn.type === 'COPY_CODE') {
+                          const pi = paramIdx++;
+                          inputs.push(
+                            <div key={`${bi}-coupon`} className="flex flex-col gap-1">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase">
+                                Tombol "{btn.text}" — Kode Kupon
+                              </label>
+                              <Input
+                                value={params.buttons[pi] || ''}
+                                onChange={(e) => {
+                                  const newBtns = [...params.buttons];
+                                  newBtns[pi] = e.target.value;
+                                  setParams({ ...params, buttons: newBtns });
+                                }}
+                                placeholder="Masukkan kode kupon"
                                 className="h-10"
                               />
                             </div>

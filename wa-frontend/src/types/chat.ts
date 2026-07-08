@@ -12,6 +12,42 @@ export interface PagedResponse<T> {
     has_more: boolean;
 }
 
+export interface SendTextResponse {
+    id : string;
+}
+
+export interface SendTextRequest {
+    to : string;
+    body : string;
+    phone_number_id : string;
+    context_message_id ?: string;
+}
+
+export interface SendMediaRequest {
+    to : string;
+    file : File;
+    body : string;
+    phone_number_id : string;
+    type : string;
+    context_message_id ?: string;
+}
+
+export interface SendTemplateRequest {
+    to : string;
+    phone_number_id : string;
+    template_name : string;
+    template_lang : string;
+    template_params : { [key: string]: any; };
+}
+
+export interface SendMediaResponse {
+    id : string;
+}
+
+export interface SendTemplateResponse {
+    id : string;
+}
+
 export interface Conversation {
     id : string;
     phone_number_id:string;
@@ -34,40 +70,12 @@ export interface ErrorDetails {
     message_original?: string;
 }
 
-export interface ChatMessage {
-    id: string;
-    conversation_id: string | number;
-    app_id: string | number;
-    wa_message_id: string;
-    sender_name: string;
-    message_text: string;
-    message_type: string;
-    media_id?: string;
-    file_path?: string;
-    file_type?: string;
-    file_name?: string;
-    direction: 'INBOUND' | 'OUTBOUND';
-    status: string;
-    platform: string;
-    raw_payload?: string;
-    content?: MessageContent;
-    context_message_id?: string;
-    reply_wamid?: string;
-    reply_name?: string;
-    reply_text?: string;
-    emoji?: string;
-    message_timestamp?: number;
-    created_at: string;
-    reactions?: string[];
-    reactionData?: { emojis: string[], total: number } | null;
-    error_details?: ErrorDetails;
-}
 
 export interface Bubble{
-    id: string;
+    id?: string;
     conversation_id: string | number;
     phone_number_id: string;
-    wa_message_id: string;
+    wa_message_id?: string;
     wa_id: string;
     direction: 'INBOUND' | 'OUTBOUND';
     created_at: string;

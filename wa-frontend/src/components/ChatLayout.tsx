@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Edit2, Send, Smile } from "lucide-react";
 
-import type { Conversation, ChatMessage, PhoneNumber, WaChannel, Bubble } from '../types/chat';
+import type { Conversation, PhoneNumber, WaChannel, Bubble } from '../types/chat';
 import { getPhoneNumbers, getChannels, getPingInfo } from '../services/chatService';
 import { normalizeTo62 } from '../lib/chatUtils';
 

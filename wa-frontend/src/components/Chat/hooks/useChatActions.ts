@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead, sendMedia } from '../../../services/chatService';
-import type { Conversation, ChatMessage, Bubble } from '../../../types/chat';
+import type { Conversation, Bubble, ApiResponse, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
 import { ButtonComponent, TemplateComponent, WaTemplate } from '@/components/TemplatePickerDialog';
@@ -35,23 +35,9 @@ export const useChatActions = ({
         if (!text.trim() || !activeConversation) return;
 
         let currentConv = activeConversation;
-        // if (!currentConv.id || currentConv.id == "") {
-        //     try {
-        //         const response = await ensureConversation(currentConv.display_phone_number,currentConv., currentConv.customer_wa_id, currentConv.customer_name);
-        //         if (response.status) {
-        //             currentConv = response.data;
-        //             setActiveConversation(currentConv);
-        //             setConversations(prev => {
-        //                 if (prev.some(c => c.id === currentConv.id)) return prev;
-        //                 return [currentConv, ...prev];
-        //             });
-        //         } else return;
-        //     } catch (error) { return; }
-        // }
 
          const id = Guid.newGuid().toString();
         const newBubble : Bubble = {
-            id: id,
             wa_id: currentConv.wa_id,
             conversation_id: currentConv.id,
             phone_number_id: currentConv.phone_number_id,
@@ -68,7 +54,6 @@ export const useChatActions = ({
                     text: text,
                 }
             }
-            // : replyingTo?.wa_message_id || undefined
         }
 
         if(replyingTo) {
@@ -78,19 +63,28 @@ export const useChatActions = ({
                 text : replyingTo.content?.body?.text
             }
         }
-                
-        setMessages(prev => [...prev, newBubble]);
-        clearInput();
         const context_id = replyingTo?.id;
 
-        sendMessage(currentConv.phone_number_id, currentConv.wa_id, text, "text", undefined, id, context_id)
-            .then((res: any) => {
+        clearInput();
+
+        const payload : SendTextRequest = {
+            to: currentConv.wa_id,
+            body: text,
+            phone_number_id: currentConv.phone_number_id,
+            context_message_id : context_id
+        }
+
+        sendMessage(payload)
+            .then((res : ApiResponse<SendTextResponse>) => {
                 if (!res.status) {
-                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
-                } 
-            }).catch((err: any) => {
-                const errMsg = err?.response?.data?.error || err?.message || '';
-                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : res?.data?.id, error_message: res?.message } : m));
+                }else{
+                    newBubble.id = res?.data?.id; 
+                    setMessages(prev => [...prev, newBubble]);
+                }
+            }).catch((err: Error) => {
+                const errMsg = err.message;
+                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : id, error_message: errMsg } : m));
             });
     };
 
@@ -105,19 +99,6 @@ export const useChatActions = ({
     const handleSendTemplate = async (template: WaTemplate, params: { body: string[], buttons: string[], header: string[] }) => {
         if (!activeConversation) return;
         let currentConv = activeConversation;
-
-        // if (currentConv.id || currentConv.id == "") {
-        //     try {
-        //         const response = await ensureConversation(currentConv.display_phone_number, currentConv.wa_channel_id, currentConv.customer_wa_id, currentConv.customer_name);
-        //         if (response.status) {
-        //             currentConv = response.data;
-        //             setActiveConversation(currentConv);
-        //             setConversations(prev => [currentConv, ...prev]);
-        //         } else return;
-        //     } catch (error) { return; }
-        // }
-
-        // const tempId = `temp_tpl_${Guid.newGuid().toString()}`;
 
         const header = template.components.find((c) => c.type === 'HEADER');
         const body = template.components.find((c) => c.type === 'BODY');
@@ -136,26 +117,6 @@ export const useChatActions = ({
             }
         };
 
-        // // // Build optimistic raw_payload with template_definition from selected template
-        // const msgComponents: any[] = [];
-        // if (params.header.length) msgComponents.push({ type: 'header', parameters: params.header.map((t: string) => ({ type: 'text', text: t })) });
-        // if (params.body.length) msgComponents.push({ type: 'body', parameters: params.body.map((t: string) => ({ type: 'text', text: t })) });
-
-        // // Optimistic buttons — distribute flat params to buttons based on template definition
-        // if (params.buttons.length && buttonsComp?.buttons) {
-        //     let pi = 0;
-        //     buttonsComp.buttons.forEach((btn: any, bi: number) => {
-        //         const btnMatch = btn.text?.match(/{{\d+}}/g);
-        //         const count = btnMatch ? new Set(btnMatch).size : 0;
-        //         if (count === 0) return;
-        //         const btnParams = [];
-        //         for (let j = 0; j < count; j++) {
-        //             btnParams.push({ type: 'text', text: params.buttons[pi++] || '' });
-        //         }
-        //         msgComponents.push({ type: 'button', sub_type: mapSubType(btn.type), index: bi, parameters: btnParams });
-        //     });
-        // }
-
         const id = Guid.newGuid().toString();
         const newBubble : Bubble = {
             id: id,
@@ -163,7 +124,7 @@ export const useChatActions = ({
             conversation_id: currentConv.id,
             phone_number_id: currentConv.phone_number_id,
             wa_message_id: id,
-            message_type: 'text',
+            message_type: 'template',
             direction: 'OUTBOUND',
             status: 'pending',
             message_timestamp: Math.floor(Date.now()),
@@ -204,27 +165,77 @@ export const useChatActions = ({
         
         let template_params : any = {};
 
-        if(params.header.length) template_params.header = params.header.map((t: string) => ({ type: 'text', text: t }));
-        if(params.body.length) template_params.body = params.body.map((t: string) => ({ type: 'text', text: t }));
-        if(buttonsComp?.buttons && params.buttons.length){
-            template_params.button = {};
-            template_params.button.index = 0;
-            template_params.button.type = "button";
-            template_params.button.sub_type = mapSubType(buttonsComp.buttons[0].type);
-               template_params.button.parameters = params.buttons.map((b: string) => ({ type: 'text', text: b }));
+        // HEADER — determine type from template definition
+        const headerComp = template.components.find(c => c.type === 'HEADER');
+        if (params.header.length && headerComp) {
+        if (headerComp.format === 'TEXT') {
+            template_params.header = params.header.map(t => ({ type: 'text', text: t }));
+        }
+        // IMAGE / VIDEO / DOCUMENT → bisa ditambah nanti
+        }
+
+        // BODY — always text
+        if (params.body.length) {
+        template_params.body = params.body.map(t => ({ type: 'text', text: t }));
+        }
+
+        // BUTTONS — grouped per button
+        if (params.buttons.length && buttonsComp?.buttons) {
+        template_params.buttons = [];
+        let pi = 0;
+        buttonsComp.buttons.forEach((btn, bi) => {
+            const textCount = (btn.text?.match(/{{\d+}}/g)?.length || 0);
+            const urlCount = (btn.url?.match(/{{\d+}}/g)?.length || 0);
+            const parameters: any[] = [];
+
+            for (let j = 0; j < textCount; j++) {
+            parameters.push({ type: 'text', text: params.buttons[pi++] || '' });
+            }
+            for (let j = 0; j < urlCount; j++) {
+            const st = mapSubType(btn.type);
+            if (st === 'copy_code') {
+                parameters.push({ type: 'coupon_code', coupon_code: params.buttons[pi++] || '' });
+            } else {
+                parameters.push({ type: 'text', text: params.buttons[pi++] || '' });
+            }
+            }
+
+            if(btn.type === 'COPY_CODE' && btn){
+                parameters.push({ type: 'coupon_code', coupon_code: params.buttons[pi++] || '' });
+            }
+
+            if (parameters.length) {
+            template_params.buttons.push({
+                sub_type: mapSubType(btn.type),
+                index: bi,
+                parameters,
+            });
+            }
+        });
         }
          
         setMessages(prev => [...prev, newBubble]);
 
         try{
-        sendTemplate(currentConv.phone_number_id,currentConv.wa_id,template.name,template.language,template_params,id)
+            const payload : SendTemplateRequest = {
+                to : currentConv.wa_id,
+                phone_number_id : currentConv.phone_number_id,
+                template_name : template.name,
+                template_lang : template.language,
+                template_params
+            }
+
+        sendTemplate(payload)
             .then((res: any) => {
-                if (!res.status) {
-                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
-                } 
-            }).catch((err: any) => {
-                const errMsg = err?.response?.data?.error || err?.message || '';
-                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+               if (!res.status) {
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : res?.data?.id, error_message: res?.message } : m));
+                }else{
+                    newBubble.id = res?.data?.id; 
+                    setMessages(prev => [...prev, newBubble]);
+                }
+            }).catch((err: Error) => {
+                const errMsg =  err?.message || '';
+                setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', error_message: errMsg } : m));
             });
         } catch (error: any) {
             const errMsg = error?.message || '';
@@ -245,7 +256,7 @@ export const useChatActions = ({
             conversation_id: currentConv.id,
             phone_number_id: currentConv.phone_number_id,
             wa_message_id: id,
-            message_type: 'text',
+            message_type: type,
             direction: 'OUTBOUND',
             status: 'pending',
             message_timestamp: Math.floor(Date.now() / 1000),
@@ -294,16 +305,27 @@ export const useChatActions = ({
             }
         }
 
-        setMessages(prev => [...prev, newBubble]);
         try {
 
-           sendMedia(currentConv.phone_number_id, currentConv.wa_id, caption, type, file, id, context_id)
-             .then((res: any) => {
+            const payload : SendMediaRequest = {
+                to: currentConv.wa_id,
+                body: caption,
+                phone_number_id: currentConv.phone_number_id,
+                type: type,
+                context_message_id: context_id,
+                file: file
+            } 
+
+           sendMedia(payload)
+             .then((res: ApiResponse<SendMediaResponse>) => {
                 if (!res.status) {
-                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: res.message }) } : m));
-                } 
-            }).catch((err: any) => {
-                const errMsg = err?.response?.data?.error || err?.message || '';
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', error_message: res?.message } : m));
+                } else{
+                    newBubble.id = res?.data?.id; 
+                    setMessages(prev => [...prev, newBubble]);
+                }
+            }).catch((err: Error) => {
+                const errMsg =  err?.message || '';
                 setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
             });
         } catch (error: any) {
