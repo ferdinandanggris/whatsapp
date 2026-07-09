@@ -209,7 +209,7 @@ export const sendTemplate = async (payload : SendTemplateRequest): Promise<ApiRe
         if(payload.template_params && Object.keys(payload.template_params).length > 0) formData.append('template_params', JSON.stringify(payload.template_params));
 
         const res = await post<ApiResponse<SendTemplateResponse>>('/api/v1/messages/template', formData);
-        return { status_code: 201, status: true, message: 'Success', data: res };
+        return { status_code: res.status_code, status: true, message: res?.message, data: res?.data };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim template', data: null };
     }

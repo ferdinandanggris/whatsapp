@@ -22,6 +22,7 @@ export interface PayloadNewMessage{
 export interface StatusUpdatePayload{
     message_id: string;
     status: string;
+    error_message ?: string;
 }
 
 export interface PayloadConversationUpdate{

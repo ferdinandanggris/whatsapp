@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead, sendMedia } from '../../../services/chatService';
-import type { Conversation, Bubble, ApiResponse, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest } from '../../../types/chat';
+import type { Conversation, Bubble, ApiResponse, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
 import { ButtonComponent, TemplateComponent, WaTemplate } from '@/components/TemplatePickerDialog';
@@ -62,6 +62,12 @@ export const useChatActions = ({
                 name : replyingTo.sender_name,
                 text : replyingTo.content?.body?.text
             }
+
+            newBubble.content.context = {
+                context_id : replyingTo.id,
+                name : replyingTo.sender_name,
+                text : replyingTo.content?.body?.text
+            }
         }
         const context_id = replyingTo?.id;
 
@@ -77,7 +83,7 @@ export const useChatActions = ({
         sendMessage(payload)
             .then((res : ApiResponse<SendTextResponse>) => {
                 if (!res.status) {
-                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : res?.data?.id, error_message: res?.message } : m));
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : id, error_message: res?.message } : m));
                 }else{
                     newBubble.id = res?.data?.id; 
                     setMessages(prev => [...prev, newBubble]);
@@ -213,8 +219,6 @@ export const useChatActions = ({
             }
         });
         }
-         
-        setMessages(prev => [...prev, newBubble]);
 
         try{
             const payload : SendTemplateRequest = {
@@ -226,20 +230,22 @@ export const useChatActions = ({
             }
 
         sendTemplate(payload)
-            .then((res: any) => {
+            .then((res: ApiResponse<SendTemplateResponse>) => {
                if (!res.status) {
-                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : res?.data?.id, error_message: res?.message } : m));
+                   setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', id : id, error_message: res?.message } : m));
                 }else{
                     newBubble.id = res?.data?.id; 
                     setMessages(prev => [...prev, newBubble]);
                 }
-            }).catch((err: Error) => {
+            }).catch((err: any) => {
+                
+                console.log("res send template",err);
                 const errMsg =  err?.message || '';
                 setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', error_message: errMsg } : m));
             });
         } catch (error: any) {
             const errMsg = error?.message || '';
-            setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', raw_payload: JSON.stringify({ error_message: errMsg }) } : m));
+            setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', error_message: errMsg } : m));
         }
     };
 
@@ -247,7 +253,7 @@ export const useChatActions = ({
         if (!activeConversation) return;
         const currentConv = activeConversation;
         const tempId = `temp_${Guid.newGuid().toString()}`;
-        const context_id = replyingTo?.wa_message_id;
+        const context_id = replyingTo ? replyingTo?.id : null;
 
         const id = Guid.newGuid().toString();
         const newBubble : Bubble = {
@@ -299,6 +305,12 @@ export const useChatActions = ({
 
           if(replyingTo) {
             newBubble.context = {
+                context_id : replyingTo.id,
+                name : replyingTo.sender_name,
+                text : replyingTo.content?.body?.text
+            }
+
+            newBubble.content.context = {
                 context_id : replyingTo.id,
                 name : replyingTo.sender_name,
                 text : replyingTo.content?.body?.text

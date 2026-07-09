@@ -3,7 +3,7 @@ import React from 'react';
 import { Check, CheckCheck, AlertCircle, Clock, Reply, Smile, Info, RotateCw } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import type { Bubble, ChatMessage, Conversation } from '../../types/chat';
+import type { Bubble, Conversation } from '../../types/chat';
 import { formatTime, formatDividerDate, isSameDay, getInitials } from '../../lib/chatUtils';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +26,6 @@ const MessageBubble = React.memo(function MessageBubble({
     onReply,
     onReaction,
     onResend,
-    renderTemplateMessage,
     renderMessageContent,
     handleContextMenuImage,
     isTemplateRequired,
@@ -91,15 +90,18 @@ const MessageBubble = React.memo(function MessageBubble({
                             </div>
                         )}
 
-                        {msg.message_type === 'template' ? renderTemplateMessage(msg) : renderMessageContent(msg, handleContextMenuImage)}
+                        <div className=" max-w-[330px]">
 
-                        {isFailed && errorDetails && showErrorInfo && (
-                            <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
-                                <p className="text-[10px] text-red-100 font-medium">
-                                    {errorDetails || "Gagal mengirim pesan."}
-                                </p>
-                            </div>
-                        )}
+                            {renderMessageContent(msg, handleContextMenuImage)}
+
+                            {isFailed && errorDetails && showErrorInfo && (
+                                <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <p className="text-[10px] text-red-100 font-medium">
+                                        {errorDetails || "Gagal mengirim pesan."}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
                         <div className={cn(
                             "flex items-center gap-1.5 mt-1",
@@ -141,7 +143,7 @@ const MessageBubble = React.memo(function MessageBubble({
                                     variant="ghost"
                                     size="icon"
                                     className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors"
-                                    onClick={() => onReply({...msg})}
+                                    onClick={() => onReply({ ...msg })}
                                     title="Balas"
                                     disabled={isTemplateRequired}
                                 >

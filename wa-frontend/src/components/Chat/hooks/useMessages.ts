@@ -117,7 +117,7 @@ export const useMessages = ({
             setMessages(prev => prev.map(m => {
                 if (m.id === res.message_id) {
                     console.log('Status update', m, res);
-                    return { ...m, status : res.status };
+                    return { ...m, status : res.status, error_message: res.error_message };
                 }
                 return m;
             }));

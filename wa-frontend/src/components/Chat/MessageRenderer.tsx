@@ -1,6 +1,6 @@
 
 import { ExternalLink, Phone } from 'lucide-react';
-import type { Bubble, ButtonMsg, ChatMessage, ContextMsg, ErrorDetails } from '../../types/chat';
+import type { Bubble, ButtonMsg,  ContextMsg, ErrorDetails } from '../../types/chat';
 import { Button, Button as ButtonComp } from '@/components/ui/button';
 import { JSX } from 'react';
 
@@ -189,7 +189,7 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
     };
 
     return (
-        <div className="space-y-2 py-1 max-w-[330px]">
+        <div className="space-y-2 py-1">
             {renderQuotedMessage(msg.content?.context)}
             {msg.content?.header && msg.content?.header.format === 'text' && (
                 <div className="font-bold text-sm mb-1 leading-tight tracking-tight">
@@ -223,7 +223,7 @@ export const renderMessageContent = (msg: Bubble, handleContextMenuImage: (e: Re
                 </div>
             )}
 
-            {msg.content?.buttons && msg.content?.buttons.length && (
+            {msg.content?.buttons && msg.content?.buttons.length > 0 && (
                 <div className="border-t border-slate-100/20 pt-2 mt-2 flex flex-col gap-1.5">
                     {msg.content?.buttons.map((btn: ButtonMsg, idx: number) => (
                         <ButtonComp
