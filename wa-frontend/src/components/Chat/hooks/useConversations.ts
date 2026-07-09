@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getConversations, getPhoneNumbers } from '../../../services/chatService';
-import type { Conversation, ChatMessage, PhoneNumber, Bubble } from '../../../types/chat';
+import type { Conversation, PhoneNumber, Bubble } from '../../../types/chat';
 import { PayloadConversationUpdate } from '@/types/wsEvent';
 
 interface UseConversationsProps {
@@ -129,48 +129,6 @@ export const useConversations = ({
             });
         };
 
-        const templatePreview = (msg: ChatMessage) => {
-            const payload = typeof msg.raw_payload === 'string' ? JSON.parse(msg.raw_payload) : msg.raw_payload;
-
-        // Template definition from backend JOIN (uppercase types: BODY, HEADER, BUTTONS)
-        const definition: any[] = payload.template_definition;
-
-        // Template message components from stored content (lowercase types: body, header, button)
-        const msgComponents: any[] = payload.template?.components || [];
-
-        if (!definition || !Array.isArray(definition)) {
-            const tplName = payload.template?.name || payload.body || '';
-            return `Template: ${tplName}`;
-        }
-
-        // Build param map: lowercase type → array of text values
-        const paramMap: Record<string, string[]> = {};
-        for (const comp of msgComponents) {
-            const type = comp.type?.toLowerCase();
-            const values = (comp.parameters || []).map((p: any) => p.text || '');
-            if (type) paramMap[type] = values;
-        }
-
-        const getParams = (defType: string): string[] => {
-            const lower = defType.toLowerCase();
-            // For buttons, params may be in 'button' entries too
-            if (lower === 'buttons') {
-                return paramMap['button'] || paramMap['buttons'] || [];
-            }
-            return paramMap[lower] || [];
-        };
-
-        const replaceParams = (text: string, params: string[]) => {
-            if (!text) return '';
-            let idx = 0;
-            return text.replace(/{{\d+}}/g, () => params[idx] || '');
-        };
-
-        const bodyDef = definition.find((c: any) => c.type === 'BODY');
-
-        return replaceParams(bodyDef?.text || '', getParams('body'))
-
-        }
 
         const handleReceiveMessage = (message: any) => {
             const chatMsg = message as Bubble;

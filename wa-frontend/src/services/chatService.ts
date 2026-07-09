@@ -1,5 +1,5 @@
 import { get, post, patch } from '../api/client';
-import type { ApiResponse, PagedResponse, Conversation, PhoneNumber, WaChannel, MessageResponse, Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse } from '../types/chat';
+import type { ApiResponse, PagedResponse, Conversation, PhoneNumber, WaChannel, MessageResponse, Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse, SendReactionRequest } from '../types/chat';
 
 function qs(params: Record<string, string | number | undefined>): string {
     const sp = new URLSearchParams();
@@ -215,16 +215,10 @@ export const sendTemplate = async (payload : SendTemplateRequest): Promise<ApiRe
     }
 };
 
-export const sendReaction = async (
-    wa_channel_id: string | number,
-    target: string,
-    emoji: string,
-    message_id: string,
+export const sendReaction = async (payload : SendReactionRequest
 ): Promise<ApiResponse<any>> => {
     try {
-        const res = await post<ApiResponse<any>>('/api/v1/messages/reaction', {
-            to: target, phone_number_id: String(wa_channel_id), message_id, emoji
-        });
+        const res = await post<ApiResponse<any>>('/api/v1/messages/reaction', payload);
         return { status_code: 201, status: true, message: 'Reaksi berhasil dikirim', data: res };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengirim reaksi', data: null };

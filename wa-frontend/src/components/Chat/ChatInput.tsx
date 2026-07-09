@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Smile, Paperclip, LayoutGrid, Send, X, Reply } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Bubble, ChatMessage, Conversation } from '../../types/chat';
+import type { Bubble,  Conversation } from '../../types/chat';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {

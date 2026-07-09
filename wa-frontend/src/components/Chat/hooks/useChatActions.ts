@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ensureConversation, sendMessage, sendTemplate, updateConversationName, sendTypingIndicator, markAsRead, sendMedia } from '../../../services/chatService';
-import type { Conversation, Bubble, ApiResponse, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse } from '../../../types/chat';
+import type { Conversation, Bubble, ApiResponse, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse, SendReactionRequest } from '../../../types/chat';
 import { User } from '@/types';
 import { Guid } from 'guid-ts';
 import { ButtonComponent, TemplateComponent, WaTemplate } from '@/components/TemplatePickerDialog';
@@ -350,12 +350,15 @@ export const useChatActions = ({
         if (!activeConversation) return;
         try {
             const { sendReaction } = await import('../../../services/chatService');
-            await sendReaction(
-                activeConversation.phone_number_id,
-                activeConversation.wa_id,
-                emoji,
-                targetMsg.wa_message_id,
-            );
+
+            const payload : SendReactionRequest = {
+                to: activeConversation.wa_id,
+                reaction: emoji,
+                phone_number_id: activeConversation.phone_number_id,
+                context_message_id: targetMsg.wa_message_id
+            }
+
+            await sendReaction(payload);
         } catch (error) {
             console.error("Failed to send reaction", error);
         }

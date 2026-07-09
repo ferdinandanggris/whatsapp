@@ -3,7 +3,7 @@ import React from 'react';
 import { Check, CheckCheck, AlertCircle, Clock, Reply, Smile, Info, RotateCw } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import type { Bubble, Conversation } from '../../types/chat';
+import type { Bubble, Conversation, ReactionMsg } from '../../types/chat';
 import { formatTime, formatDividerDate, isSameDay, getInitials } from '../../lib/chatUtils';
 import { cn } from '@/lib/utils';
 
@@ -117,21 +117,21 @@ const MessageBubble = React.memo(function MessageBubble({
                         </div>
                     </div>
 
-                    {/* {msg.reactionData && (() => {console.log(`Log Message Reactions: ${JSON.stringify(msg.reactionData)}`); return true;}) && (
+                    {msg.content?.reactions && msg.content?.reactions.length > 0 && (
                         <div className={cn(
                             "absolute -bottom-2 flex items-center bg-white border border-slate-100 rounded-full px-1.5 py-0.5 shadow-md scale-90 origin-center transition-transform hover:scale-100 select-none z-20",
                             isOutbound ? "right-2" : "left-2"
                         )}>
                             <div className="flex -space-x-1 hover:space-x-0.5 transition-all">
-                                {msg.reactionData.emojis.map((emoji: string, idx: number) => (
-                                    <span key={idx} className="text-[12px] drop-shadow-sm transition-transform active:scale-125 hover:z-10">{emoji}</span>
+                                {msg.content?.reactions.map((emoji: ReactionMsg, idx: number) => (
+                                    <span key={idx} className="text-[12px] drop-shadow-sm transition-transform active:scale-125 hover:z-10">{emoji.emoji}</span>
                                 ))}
                             </div>
-                            {msg.reactionData.total > 1 && (
-                                <span className="ml-1 text-[9px] font-bold text-slate-500 border-l pl-1 border-slate-100">{msg.reactionData.total}</span>
+                            {msg.content?.reactions.length > 1 && (
+                                <span className="ml-1 text-[9px] font-bold text-slate-500 border-l pl-1 border-slate-100">{msg.content?.reactions.length}</span>
                             )}
                         </div>
-                    )} */}
+                    )}
 
                     <div className={cn(
                         "absolute top-0 opacity-0 group-hover/bubble:opacity-100 transition-all duration-200 flex items-center gap-1 px-2 pointer-events-none group-hover/bubble:pointer-events-auto",

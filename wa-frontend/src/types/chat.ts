@@ -23,6 +23,13 @@ export interface SendTextRequest {
     context_message_id ?: string;
 }
 
+export interface SendReactionRequest {
+    to : string;
+    reaction : string;
+    phone_number_id : string;
+    context_message_id : string;
+}
+
 export interface SendMediaRequest {
     to : string;
     file : File;
@@ -112,11 +119,18 @@ export interface ContextMsg {
     text: string;
 }
 
+export interface ReactionMsg {
+    emoji: string;
+    wamid: string;
+    wa_id: string;
+}
+
 export interface MessageContent {
     header?: ContentMsg;
     body?: ContentMsg;
     footer?: ContentMsg;
     buttons?: ButtonMsg[];
+    reactions?: ReactionMsg[];
     context?: ContextMsg;
 }
 
