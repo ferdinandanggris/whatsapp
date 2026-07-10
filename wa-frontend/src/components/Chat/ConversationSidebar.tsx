@@ -30,6 +30,71 @@ interface ConversationSidebarProps {
     onMessageSearchClick?: (conv: Conversation, term: string) => void;
 }
 
+const ConversationItem = React.memo(({ 
+    conv, 
+    isActive, 
+    onClick, 
+    onContextMenu, 
+    typingAgents 
+}: { 
+    conv: Conversation, 
+    isActive: boolean, 
+    onClick: () => void, 
+    onContextMenu: (e: React.MouseEvent) => void,
+    typingAgents: Record<number, { name: string, timeout: any }>
+}) => (
+    <div
+        className={`flex flex-col gap-1 p-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors border-b border-gray-50 ${isActive ? 'bg-[#ebebeb]' : ''}`}
+        onClick={onClick}
+        onContextMenu={onContextMenu}
+    >
+        <div className="flex justify-end pr-1 gap-1 flex-wrap">
+            {conv.display_name && (
+                <span className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-600 rounded-md font-medium border border-emerald-100 capitalize">
+                    {conv.display_name}
+                </span>
+            )}
+            {conv.display_phone_number && (
+                <span className="text-[9px] px-1.5 py-0 bg-slate-100 text-slate-500 rounded-md font-medium border border-slate-200 capitalize">
+                    To: {conv.display_phone_number}
+                </span>
+            )}
+        </div>
+        <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 text-white border flex-shrink-0">
+                <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.custom_name)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div className="flex justify-between items-baseline gap-2">
+                    <span className="font-semibold text-[#111b21] truncate min-w-0 flex-1 ">
+                        {truncateText(conv.custom_name || 'Unknown', 22)}
+                    </span>
+                    <span className="text-[11px] text-[#667781] whitespace-nowrap flex-shrink-0">
+                        {formatTimeConversation(conv.conversation_timestamp)}
+                    </span>
+                </div>
+                <div className="flex justify-between items-center gap-2 mt-0.5">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <p className={`text-sm truncate min-w-0 flex-1 ${typingAgents[conv.id] ? 'text-[#00a884] font-medium italic' : 'text-[#667781]'}`} style={{maxWidth : '246px'}}>
+                                {typingAgents[conv.id] ? `${typingAgents[conv.id].name} sedang mengetik...` : truncateText(conv.last_message_preview || '', 35)}
+                            </p>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{conv.last_message_preview}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                    {conv.unread_count > 0 && (
+                        <div className="bg-[#25d366] text-white text-[10px] rounded-full min-w-[20px] h-5 px-1 flex-shrink-0 flex items-center justify-center font-bold">
+                            {conv.unread_count}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    </div>
+));
+
 const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     conversations,
     messageConversations,
@@ -133,57 +198,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                         </>
                     )}
                     {conversations.map(conv => (
-                        <div
+                        <ConversationItem
                             key={conv.id}
-                            className={`flex flex-col gap-1 p-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors border-b border-gray-50 ${activeConversation?.id === conv.id ? 'bg-[#ebebeb]' : ''}`}
+                            conv={conv}
+                            isActive={activeConversation?.id === conv.id}
                             onClick={() => setActiveConversation(conv)}
                             onContextMenu={(e) => handleContextMenu(e, conv)}
-                        >
-                            <div className="flex justify-end pr-1 gap-1 flex-wrap">
-                                {conv.display_name && (
-                                    <span className="text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-600 rounded-md font-medium border border-emerald-100 capitalize">
-                                        {conv.display_name}
-                                    </span>
-                                )}
-                                {conv.display_phone_number && (
-                                    <span className="text-[9px] px-1.5 py-0 bg-slate-100 text-slate-500 rounded-md font-medium border border-slate-200 capitalize">
-                                        To: {conv.display_phone_number}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-12 w-12 text-white border flex-shrink-0">
-                                    <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.custom_name)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                    <div className="flex justify-between items-baseline gap-2">
-                                        <span className="font-semibold text-[#111b21] truncate min-w-0 flex-1 ">
-                                            {truncateText(conv.custom_name || 'Unknown', 22)}
-                                        </span>
-                                        <span className="text-[11px] text-[#667781] whitespace-nowrap flex-shrink-0">
-                                            {formatTimeConversation(conv.conversation_timestamp)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center gap-2 mt-0.5">
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <p className={`text-sm truncate min-w-0 flex-1 ${typingAgents[conv.id] ? 'text-[#00a884] font-medium italic' : 'text-[#667781]'}`} style={{maxWidth : '246px'}}>
-                                                    {typingAgents[conv.id] ? `${typingAgents[conv.id].name} sedang mengetik...` : truncateText(conv.last_message_preview || '', 35)}
-                                                </p>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{conv.last_message_preview}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                        {conv.unread_count > 0 && (
-                                            <div className="bg-[#25d366] text-white text-[10px] rounded-full min-w-[20px] h-5 px-1 flex-shrink-0 flex items-center justify-center font-bold">
-                                                {conv.unread_count}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            typingAgents={typingAgents}
+                        />
                     ))}
                     {searchTerm && messageConversations.length > 0 && (
                         <>
@@ -192,30 +214,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             </div>
                             <div className="px-3 py-2 text-[11px] font-semibold text-[#667781] uppercase tracking-wider">Pesan</div>
                             {messageConversations.map(conv => (
-                                <div
-                                    key={`msg-${conv.id}`}
-                                    className={`flex flex-col gap-1 p-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors border-b border-gray-50 ${activeConversation?.id === conv.id ? 'bg-[#ebebeb]' : ''}`}
-                                    onClick={() => onMessageSearchClick ? onMessageSearchClick(conv, searchTerm) : setActiveConversation(conv)}
-                                    onContextMenu={(e) => handleContextMenu(e, conv)}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-12 w-12 text-white border flex-shrink-0">
-                                            <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.custom_name)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            <div className="flex justify-between items-baseline gap-2">
-                                                <span className="font-semibold text-[#111b21] truncate min-w-0 flex-1">
-                                                    {truncateText(conv.custom_name || 'Unknown', 22)}
-                                                </span>
-                                                <span className="text-[11px] text-[#667781] whitespace-nowrap flex-shrink-0">
-                                                    {formatTimeConversation(conv.conversation_timestamp)}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm truncate text-[#667781]" style={{maxWidth: '246px'}}>
-                                                {truncateText(conv.last_message_preview || '', 50)}
-                                            </p>
-                                        </div>
-                                    </div>
+                                <div key={`msg-${conv.matched_message_id}`} className="mx-2 my-2 border border-slate-100 rounded-xl shadow-sm bg-white overflow-hidden">
+                                    <ConversationItem
+                                        conv={conv}
+                                        isActive={activeConversation?.id === conv.id}
+                                        onClick={() => onMessageSearchClick ? onMessageSearchClick(conv, searchTerm) : setActiveConversation(conv)}
+                                        onContextMenu={(e) => handleContextMenu(e, conv)}
+                                        typingAgents={typingAgents}
+                                    />
                                 </div>
                             ))}
                         </>

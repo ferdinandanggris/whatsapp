@@ -90,15 +90,15 @@ export const getMessages = async (
     search?: string,
     message_type?: string,
     direction?: string
-): Promise<ApiResponse<PagedResponse<Bubble>>> => {
+): Promise<ApiResponse<PagedResponse<Bubble> & { conversation?: Conversation }>> => {
     try {
-        const res = await get<ApiResponse<{ messages: any[], has_more: boolean}>>(
+        const res = await get<ApiResponse<{ messages: any[], has_more: boolean, conversation?: Conversation }>>(
             `/api/v1/conversations/${conversation_id}/messages?${qs({ limit, page, q: search, type: message_type, direction })}`
         );
         const body = res.data;
         return {
             status_code: 200, status: true, message: 'Success',
-            data: { items: body.messages || [], limit, page, has_more: body.has_more ?? false }
+            data: { items: body.messages || [], limit, page, has_more: body.has_more ?? false, conversation: body.conversation }
         };
     } catch {
         return { status_code: 500, status: false, message: 'Gagal mengambil pesan', data: { items: [], limit, has_more: false, page } };

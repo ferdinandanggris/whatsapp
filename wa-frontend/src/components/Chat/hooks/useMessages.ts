@@ -53,6 +53,10 @@ export const useMessages = ({
                     // Backend returns newest-first; reverse for display (oldest-first)
                     setMessages([...res.data.items].reverse());
                     setHasMore(res.data.has_more);
+                    if (res.data.conversation) {
+                        setActiveConversation(res.data.conversation);
+                        setConversations(prev => prev.map(c => c.id === res.data.conversation!.id ? res.data.conversation! : c));
+                    }
                 }
             })
             .catch(console.error)
