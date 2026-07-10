@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Search, LayoutGrid, Clock, X, RefreshCw, ChevronRight, ChevronsDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,8 @@ interface ChatWindowProps {
     typingAgents: Record<number, { name: string, timeout: any }>;
     handleFiles: (files: FileList | File[] | null) => void;
     onToggleSidebar?: () => void;
+    searchNotification: {messageId: string; term: string; conversationId: string} | null;
+    onClearSearchNotification: () => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -84,7 +86,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     handleContextMenuImage,
     typingAgents,
     handleFiles,
-    onToggleSidebar
+    onToggleSidebar,
+    searchNotification,
+    onClearSearchNotification
 }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const scrollViewportRef = useRef<HTMLDivElement | null>(null);
@@ -208,6 +212,40 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         return () => viewport.removeEventListener('scroll', handleScroll);
     }, [hasMore, isFetchingMore, handleLoadMore, checkIsNearBottom]);
 
+    // Auto-scroll to matched message from sidebar "Pesan" search result
+    const [autoScrollFailed, setAutoScrollFailed] = useState(false);
+
+    useEffect(() => {
+        if (!searchNotification || messages.length === 0 || isLoading) return;
+
+        if (activeConversation && messages[0]?.wa_id !== activeConversation.wa_id) return;
+
+        console.log('search scroll: conditions met, messageId:', searchNotification.messageId);
+
+        setAutoScrollFailed(false);
+        isNearBottomRef.current = false;
+
+        let cancelled = false;
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (cancelled) return;
+                const el = document.getElementById(`msg-${searchNotification.messageId}`);
+                console.log('search scroll: rAF fired, el found:', !!el);
+                if (el) {
+                    el.scrollIntoView({ block: 'center' });
+                    el.classList.add('animate-pulse-glow');
+                    setTimeout(() => el.classList.remove('animate-pulse-glow'), 2000);
+                    onClearSearchNotification();
+                } else {
+                    setAutoScrollFailed(true);
+                }
+            });
+        });
+
+        return () => { cancelled = true; };
+    }, [searchNotification, messages, isLoading, activeConversation?.wa_id]);
+
     const currentTyping = activeConversation ? typingAgents[activeConversation.id] : null;
 
     return (
@@ -300,6 +338,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     </div>
                 )}
 
+                {autoScrollFailed && searchNotification && (
+                    <div className="absolute top-2 inset-x-2 z-40 bg-blue-50 border border-blue-200 shadow-lg rounded-lg px-3 py-2.5 flex items-center justify-between animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2 text-xs text-blue-800 min-w-0">
+                            <Search className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate">
+                                Hasil pencarian untuk <strong>"{searchNotification.term}"</strong>.
+                            </span>
+                            <button
+                                className="font-semibold text-blue-600 hover:text-blue-800 whitespace-nowrap flex-shrink-0"
+                                onClick={() => setIsMessageSearchOpen(true)}
+                            >
+                                Cari di chat
+                            </button>
+                        </div>
+                        <button
+                            onClick={onClearSearchNotification}
+                            className="h-5 w-5 rounded-full flex items-center justify-center hover:bg-blue-100 flex-shrink-0 ml-2"
+                        >
+                            <X className="h-3 w-3 text-blue-400" />
+                        </button>
+                    </div>
+                )}
                 <ScrollArea className="h-full w-full [&>div>div]:!block" ref={scrollRef}>
                     <div className="flex flex-col py-4 w-full min-w-0">
                         {isLoading && !messages.length && (

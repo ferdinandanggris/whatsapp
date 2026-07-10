@@ -12,6 +12,8 @@ import { formatTimeConversation, truncateNameInitial, truncateText } from '../..
 
 interface ConversationSidebarProps {
     conversations: Conversation[];
+    messageConversations: Conversation[];
+    messageHasMore: boolean;
     activeConversation: Conversation | null;
     setActiveConversation: (conv: Conversation | null) => void;
     searchTerm: string;
@@ -25,10 +27,13 @@ interface ConversationSidebarProps {
     isFetchingMore: boolean;
     hasMore: boolean;
     onLoadMore: () => void;
+    onMessageSearchClick?: (conv: Conversation, term: string) => void;
 }
 
 const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     conversations,
+    messageConversations,
+    messageHasMore,
     activeConversation,
     setActiveConversation,
     searchTerm,
@@ -41,7 +46,8 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
     isLoading,
     isFetchingMore,
     hasMore,
-    onLoadMore
+    onLoadMore,
+    onMessageSearchClick
 }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const scrollViewportRef = useRef<HTMLDivElement | null>(null);
@@ -118,6 +124,14 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
 
             <ScrollArea className="flex-1 w-full [&>div>div]:!block" ref={scrollRef}>
                 <div className="flex flex-col w-full min-w-0">
+                    {searchTerm && messageConversations.length > 0 && (
+                        <>
+                            <div className="px-3 py-2 text-[11px] font-semibold text-[#667781] uppercase tracking-wider">Percakapan</div>
+                            {conversations.length === 0 && (
+                                <div className="px-3 py-4 text-center text-gray-400 text-sm">No conversations match your search</div>
+                            )}
+                        </>
+                    )}
                     {conversations.map(conv => (
                         <div
                             key={conv.id}
@@ -151,7 +165,6 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center gap-2 mt-0.5">
-                                        {/* add tooltip to last_message_preview */}
                                         <Tooltip>
                                             <TooltipTrigger>
                                                 <p className={`text-sm truncate min-w-0 flex-1 ${typingAgents[conv.id] ? 'text-[#00a884] font-medium italic' : 'text-[#667781]'}`} style={{maxWidth : '246px'}}>
@@ -172,12 +185,47 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             </div>
                         </div>
                     ))}
+                    {searchTerm && messageConversations.length > 0 && (
+                        <>
+                            <div className="pl-3 pr-3 pt-3 pb-1">
+                                <Separator />
+                            </div>
+                            <div className="px-3 py-2 text-[11px] font-semibold text-[#667781] uppercase tracking-wider">Pesan</div>
+                            {messageConversations.map(conv => (
+                                <div
+                                    key={`msg-${conv.id}`}
+                                    className={`flex flex-col gap-1 p-3 cursor-pointer hover:bg-[#f5f6f6] transition-colors border-b border-gray-50 ${activeConversation?.id === conv.id ? 'bg-[#ebebeb]' : ''}`}
+                                    onClick={() => onMessageSearchClick ? onMessageSearchClick(conv, searchTerm) : setActiveConversation(conv)}
+                                    onContextMenu={(e) => handleContextMenu(e, conv)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 text-white border flex-shrink-0">
+                                            <AvatarFallback className="bg-slate-300 text-slate-600 font-semibold">{truncateNameInitial(conv.custom_name)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            <div className="flex justify-between items-baseline gap-2">
+                                                <span className="font-semibold text-[#111b21] truncate min-w-0 flex-1">
+                                                    {truncateText(conv.custom_name || 'Unknown', 22)}
+                                                </span>
+                                                <span className="text-[11px] text-[#667781] whitespace-nowrap flex-shrink-0">
+                                                    {formatTimeConversation(conv.conversation_timestamp)}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm truncate text-[#667781]" style={{maxWidth: '246px'}}>
+                                                {truncateText(conv.last_message_preview || '', 50)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    )}
                     {isFetchingMore && (
                         <div className="flex justify-center p-4">
                             <RefreshCw className="h-6 w-6 animate-spin text-[#00a884]" />
                         </div>
                     )}
-                    {!isLoading && conversations.length === 0 && (
+                    {!isLoading && conversations.length === 0 && messageConversations.length === 0 && (
                         <div className="p-8 text-center text-gray-400 text-sm">No conversations yet</div>
                     )}
                 </div>

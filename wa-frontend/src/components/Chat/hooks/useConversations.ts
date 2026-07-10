@@ -24,6 +24,8 @@ export const useConversations = ({
     setApplications,
 }: UseConversationsProps) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [messageConversations, setMessageConversations] = useState<Conversation[]>([]);
+    const [messageHasMore, setMessageHasMore] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreConvs, setHasMoreConvs] = useState(false);
     const [isFetchingMoreConvs, setIsFetchingMoreConvs] = useState(false);
@@ -51,6 +53,8 @@ export const useConversations = ({
             );
             if (response.status) {
                 setConversations(response.data.items);
+                setMessageConversations(response.data.messageConversations || []);
+                setMessageHasMore(response.data.messageHasMore || false);
                 setHasMoreConvs(response.data.has_more);
 
                 if (activeConversation && !response.data.items.some(c => c.id === activeConversation.id)) {
@@ -229,6 +233,8 @@ export const useConversations = ({
 
     return {
         conversations,
+        messageConversations,
+        messageHasMore,
         setConversations,
         isLoading,
         hasMoreConvs,

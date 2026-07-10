@@ -80,6 +80,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const [reactionTargetMsg, setReactionTargetMsg] = useState<Bubble | null>(null);
     const [viewingMedia, setViewingMedia] = useState<Bubble | null>(null);
     const [showContactSidebar, setShowContactSidebar] = useState(false);
+    const [searchNotification, setSearchNotification] = useState<{messageId: string; term: string; conversationId: string} | null>(null);
 
 
     // --- Refs ---
@@ -90,7 +91,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // --- Hooks Integration ---
     const { connectionStatus, connection, handleRetryConnection, handleFindServer } = useChatConnection({ setApplications });
 
-    const { conversations, setConversations, isLoading: isConvLoading, hasMoreConvs, isFetchingMoreConvs, handleLoadMoreConversations, fetchConvs } = useConversations({
+    const { conversations, messageConversations, messageHasMore, setConversations, isLoading: isConvLoading, hasMoreConvs, isFetchingMoreConvs, handleLoadMoreConversations, fetchConvs } = useConversations({
         activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, setApplications
     });
 
@@ -144,6 +145,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         const timer = setTimeout(() => setDebouncedMessageSearchTerm(messageSearchTerm), 800);
         return () => clearTimeout(timer);
     }, [messageSearchTerm]);
+
+    // Clear search notification when switching to a different conversation
+    useEffect(() => {
+        if (searchNotification && searchNotification.conversationId !== activeConversation?.id) {
+            setSearchNotification(null);
+        }
+    }, [activeConversation?.id, searchNotification]);
 
     // Media caption auto-resize
     useEffect(() => {
@@ -398,6 +406,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
 
             <ConversationSidebar
                 conversations={conversations}
+                messageConversations={messageConversations}
+                messageHasMore={messageHasMore}
                 activeConversation={activeConversation}
                 setActiveConversation={setActiveConversation}
                 searchTerm={searchTerm}
@@ -414,6 +424,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 isFetchingMore={isFetchingMoreConvs}
                 hasMore={hasMoreConvs}
                 onLoadMore={handleLoadMoreConversations}
+                onMessageSearchClick={(conv, term) => {
+                    setActiveConversation(conv);
+                    setSearchNotification({ messageId: conv.matched_message_id || '', term, conversationId: conv.id });
+                }}
             />
 
             <ChatWindow
@@ -436,6 +450,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 isTemplateRequired={!!activeConversation?.is_template_required}
                 allowSendTemplate={allowSendTemplate}
                 setIsTemplateDialogOpen={setIsTemplateDialogOpen}
+                searchNotification={searchNotification}
+                onClearSearchNotification={() => setSearchNotification(null)}
                 fileInputRef={fileInputRef}
                 handleFileSelect={handleFileSelect}
                 setShowEmojiPicker={setShowEmojiPicker}

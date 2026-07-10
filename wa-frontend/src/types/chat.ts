@@ -68,6 +68,7 @@ export interface Conversation {
     display_name: string;
     display_phone_number: string;
     is_template_required: boolean;
+    matched_message_id?: string;
 }
 
 export interface ErrorDetails {

@@ -15,9 +15,9 @@ export const getConversations = async (
     phone_number_id?: string,
     search?: string,
     filter?: string
-): Promise<ApiResponse<PagedResponse<Conversation>>> => {
+): Promise<ApiResponse<PagedResponse<Conversation> & { messageConversations?: Conversation[], messageHasMore?: boolean }>> => {
     try {
-        const res = await get<ApiResponse<{conversations: Conversation[], has_more: boolean}>>(
+        const res = await get<ApiResponse<{conversations: Conversation[], has_more: boolean, message_conversations?: Conversation[], message_has_more?: boolean}>>(
             `/api/v1/conversations?${qs({ page, limit, phone_number_id, q: search, filter })}`
         );
         const data = res.data;
@@ -25,13 +25,18 @@ export const getConversations = async (
             status_code: 200,
             status: true,
             message: 'Success',
-            data: { items: data.conversations || [], limit, page, has_more: data.has_more }
+            data: {
+                items: data.conversations || [],
+                messageConversations: data.message_conversations || [],
+                messageHasMore: data.message_has_more || false,
+                limit, page, has_more: data.has_more
+            }
         };
     } catch {
         return {
             status_code: 500, status: false,
             message: 'Gagal mengambil data percakapan',
-            data: { items: [], limit, has_more: false, page: 1 }
+            data: { items: [], messageConversations: [], messageHasMore: false, limit, has_more: false, page: 1 }
         };
     }
 };
