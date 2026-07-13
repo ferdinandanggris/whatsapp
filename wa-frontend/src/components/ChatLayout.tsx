@@ -9,30 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Edit2, Send, Smile } from "lucide-react";
 
-import type { Conversation, PhoneNumber, WaChannel, Bubble } from '../types/chat';
-import { getPhoneNumbers, getChannels, getPingInfo } from '../services/chatService';
-import { normalizeTo62 } from '../lib/chatUtils';
+import type { Conversation, Bubble } from '../types/chat';
 
 import TemplatePickerDialog from './TemplatePickerDialog';
 import NewChatDialog from './NewChatDialog';
 
 // Modular Components
-import ChatSidebar from './Chat/ChatSidebar';
-import ConversationSidebar from './Chat/ConversationSidebar';
+import ChatSidebar from './PhoneNumber';
+import ConversationSidebar from './ConversationSidebar';
 import ChatWindow from './Chat/ChatWindow';
-import ConnectionBanner from './Chat/ConnectionBanner';
 import ImageViewer from './Chat/ImageViewer';
 import ContactSidebar from './ContactSidebar';
 
 
 // Custom Hooks
-import { useChatConnection } from './Chat/hooks/useChatConnection';
-import { useConversations } from './Chat/hooks/useConversations';
-import { useMessages } from './Chat/hooks/useMessages';
-import { useChatActions } from './Chat/hooks/useChatActions';
-import { renderMessageContent, renderTemplateMessage } from './Chat/MessageRenderer';
+import { useChatConnection } from '@/components/hooks/useChatConnection';
+import { useConversations } from '@/components/hooks/useConversations';
+import { useMessages } from '@/components/hooks/useMessages';
+import { useChatActions } from '@/components/hooks/useChatActions';
+import { renderMessageContent } from './Chat/MessageRenderer';
 import { User } from '@/types';
-import { Guid } from 'guid-ts';
+import { useExternalActions } from '@/components/hooks/useExternalActions';
+import { useGlobal } from './hooks/useGlobals';
+import { usePhoneNumber } from './hooks/usePhoneNumbers';
+import ConnectionBanner from './ConnectionBanner';
 
 interface ChatLayoutProps {
     user?: User;
@@ -40,9 +40,6 @@ interface ChatLayoutProps {
 }
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
-    // --- Global Data State ---
-    const [applications, setApplications] = useState<PhoneNumber[]>([]);
-    const [channels, setChannels] = useState<WaChannel[]>([]);
     const [activeAppId, setActiveAppId] = useState<string | null>(null);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [allowSendTemplate, setAllowSendTemplate] = useState(true);
@@ -82,22 +79,27 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const [showContactSidebar, setShowContactSidebar] = useState(false);
     const [searchNotification, setSearchNotification] = useState<{messageId: string; term: string; conversationId: string} | null>(null);
 
-
     // --- Refs ---
     const emojiPickerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const mediaCaptionRef = useRef<HTMLTextAreaElement>(null);
 
     // --- Hooks Integration ---
-    const { connectionStatus, connection, handleRetryConnection, handleFindServer } = useChatConnection({ setApplications });
+    const { connectionStatus, connection, handleRetryConnection, handleFindServer } = useChatConnection();
+    const { fetchPhoneNumbers ,phoneNumbers, totalUnread } = usePhoneNumber();
 
     const { conversations, messageConversations, messageHasMore, setConversations, isLoading: isConvLoading, hasMoreConvs, isFetchingMoreConvs, handleLoadMoreConversations, fetchConvs } = useConversations({
-        activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, setApplications
+        activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, fetchPhoneNumbers
     });
-
     const { messages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
         activeConversation, debouncedMessageSearchTerm, connection, setConversations, setActiveConversation
     });
+    const { handleCopy,handleDownload,handleResendMessage } = useExternalActions({ totalUnread });
+    const { handleGlobalRefresh } =  useGlobal({
+        fetchConversations : fetchConvs,
+        fetchPhoneNumbers,
+        setIsRefreshing
+    })
 
     const {
         handleSend: onSend,
@@ -106,7 +108,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         handleSendReaction,
         handleRenameSubmit: onRename,
         sendTyping,
-        typingAgents
+        typingUsers,
+        initialChat
     } = useChatActions({
         user,
         enableLogin,
@@ -114,20 +117,17 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         connection,
         setActiveConversation,
         setConversations,
-        setMessages
+        setMessages,
+        phoneNumbers,
+        conversations
     });
 
-    const totalUnread = applications.reduce((acc, app) => acc + (app.unread_count || 0), 0);
 
     // --- Side Effects ---
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // const [appResp, channelResp, pingResp] = await Promise.all([getPhoneNumbers(), getChannels(), getPingInfo()]);
-                const [appResp, channelResp] = await Promise.all([getPhoneNumbers(), getChannels()]);
-                if (appResp.status) setApplications(appResp.data);
-                if (channelResp.status) setChannels(channelResp.data);
-                // const canSendTemplate = pingResp.allowSendTemplate;
+                await fetchPhoneNumbers();
                 const canSendTemplate = true;
                 if (canSendTemplate !== undefined) setAllowSendTemplate(canSendTemplate);
             } catch (error) { console.error("Initial fetch failed", error); }
@@ -160,33 +160,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
             mediaCaptionRef.current.style.height = `${Math.min(mediaCaptionRef.current.scrollHeight, 128)}px`;
         }
     }, [inputText]);
-
-    // Handle typing indicator from SignalR
-    useEffect(() => {
-        if (!connection) return;
-        // const handleAgentTyping = (data: { conversation_id: number, sender_name: string }) => {
-        //     if (data.sender_name === user?.display_name) return;
-        //     setTypingAgents(prev => {
-        //         if (prev[data.conversation_id]) clearTimeout(prev[data.conversation_id].timeout);
-        //         const timeout = setTimeout(() => {
-        //             setTypingAgents(curr => {
-        //                 const updated = { ...curr };
-        //                 delete updated[data.conversation_id];
-        //                 return updated;
-        //             });
-        //         }, 10000);
-        //         return { ...prev, [data.conversation_id]: { name: data.sender_name, timeout } };
-        //     });
-        // };
-        const handleUpdateAllowSendTemplate = (allow: boolean) => setAllowSendTemplate(allow);
-
-        // connection.on("AgentTyping", handleAgentTyping);
-        connection.on("UpdateAllowSendTemplate", handleUpdateAllowSendTemplate);
-        return () => {
-            // connection.off("AgentTyping", handleAgentTyping);
-            connection.off("UpdateAllowSendTemplate", handleUpdateAllowSendTemplate);
-        };
-    }, [connection, user?.name]);
 
     // Fix for emoji-picker-react crash: ensure suggested history is not null in localStorage
     useEffect(() => {
@@ -245,27 +218,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     }, [activeConversation?.id]);
 
 
-    // Taskbar Badge Update
-    useEffect(() => {
-        if ((window as any).chrome?.webview) {
-            (window as any).chrome.webview.postMessage({
-                type: 'SET_BADGE',
-                count: totalUnread
-            });
-        }
-    }, [totalUnread]);
 
     // Global Handlers
     const handleLogout = () => { localStorage.removeItem('wm_user'); window.location.reload(); };
-    const handleGlobalRefresh = async () => {
-        setIsRefreshing(true);
-        try {
-            const [appResp, channelResp] = await Promise.all([getPhoneNumbers(), getChannels()]);
-            if (appResp.status) setApplications(appResp.data);
-            if (channelResp.status) setChannels(channelResp.data);
-            await fetchConvs(true);
-        } finally { setTimeout(() => setIsRefreshing(false), 500); }
-    };
 
     const handleConversationUpdated = (updatedConv: Conversation) => {
         setConversations(prev => prev.map(c => c.id === updatedConv.id ? updatedConv : c));
@@ -284,86 +239,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
         }
     };
 
-    // Fungsi Copy Gambar
-    const handleCopy = async () => {
-        // try {
-        //     // Bridge to WinForms for desktop notification
-        //     if (!contextMenuImage.chatMsg?.file_path) return;
-        //     if ((window as any).chrome?.webview) {
-        //         (window as any).chrome.webview.postMessage({
-        //             type: 'COPY_IMAGE',
-        //             url: contextMenuImage.chatMsg?.file_path,
-        //         });
-        //     } else {
-        //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-        //         console.log("Tidak berada di WinForms. Fallback copy URL...");
-        //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-        //     }
-        // } catch (error) {
-        //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-        //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-        // }
-    };
-
-    // Fungsi Download Gambar
-    const handleDownload = async () => {
-        // try {
-        //     // Bridge to WinForms for desktop notification
-        //     if (!contextMenuImage.chatMsg?.file_path) return;
-        //     if ((window as any).chrome?.webview) {
-        //         (window as any).chrome.webview.postMessage({
-        //             type: 'SAVE_IMAGE',
-        //             url: contextMenuImage.chatMsg?.file_path,
-        //         });
-        //     } else {
-        //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-        //         console.log("Tidak berada di WinForms. Fallback copy URL...");
-        //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-        //     }
-        // } catch (error) {
-        //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-        //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-        // }
-
-    };
-
-    // Media Handlers
-    const handleResendMessage = async (msg: Bubble) => {
-        // if (!msg) return;
-
-        // // Populate Input Text
-        // setInputText(msg.message_text || '');
-
-        // // Handle Media Resending
-        // if (msg.file_path && ['image', 'video', 'audio', 'document'].includes(msg.message_type)) {
-        //     if ((window as any).chrome?.webview) {
-        //         // Use WinForms bridge to bypass CORS/SSL issues
-        //         (window as any).chrome.webview.postMessage({
-        //             type: 'FETCH_MEDIA_FOR_RESEND',
-        //             url: msg.file_path,
-        //             message_type: msg.message_type,
-        //             file_name: msg.file_name || 'file'
-        //         });
-        //     } else {
-        //         // Fallback for browser (might fail due to CORS)
-        //         try {
-        //             const response = await fetch(msg.file_path);
-        //             const blob = await response.blob();
-        //             const fileName = msg.file_name || msg.file_path.split('/').pop() || 'file';
-        //             const file = new File([blob], fileName, { type: msg.file_type || blob.type });
-
-        //             const previewUrl = URL.createObjectURL(file);
-        //             setPendingMedia({
-        //                 file,
-        //                 previewUrl,
-        //                 type: msg.message_type as any
-        //             });  
-        //         } catch (error) {
-        //             console.error("Failed to fetch media for resend:", error);
-        //         }
-        //     }
-        // }
-    };
 
     const handleFiles = (files: FileList | File[] | null) => {
         const file = files?.[0];
@@ -393,7 +268,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
             <ConnectionBanner status={connectionStatus} onRetry={handleRetryConnection} onFindServer={handleFindServer} />
 
             <ChatSidebar
-                applications={applications}
+                phoneNumbers={phoneNumbers}
                 totalUnread={totalUnread}
                 activeAppId={activeAppId}
                 setActiveAppId={setActiveAppId}
@@ -419,7 +294,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                     setContextMenu({ x: e.pageX, y: e.pageY, conversation: conv });
                 }}
                 setIsNewChatDialogOpen={setIsNewChatDialogOpen}
-                typingAgents={typingAgents}
+                typingAgents={typingUsers}
                 isLoading={isConvLoading}
                 isFetchingMore={isFetchingMoreConvs}
                 hasMore={hasMoreConvs}
@@ -469,9 +344,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                     e.preventDefault();
                     setContextMenuImage({ x: e.pageX, y: e.pageY, chatMsg: chatMsg });
                 }}
-                renderTemplateMessage={renderTemplateMessage}
                 renderMessageContent={(msg, handler) => renderMessageContent(msg, handler, (m) => setViewingMedia(m))}
-                typingAgents={typingAgents}
+                typingAgents={typingUsers}
                 handleFiles={handleFiles}
                 onToggleSidebar={() => setShowContactSidebar(prev => !prev)}
             />
@@ -484,7 +358,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 />
             )}
 
-
             {/* Modals */}
             <TemplatePickerDialog
                 isOpen={isTemplateDialogOpen}
@@ -493,7 +366,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 conversation={activeConversation}
             />
 
-            <NewChatDialog
+            {/* <NewChatDialog
                 open={isNewChatDialogOpen}
                 onOpenChange={setIsNewChatDialogOpen}
                 onStartChat={(waId, name, phone_number_id) => {
@@ -503,24 +376,32 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                         setActiveConversation(existing);
                         setShowTemplateQuickAction(true);
                     } else {
-                        const selectedChannel = channels.find(c => c.id === phone_number_id);
+                        const selectedChannel = phoneNumbers.find(c => c.id === phone_number_id);
                         const id = Guid.newGuid().toString();
                         const tempConv: Conversation = {
                             id: id,
                             phone_number_id: phone_number_id,
                             wa_id: normalizedWaId,
-                            custom_name: name || normalizedWaId, display_phone_number: selectedChannel?.display_phone_number || '',
+                            custom_name: name || normalizedWaId,
                             last_message_preview: '', unread_count: 0, is_template_required: true,conversation_timestamp: Date.now(),
-                            display_name: selectedChannel?.display_name || selectedChannel?.display_phone_number || 'WA Number',last_message_at: Date(),
-                            profile_name: selectedChannel?.display_name
+                            display_name: selectedChannel?.display_name || 'WA Number',last_message_at: Date(),
+                            profile_name: selectedChannel?.display_name,
+                            display_phone_number: selectedChannel?.display_phone_number
                         };
                         setActiveConversation(tempConv);
                         setMessages([]);
                         setShowTemplateQuickAction(true);
                     }
                 }}
-                channels={channels}
-                defaultChannelId={channels.find(c => c.app_id === activeAppId)?.id}
+                phoneNumbers={phoneNumbers}
+                defaultPhoneNumberId={phoneNumbers.find(c => c.id === activeConversation?.phone_number_id)?.id}
+            /> */}
+            <NewChatDialog
+                open={isNewChatDialogOpen}
+                onOpenChange={setIsNewChatDialogOpen}
+                onStartChat={initialChat}
+                phoneNumbers={phoneNumbers}
+                defaultPhoneNumberId={phoneNumbers.find(c => c.id === activeConversation?.phone_number_id)?.id}
             />
 
             <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>

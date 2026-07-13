@@ -1,12 +1,26 @@
 export interface ApiResponse<T> {
-    status_code: number;
-    status: boolean;
+    success: boolean;
     message: string;
     data: T;
 }
 
+export interface ConversationResponse{
+    conversations : Conversation[],
+    has_more : boolean,
+    message_conversations : Conversation[],
+    message_has_more : boolean
+}
+
+export interface MessageResponse{
+    conversation : Conversation,
+    has_more : boolean,
+    messages : Bubble[]
+}
+
 export interface PagedResponse<T> {
-    items: T[];
+    success : boolean;
+    message : string;
+    data: T[];
     limit: number;
     page: number;
     has_more: boolean;
@@ -27,7 +41,8 @@ export interface SendReactionRequest {
     to : string;
     reaction : string;
     phone_number_id : string;
-    context_message_id : string;
+    context_message_id ?: string;
+    message_id ?: string;
 }
 
 export interface SendMediaRequest {
@@ -71,21 +86,21 @@ export interface Conversation {
     matched_message_id?: string;
 }
 
-export interface ErrorDetails {
-    code?: string | number;
-    failed_at?: string;
-    message_local?: string;
-    message_original?: string;
+export interface Contact{
+    wa_id: string;
+    phone_number_id: string;
+    profile_name : string;
+    custom_name : string;
+    last_customer_message_at : string;
 }
-
 
 export interface Bubble{
     id?: string;
-    conversation_id: string | number;
+    conversation_id: string ;
     phone_number_id: string;
-    wa_message_id?: string;
+    wamid?: string;
     wa_id: string;
-    direction: 'INBOUND' | 'OUTBOUND';
+    direction: 'inbound' | 'outbound';
     created_at: string;
     message_timestamp?: number;
     timestamp?: Date;
@@ -135,36 +150,10 @@ export interface MessageContent {
     context?: ContextMsg;
 }
 
-export interface MessageResponse{
-    agent_id : string;
-    agent_name : string,
-    content : MessageContent,
-    direction : string,
-    id : string,
-    phone_number_id : string,
-    raw_message : string | null,
-    status : string,
-    wa_id : string
-    wamid : string
-    type : string
-    timestamp : string
-    conversation_id : string,
-    error_details : ErrorDetails    
-}
-
 export interface PhoneNumber {
     id: string ;
     display_name: string;
+    display_phone_number: string;
     unread_count: number;
 }
 
-export interface WaChannel {
-    id: string;
-    app_id: string ;
-    phone_number_id: string;
-    waba_id: string;
-    display_name: string;
-    display_phone_number: string;
-    is_active: boolean;
-    type: 'CENTER' | 'CS';
-}

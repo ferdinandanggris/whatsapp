@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { getConversations, getPhoneNumbers } from '../../../services/chatService';
-import type { Conversation, PhoneNumber, Bubble } from '../../../types/chat';
+import { getConversations, getPhoneNumbers } from '../../services/chatService';
+import type { Conversation, PhoneNumber, Bubble } from '../../types/chat';
 import { PayloadConversationUpdate } from '@/types/wsEvent';
 
 interface UseConversationsProps {
@@ -11,7 +11,7 @@ interface UseConversationsProps {
     connection: any;
     activeConversation: Conversation | null;
     setActiveConversation: (conv: Conversation | null) => void;
-    setApplications: (apps: PhoneNumber[]) => void;
+    fetchPhoneNumbers: () => Promise<void>;
 }
 
 export const useConversations = ({
@@ -21,7 +21,7 @@ export const useConversations = ({
     connection, 
     activeConversation,
     setActiveConversation,
-    setApplications,
+    fetchPhoneNumbers
 }: UseConversationsProps) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [messageConversations, setMessageConversations] = useState<Conversation[]>([]);
@@ -51,13 +51,13 @@ export const useConversations = ({
                 debouncedSearchTerm || undefined,
                 convFilter === 'all' ? undefined : convFilter,
             );
-            if (response.status) {
-                setConversations(response.data.items);
-                setMessageConversations(response.data.messageConversations || []);
-                setMessageHasMore(response.data.messageHasMore || false);
+            if (response.success) {
+                setConversations(response.data.conversations || []);
+                setMessageConversations(response.data.message_conversations || []);
+                setMessageHasMore(response.data.message_has_more || false);
                 setHasMoreConvs(response.data.has_more);
 
-                if (activeConversation && !response.data.items.some(c => c.id === activeConversation.id)) {
+                if (activeConversation && !response?.data?.conversations.some(c => c.id === activeConversation.id)) {
                     setActiveConversation(null);
                 }
             }
@@ -86,9 +86,9 @@ export const useConversations = ({
                 convFilter === 'all' ? undefined : convFilter
             );
 
-            if (response.status) {
+            if (response.success) {
                 setConvPage(nextPage);
-                setConversations(prev => [...prev, ...response.data.items]);
+                setConversations(prev => [...prev, ...response.data.conversations || []]);
                 setHasMoreConvs(response.data.has_more);
             }
         } catch (error) {
@@ -104,9 +104,7 @@ export const useConversations = ({
         const handleUpdateConversation = (conv: any) => {
             console.log(`[WS] UpdateConversation`, conv);   
             var res: Conversation = conv;
-            getPhoneNumbers().then(res => {
-                if (res.status) setApplications(res.data);
-            });
+            fetchPhoneNumbers();
 
             // if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
 
@@ -150,7 +148,7 @@ export const useConversations = ({
 
                     // check convFilter
                     console.log(`convFilter: ${convFilter}, message direction: ${chatMsg.direction}`);
-                    if (convFilter === 'unread' && chatMsg.direction === 'OUTBOUND') {
+                    if (convFilter === 'unread' && chatMsg.direction === 'outbound') {
                         return prev;
                     }
 
@@ -162,16 +160,16 @@ export const useConversations = ({
                     else if (chatMsg.message_type === 'video') preview = (chatMsg.content?.body?.text == "") ? "🎥 Video" : `🎥 ${chatMsg.content?.body?.text}`;
                     else if (chatMsg.message_type === 'audio') preview = (chatMsg.content?.body?.text == "") ? "🎵 Audio" : `🎵 ${chatMsg.content?.body?.text}`;
                     else if (chatMsg.message_type === 'document') preview = (chatMsg.content?.body?.text == "") ? "📄 Dokumen" : `📄 ${chatMsg.content?.body?.text}`;
-                    else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} sent a sticker`;
-                    else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} reacted to a message`;
-                    else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'INBOUND' ? conv.custom_name : 'Me'} shared a location`;
+                    else if (chatMsg.message_type === 'sticker') preview = `${chatMsg.direction === 'inbound' ? conv.custom_name : 'Me'} sent a sticker`;
+                    else if (chatMsg.message_type === 'reaction') preview = `${chatMsg.direction === 'inbound' ? conv.custom_name : 'Me'} reacted to a message`;
+                    else if (chatMsg.message_type === 'location') preview = `${chatMsg.direction === 'inbound' ? conv.custom_name : 'Me'} shared a location`;
                     else if (chatMsg.message_type === 'template') preview =  chatMsg.content?.body?.text || 'Template Message';
 
                     conv.last_message_preview = preview;
                     // conv.last_message_timestamp = chatMsg.message_timestamp;
                     // conv.updated_at = chatMsg.created_at;
 
-                    if (chatMsg.direction === 'INBOUND') {
+                    if (chatMsg.direction === 'inbound') {
 
                         // Simpan info buat notif, jangan postMessage di sini
                         if (!shouldNotify && (window as any).chrome?.webview) {
@@ -185,9 +183,7 @@ export const useConversations = ({
                         
 
                         // Refresh app badges in sidebar
-                        getPhoneNumbers().then(res => {
-                            if (res.status) setApplications(res.data);
-                        });
+                        fetchPhoneNumbers();
                     }
 
                     // const activeConv = activeConversationRef.current;

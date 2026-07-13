@@ -1,5 +1,6 @@
-import { get, post, patch } from '../api/client';
-import type { ApiResponse, PagedResponse, Conversation, PhoneNumber, WaChannel, MessageResponse, Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse, SendReactionRequest } from '../types/chat';
+import { Contact } from '@/types';
+import { get, post } from '../api/client';
+import type { ApiResponse, PagedResponse, Conversation, PhoneNumber,  Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse, SendReactionRequest, ConversationResponse, MessageResponse } from '../types/chat';
 
 function qs(params: Record<string, string | number | undefined>): string {
     const sp = new URLSearchParams();
@@ -15,28 +16,22 @@ export const getConversations = async (
     phone_number_id?: string,
     search?: string,
     filter?: string
-): Promise<ApiResponse<PagedResponse<Conversation> & { messageConversations?: Conversation[], messageHasMore?: boolean }>> => {
+): Promise<ApiResponse<ConversationResponse>> => {
     try {
-        const res = await get<ApiResponse<{conversations: Conversation[], has_more: boolean, message_conversations?: Conversation[], message_has_more?: boolean}>>(
+        const res = await get<ApiResponse<any>>(
             `/api/v1/conversations?${qs({ page, limit, phone_number_id, q: search, filter })}`
         );
-        const data = res.data;
-        return {
-            status_code: 200,
-            status: true,
-            message: 'Success',
-            data: {
-                items: data.conversations || [],
-                messageConversations: data.message_conversations || [],
-                messageHasMore: data.message_has_more || false,
-                limit, page, has_more: data.has_more
-            }
-        };
+        return res;
     } catch {
-        return {
-            status_code: 500, status: false,
+        return { 
+            success: false,
             message: 'Gagal mengambil data percakapan',
-            data: { items: [], messageConversations: [], messageHasMore: false, limit, has_more: false, page: 1 }
+            data : {
+                conversations: [],
+                has_more: false,
+                message_conversations: [],
+                message_has_more: false
+            }
         };
     }
 };
@@ -56,52 +51,30 @@ export const getPhoneNumbers = async (): Promise<ApiResponse<PhoneNumber[]>> => 
         const items: PhoneNumber[] = (res.data || []).map(p => ({
             id: p.phone_number_id,
             display_name: p.display_name || p.display_phone_number || 'WA Number',
-            unread_count: p.unread_count || 0
-        }));
-        return { status_code: 200, status: true, message: 'Success', data: items };
-    } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengambil ringkasan aplikasi', data: [] };
-    }
-};
-
-export const getChannels = async (): Promise<ApiResponse<WaChannel[]>> => {
-    try {
-        const res = await get<ApiResponse<any[]>>('/api/v1/phone-numbers');
-        const items: WaChannel[] = (res.data || []).map(p => ({
-            id: p.phone_number_id,
-            app_id: p.phone_number_id,
-            phone_number_id: p.phone_number_id,
-            waba_id: '',
-            display_name: p.display_name || p.display_phone_number || 'WA Number',
+            unread_count: p.unread_count || 0,
             display_phone_number: p.display_phone_number || '',
-            is_active: true,
-            type: 'CENTER'
         }));
-        return { status_code: 200, status: true, message: 'Success', data: items };
+        return { success: true, message: 'Success', data: items };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengambil channel', data: [] };
+        return { success: false, message: 'Gagal mengambil ringkasan aplikasi', data: [] };
     }
 };
 
 export const getMessages = async (
-    conversation_id: string | number,
+    conversation_id: string ,
     limit = 30,
     page = 1,
     search?: string,
     message_type?: string,
     direction?: string
-): Promise<ApiResponse<PagedResponse<Bubble> & { conversation?: Conversation }>> => {
+): Promise<ApiResponse<MessageResponse>> => {
     try {
-        const res = await get<ApiResponse<{ messages: any[], has_more: boolean, conversation?: Conversation }>>(
+        const res = await get<ApiResponse<any>>(
             `/api/v1/conversations/${conversation_id}/messages?${qs({ limit, page, q: search, type: message_type, direction })}`
         );
-        const body = res.data;
-        return {
-            status_code: 200, status: true, message: 'Success',
-            data: { items: body.messages || [], limit, page, has_more: body.has_more ?? false, conversation: body.conversation }
-        };
+        return res;
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengambil pesan', data: { items: [], limit, has_more: false, page } };
+        return { success: false, message: 'Gagal mengambil pesan', data: { messages: [], conversation: null , has_more: false} };
     }
 };
 
@@ -136,12 +109,12 @@ export const ensureConversation = async (
         try {
             const listRes = await get<ApiResponse<{ conversations: any[] }>>(`/api/v1/conversations?${qs({ phone_number_id, limit: 100 })}`);
             const existing = (listRes.data?.conversations || []).find((c: any) => c.wa_id === customer_wa_id);
-            if (existing) return { status_code: 200, status: true, message: 'Success', data: existing };
+            if (existing) return { success: true, message: 'Success', data: existing };
         } catch { /* ignore */ }
 
-        return { status_code: 200, status: true, message: 'Success', data: conv };
+        return { success: true, message: 'Success', data: conv };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal membuat percakapan', data: null as any };
+        return { success: false, message: 'Gagal membuat percakapan', data: null as any };
     }
 };
 
@@ -149,7 +122,7 @@ export const markAsRead = async (conversationId: string | number): Promise<ApiRe
     try {
         return await post<ApiResponse<any>>(`/api/v1/conversations/${conversationId}/read`, {});
     } catch {
-        return { status_code: 500, status: true, message: 'Gagal mark as read', data: null as any };
+        return { success: true, message: 'Gagal mark as read', data: null as any };
     }
 };
 
@@ -164,7 +137,7 @@ export const uploadMedia = async (
 
         const res = await post<ApiResponse<any>>('/api/v1/media/upload', formData);
         return {
-            status_code: 200, status: true, message: 'Success',
+            success: true, message: 'Success',
             data: {
                 media_id: res.data?.media_id || res.data?.id || '',
                 file_path: `/api/v1/media/${res.data?.media_id || res.data?.id || ''}`,
@@ -172,16 +145,16 @@ export const uploadMedia = async (
             }
         };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengunggah media', data: null as any };
+        return { success: false, message: 'Gagal mengunggah media', data: null as any };
     }
 };
 
 export const sendMessage = async (payload : SendTextRequest): Promise<ApiResponse<SendTextResponse>> => {
     try {
         const res = await post<ApiResponse<SendTextResponse>>('/api/v1/messages/text', payload);
-        return { status_code: res.status_code, status: true, message: 'Success', data: res.data };
+        return { success: true, message: 'Success', data: res.data };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengirim pesan', data: null };
+        return { success: false, message: 'Gagal mengirim pesan', data: null };
     }
 };
 
@@ -196,9 +169,9 @@ export const sendMedia = async (payload : SendMediaRequest): Promise<ApiResponse
         formData.append('context_message_id', payload.context_message_id);
 
         const res = await post<ApiResponse<SendMediaResponse>>('/api/v1/messages/media', formData);
-        return { status_code: 201, status: true, message: 'Success', data: res?.data };
+        return { success: true, message: 'Success', data: res?.data };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengirim media', data: null };
+        return { success: false, message: 'Gagal mengirim media', data: null };
     }
 };
 
@@ -214,9 +187,9 @@ export const sendTemplate = async (payload : SendTemplateRequest): Promise<ApiRe
         if(payload.template_params && Object.keys(payload.template_params).length > 0) formData.append('template_params', JSON.stringify(payload.template_params));
 
         const res = await post<ApiResponse<SendTemplateResponse>>('/api/v1/messages/template', formData);
-        return { status_code: res.status_code, status: true, message: res?.message, data: res?.data };
+        return { success: true, message: res?.message, data: res?.data };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengirim template', data: null };
+        return { success: false, message: 'Gagal mengirim template', data: null };
     }
 };
 
@@ -224,37 +197,44 @@ export const sendReaction = async (payload : SendReactionRequest
 ): Promise<ApiResponse<any>> => {
     try {
         const res = await post<ApiResponse<any>>('/api/v1/messages/reaction', payload);
-        return { status_code: 201, status: true, message: 'Reaksi berhasil dikirim', data: res };
+        return { success: true, message: 'Reaksi berhasil dikirim', data: res };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengirim reaksi', data: null };
+        return { success: false, message: 'Gagal mengirim reaksi', data: null };
     }
 };
 
+export const GetContact = async (
+    wa_id: string ,
+    phone_number_id: string 
+):Promise<ApiResponse<any>> => {
+    const contactRes = await get<ApiResponse<Contact>>(`/api/v1/contacts?phone_number_id=${phone_number_id}&wa_id=${wa_id}`);
+    return contactRes;
+}
+
 export const updateConversationName = async (
-    id: string | number,
+    phone_number_id: string,
+    wa_id: string,
     name: string
 ): Promise<ApiResponse<any>> => {
     try {
-        const convRes = await get<ApiResponse<{ wa_id: string, phone_number_id: string }>>(`/api/v1/conversations/${id}`);
-        const conv = convRes.data;
-        const res = await patch<ApiResponse<any>>(`/api/v1/contacts/${conv.wa_id}?phone_number_id=${conv.phone_number_id}`, {
-            company_custom_name: name
+        const res = await post<ApiResponse<any>>(`/api/v1/contacts`, {
+            wa_id: wa_id,
+            phone_number_id: phone_number_id,
+            name: name
         });
-        return { status_code: 200, status: true, message: 'Nama berhasil diubah', data: res };
+        return { success: true, message: 'Nama berhasil diubah', data: res };
     } catch {
-        return { status_code: 500, status: false, message: 'Gagal mengubah nama', data: null };
+        return { success: false, message: 'Gagal mengubah nama', data: null };
     }
 };
 
 export const sendTypingIndicator = async (
-    conversation_id: string | number,
-    target: string,
-    sender_name: string
+    conversation_id: string | number
 ): Promise<ApiResponse<any>> => {
     try {
-        const res = await post<ApiResponse<any>>('/api/v1/typing', { conversation_id, target, sender_name });
-        return { status_code: 200, status: true, message: 'Success', data: res };
+        const res = await post<ApiResponse<any>>(`/api/v1/conversations/${conversation_id}/typing`);
+        return { success: true, message: 'Success', data: res };
     } catch {
-        return { status_code: 500, status: false, message: 'Failed to send typing indicator', data: null };
+        return { success: false, message: 'Failed to send typing indicator', data: null };
     }
 };

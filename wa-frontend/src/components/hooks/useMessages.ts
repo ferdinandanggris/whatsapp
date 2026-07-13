@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { getMessages, markAsRead } from '../../../services/chatService';
-import type { Bubble,  Conversation } from '../../../types/chat';
+import { useState, useEffect, useRef} from 'react';
+import { getMessages, markAsRead } from '@/services/chatService';
+import type { Bubble,  Conversation } from '@/types/chat';
 import { StatusUpdatePayload } from '@/types/wsEvent';
 
 interface UseMessagesProps {
@@ -18,7 +18,7 @@ export const useMessages = ({
     setConversations,
     setActiveConversation,
 }: UseMessagesProps) => {
-    const [messages, setMessages] = useState<Bubble[]>([]);
+    const [messages, setMessages] = useState<Bubble[]>([]); 
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -49,9 +49,9 @@ export const useMessages = ({
         setMessagePage(1);
         getMessages(activeConversation.id, 50, 1, searchTerm || undefined)
             .then(res => {
-                if (res.status) {
+                if (res.success) {
                     // Backend returns newest-first; reverse for display (oldest-first)
-                    setMessages([...res.data.items].reverse());
+                    setMessages([...res.data.messages].reverse());
                     setHasMore(res.data.has_more);
                     if (res.data.conversation) {
                         setActiveConversation(res.data.conversation);
@@ -72,9 +72,9 @@ export const useMessages = ({
             const previousScrollHeight = scrollViewport?.scrollHeight || 0;
             const res = await getMessages(activeConversation.id, 50, nextPage, searchTerm || undefined);
             if (activeConversationRef.current?.id !== convIdAtStart) return;
-            if (res.status) {
+            if (res.success) {
                 // Backend returns newest-first; older messages get reversed + prepended
-                const olderItems = [...res.data.items].reverse();
+                const olderItems = [...res.data.messages].reverse();
                 setMessages(prev => [...olderItems, ...prev]);
                 setMessagePage(nextPage);
                 setHasMore(res.data.has_more);
@@ -121,35 +121,18 @@ export const useMessages = ({
             setMessages(prev => prev.map(m => {
                 if (m.id === res.message_id) {
                     console.log('Status update', m, res);
-                    return { ...m, status : res.status, error_message: res.error_message };
+                    return { ...m, status : res.status, error_message: res.error_message, wamid: res.wamid };
                 }
                 return m;
             }));
         };
 
-        const handleMessageStatusFailed = (waMessageId: string, raw_payload: any) => {
-            const conv = activeConversationRef.current;
-            if (!conv) return;
-            const parsedPayload = JSON.parse((raw_payload as string) || '{}');
-            const errorDetails = parsedPayload?.error_details;
-            setMessages(prev => prev.map(m => {
-                if (m.wa_message_id === waMessageId) {
-                    const oldParsedPayload = JSON.parse(m.raw_message || '{}');
-                    const rawPayload = JSON.stringify({ ...oldParsedPayload, error_details: errorDetails });
-                    return { ...m, raw_payload: rawPayload, status: 'failed' };
-                }
-                return m;
-            }));
-        }
-
         connection.on("ReceiveMessage", handleReceiveMessage);
         connection.on("MessageStatusUpdated", handleMessageStatusUpdated);
-        connection.on("MessageStatusFailed", handleMessageStatusFailed);
 
         return () => {
             connection.off("ReceiveMessage", handleReceiveMessage);
             connection.off("MessageStatusUpdated", handleMessageStatusUpdated);
-            connection.off("MessageStatusFailed", handleMessageStatusFailed);
         };
     }, [connection]);
 

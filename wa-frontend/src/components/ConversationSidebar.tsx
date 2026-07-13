@@ -7,8 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import type { Conversation } from '../../types/chat';
-import { formatTimeConversation, truncateNameInitial, truncateText } from '../../lib/chatUtils';
+import type { Conversation } from '@/types/chat';
+import { formatTimeConversation, truncateNameInitial, truncateText } from '../lib/chatUtils';
 
 interface ConversationSidebarProps {
     conversations: Conversation[];

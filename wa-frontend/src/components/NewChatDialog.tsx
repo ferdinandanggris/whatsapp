@@ -4,34 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { Select } from "@/components/ui/select";
-import type { WaChannel } from "@/types/chat";
+import type { PhoneNumber } from "@/types/chat";
 
 interface NewChatDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onStartChat: (waId: string, name: string, phone_number_id: string) => void;
-    channels: WaChannel[];
-    defaultChannelId?: string | null;
+    phoneNumbers: PhoneNumber[];
+    defaultPhoneNumberId?: string | null;
 }
 
-const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange, onStartChat, channels, defaultChannelId }) => {
+const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange, onStartChat, phoneNumbers: phoneNumbers, defaultPhoneNumberId }) => {
     const [waId, setWaId] = useState('');
     const [name, setName] = useState('');
-    const [selectedChannelId, setSelectedChannelId] = useState<string>(defaultChannelId || (channels[0]?.id || ''));
+    const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<string>(defaultPhoneNumberId || (phoneNumbers[0]?.id || ''));
 
     // Update selected channel when default changes or dialog opens
     React.useEffect(() => {
-        if (open && defaultChannelId) {
-            setSelectedChannelId(defaultChannelId);
-        } else if (open && !selectedChannelId && channels.length > 0) {
-            setSelectedChannelId(channels[0].id);
+        if (open && defaultPhoneNumberId) {
+            setSelectedPhoneNumberId(defaultPhoneNumberId);
+        } else if (open && !selectedPhoneNumberId && phoneNumbers.length > 0) {
+            setSelectedPhoneNumberId(phoneNumbers[0].id);
         }
-    }, [open, defaultChannelId, channels]);
+    }, [open, defaultPhoneNumberId, phoneNumbers]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (waId.trim() && selectedChannelId) {
-            onStartChat(waId.trim(), name.trim(), selectedChannelId);
+        if (waId.trim() && selectedPhoneNumberId) {
+            onStartChat(waId.trim(), name.trim(), selectedPhoneNumberId);
             setWaId('');
             setName('');
             onOpenChange(false);
@@ -58,11 +58,11 @@ const NewChatDialog: React.FC<NewChatDialogProps> = ({ open, onOpenChange, onSta
                             <div className="flex-1 space-y-1.5">
                                 <label className="text-xs font-medium text-[#54656f] ml-1">WhatsApp Channel / Account</label>
                                 <Select
-                                    value={selectedChannelId}
-                                    onChange={(e) => setSelectedChannelId(e.target.value)}
+                                    value={selectedPhoneNumberId}
+                                    onChange={(e) => setSelectedPhoneNumberId(e.target.value)}
                                     className="h-10 text-sm bg-[#f0f2f5] border-none focus-visible:ring-1 focus-visible:ring-[#00a884]"
                                 >
-                                    {channels
+                                    {phoneNumbers
                                         .map(ch => (
                                             <option key={ch.id} value={ch.id}>
                                                 {ch.display_name} ({ch.display_phone_number})

@@ -13,7 +13,6 @@ interface MessageBubbleProps {
     onReply: (msg: Bubble) => void;
     onReaction: (msg: Bubble) => void;
     onResend: (msg: Bubble) => void;
-    renderTemplateMessage: (msg: Bubble) => React.ReactNode;
     renderMessageContent: (msg: Bubble, handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void) => React.ReactNode;
     handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void;
     conversation: Conversation;

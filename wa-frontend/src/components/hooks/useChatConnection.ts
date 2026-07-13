@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useWS } from '../../../stores/ws';
-import { getPhoneNumbers } from '../../../services/chatService';
-import type { PhoneNumber } from '../../../types/chat';
+import { useWS } from '../../stores/ws';
+import type { PhoneNumber } from '../../types/chat';
 import { EventType, WebsocketEvent } from '@/types/wsEvent';
 import { useAuth } from '@/stores/auth';
 
@@ -34,11 +33,8 @@ class WebMetaEventEmitter {
     }
 }
 
-interface UseChatConnectionProps {
-    setApplications: (apps: PhoneNumber[]) => void;
-}
 
-export const useChatConnection = ({ setApplications }: UseChatConnectionProps) => {
+export const useChatConnection = () => {
     const emitterRef = useRef<WebMetaEventEmitter>(new WebMetaEventEmitter());
     const { connected, connect, disconnect } = useWS();
       const { token, user} = useAuth()
@@ -71,35 +67,12 @@ export const useChatConnection = ({ setApplications }: UseChatConnectionProps) =
                 else if (payload.event_type === EventType.CONVERSATION_UPDATE) {
                     console.log('WS Event received [CONVERSATION_UPDATE]:', ev);
                     emitterRef.current.emit('UpdateConversation', payload.data);
+                }else if(ev.type === EventType.USER_TYPING){
+                    // conversation_id and sender_name
+                    console.log('WS Event received [USER_TYPING]:', ev);
+                    const {conversation_id, sender_name} = ev.data;
+                    emitterRef.current.emit('UserTyping', conversation_id, sender_name);
                 }
-                // }else if(ev.type === 'USER_TYPING'){
-                //     // conversation_id and sender_name
-                //     const {conversation_id, sender_name} = ev.data;
-                //     emitterRef.current.emit('AgentTyping', conversation_id, sender_name);
-                // } else if (ev.type === 'message_sent') {
-                //     const message = ev.data.message;
-                //     if (message) {
-                //         emitterRef.current.emit('ReceiveMessage', mapMessage(message));
-                //     }
-                // } else if (ev.type === 'message_status') {
-                //     const wamid = ev.data.wamid;
-                //     const msgStatus = ev.data.status;
-                //     const errorMsg = ev.data.error_message;
-
-                //     if (msgStatus === 'failed') {
-                //         emitterRef.current.emit('MessageStatusFailed', wamid, JSON.stringify({
-                //             error_details: {
-                //                 error_message: errorMsg || '',
-                //                 failed_at: new Date().toISOString(),
-                //                 message_local: errorMsg || 'Pesan gagal terkirim (Meta Cloud API)',
-                //             }
-                //         }));
-                //     } else {
-                //         emitterRef.current.emit('MessageStatusUpdated', wamid, msgStatus);
-                //     }
-                // } else if (ev.type === 'service_window_opened') {
-                //     emitterRef.current.emit('UpdateAllowSendTemplate', true);
-                // }
             }
         });
 

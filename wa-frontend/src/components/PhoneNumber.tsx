@@ -4,11 +4,11 @@ import { X, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { PhoneNumber } from '../../types/chat';
-import { getInitials } from '../../lib/chatUtils';
+import type { PhoneNumber } from '../types/chat';
+import { getInitials } from '../lib/chatUtils';
 
 interface ChatSidebarProps {
-    applications: PhoneNumber[];
+    phoneNumbers: PhoneNumber[];
     totalUnread: number;
     activeAppId: string ;
     setActiveAppId: (id: string ) => void;
@@ -20,7 +20,7 @@ interface ChatSidebarProps {
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
-    applications,
+    phoneNumbers,
     totalUnread,
     activeAppId,
     setActiveAppId,
@@ -54,23 +54,23 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
             <Separator className="w-10 bg-slate-200" />
 
-            {applications.map(app => (
-                <div key={app.id} className="relative group">
+            {phoneNumbers.map(phoneNumber => (
+                <div key={phoneNumber.id} className="relative group">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className={`w-12 h-12 rounded-xl transition-all duration-200 ${activeAppId === app.id ? 'bg-[#00a884] text-white rounded-lg' : 'bg-white text-slate-600 hover:bg-[#00a884] hover:text-white'}`}
-                        onClick={() => setActiveAppId(app.id)}
-                        title={app.display_name}
+                        className={`w-12 h-12 rounded-xl transition-all duration-200 ${activeAppId === phoneNumber.id ? 'bg-[#00a884] text-white rounded-lg' : 'bg-white text-slate-600 hover:bg-[#00a884] hover:text-white'}`}
+                        onClick={() => setActiveAppId(phoneNumber.id)}
+                        title={phoneNumber.display_name}
                     >
-                        <span className="text-sm font-bold">{getInitials(app.display_name)}</span>
+                        <span className="text-sm font-bold">{getInitials(phoneNumber.display_name)}</span>
                     </Button>
-                    {app.unread_count > 0 && (
+                    {phoneNumber.unread_count > 0 && (
                         <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1.5 h-5 flex items-center justify-center font-bold border-2 border-[#f0f2f5] shadow-sm">
-                            {app.unread_count > 99 ? '99+' : app.unread_count}
+                            {phoneNumber.unread_count > 99 ? '99+' : phoneNumber.unread_count}
                         </div>
                     )}
-                    {activeAppId === app.id && (
+                    {activeAppId === phoneNumber.id && (
                         <div className="absolute left-[-15px] top-1/2 -translate-y-1/2 w-1 h-8 bg-[#00a884] rounded-r-full" />
                     )}
                 </div>

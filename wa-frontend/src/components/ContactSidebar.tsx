@@ -4,9 +4,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import type { Conversation } from '../types/chat';
-import { updateConversationName } from '../services/chatService';
+import { GetContact, updateConversationName } from '../services/chatService';
 import { getInitials } from '../lib/chatUtils';
-import axios from 'axios';
+import { Contact } from '@/types';
 
 interface ContactSidebarProps {
     conversation: Conversation;
@@ -18,7 +18,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
     const [customName, setCustomName] = useState(conversation.custom_name);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [contactDetails, setContactDetails] = useState<any>(null);
+    const [contactDetails, setContactDetails] = useState<Contact>(null);
 
     useEffect(() => {
         setCustomName(conversation.custom_name);
@@ -26,12 +26,9 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
         // Fetch deep contact details from our Go backend
         const fetchContact = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get(`/api/v1/contacts/${conversation.wa_id}`, {
-                    params: { phone_number_id: conversation.phone_number_id },
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await GetContact(conversation.wa_id, conversation.phone_number_id);
                 if (response.data) {
+                    console.log("Fetched contact details:", response.data);
                     setContactDetails(response.data);
                 }
             } catch (error) {
@@ -48,7 +45,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ conversation, onClose, 
         if (!customName.trim()) return;
         setLoading(true);
         try {
-            const success = await updateConversationName(conversation.id, customName.trim());
+            const success = await updateConversationName(conversation.phone_number_id, conversation.wa_id, customName.trim());
             if (success) {
                 setIsEditing(false);
                 const updated = { ...conversation, customer_name: customName.trim() };

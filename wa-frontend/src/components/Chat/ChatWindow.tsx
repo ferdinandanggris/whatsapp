@@ -42,7 +42,6 @@ interface ChatWindowProps {
     setReplyingTo: (msg: Bubble | null) => void;
     onReaction: (msg: Bubble) => void;
     onResend: (msg: Bubble) => void;
-    renderTemplateMessage: (msg: Bubble) => React.ReactNode;
     renderMessageContent: (msg: Bubble, handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void) => React.ReactNode;
     handleContextMenuImage: (e: React.MouseEvent, msg: Bubble) => void;
     typingAgents: Record<number, { name: string, timeout: any }>;
@@ -81,7 +80,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setReplyingTo,
     onReaction,
     onResend,
-    renderTemplateMessage,
     renderMessageContent,
     handleContextMenuImage,
     typingAgents,
@@ -161,7 +159,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         wasFetchingMoreRef.current = false;
 
         const prevLen = prevMsgLenRef.current;
-        const newLen = messages.length;
+        const newLen = messages.filter(msg => msg.direction.toUpperCase() == "INBOUND" && msg.status != "read").length;
 
         if (isNearBottomRef.current) {
             // User at bottom → auto-scroll, clear badge
@@ -231,7 +229,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             requestAnimationFrame(() => {
                 if (cancelled) return;
                 const el = document.getElementById(`msg-${searchNotification.messageId}`);
-                console.log('search scroll: rAF fired, el found:', !!el);
                 if (el) {
                     el.scrollIntoView({ block: 'center' });
                     el.classList.add('animate-pulse-glow');
@@ -374,7 +371,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         )}
                         {messages.map((msg, idx) => (
                             <MessageBubble
-                                key={msg.id || msg.wa_message_id}
+                                key={msg.id || msg?.wamid}
                                 isTemplateRequired={isTemplateRequired}
                                 msg={msg}
                                 conversation={activeConversation}
@@ -382,7 +379,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 onReply={(m) => setReplyingTo(m)}
                                 onReaction={onReaction}
                                 onResend={onResend}
-                                renderTemplateMessage={renderTemplateMessage}
                                 renderMessageContent={renderMessageContent}
                                 handleContextMenuImage={handleContextMenuImage}
                             />
