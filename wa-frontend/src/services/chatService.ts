@@ -1,5 +1,5 @@
 import { Contact } from '@/types';
-import { get, post } from '../api/client';
+import { get, post, put } from '../api/client';
 import type { ApiResponse, PagedResponse, Conversation, PhoneNumber,  Bubble, SendTextResponse, SendTextRequest, SendMediaRequest, SendMediaResponse, SendTemplateRequest, SendTemplateResponse, SendReactionRequest, ConversationResponse, MessageResponse } from '../types/chat';
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -217,7 +217,7 @@ export const updateConversationName = async (
     name: string
 ): Promise<ApiResponse<any>> => {
     try {
-        const res = await post<ApiResponse<any>>(`/api/v1/contacts`, {
+        const res = await put<ApiResponse<any>>(`/api/v1/contacts`, {
             wa_id: wa_id,
             phone_number_id: phone_number_id,
             name: name

@@ -293,7 +293,7 @@ export const useChatActions = ({
             message_type: type,
             direction: 'outbound',
             status: 'pending',
-            message_timestamp: Math.floor(Date.now() / 1000),
+            message_timestamp: Math.floor(Date.now()),
             created_at: new Date().toISOString(),
             sender_name: user?.name || 'Me',
             agent_name: user?.name || 'Me',
@@ -306,28 +306,28 @@ export const useChatActions = ({
                      format: type,
                      text : caption,
                      url : previewUrl,
-                     filename : file.name
+                     file_name : file.name
                  }
              case 'video':
                  newBubble.content.body = {
                      format: type,
                      text : caption,
                      url : previewUrl,
-                     filename : file.name
+                     file_name : file.name
                  }
              case 'audio':
                  newBubble.content.body = {
                      format: type,
                      text : caption,
                      url : previewUrl,
-                     filename : file.name
+                     file_name : file.name
                  }
              case 'document':
                  newBubble.content.body = {
                      format: type,
                      text : caption,
                      url : previewUrl,
-                     filename : file.name
+                     file_name : file.name
                  }
          }
 
@@ -362,6 +362,7 @@ export const useChatActions = ({
                    setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'failed', error_message: res?.message } : m));
                 } else{
                     newBubble.id = res?.data?.id; 
+                    newBubble.content.body.url = res?.data?.media_url;
                     setMessages(prev => [...prev, newBubble]);
                 }
             }).catch((err: Error) => {

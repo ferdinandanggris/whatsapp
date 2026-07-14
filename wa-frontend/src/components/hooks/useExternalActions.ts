@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 
 interface UseExternalActionsProps {
     totalUnread: number
+    contextMenuImage: { x: number, y: number, chatMsg: Bubble | null }
 }
 
 export const useExternalActions  = ({
     totalUnread
+    , contextMenuImage
 } : UseExternalActionsProps
 ) => {
      useEffect(() => {
@@ -21,44 +23,46 @@ export const useExternalActions  = ({
 
       // Fungsi Copy Gambar
         const handleCopy = async () => {
-            // try {
-            //     // Bridge to WinForms for desktop notification
-            //     if (!contextMenuImage.chatMsg?.file_path) return;
-            //     if ((window as any).chrome?.webview) {
-            //         (window as any).chrome.webview.postMessage({
-            //             type: 'COPY_IMAGE',
-            //             url: contextMenuImage.chatMsg?.file_path,
-            //         });
-            //     } else {
-            //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-            //         console.log("Tidak berada di WinForms. Fallback copy URL...");
-            //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-            //     }
-            // } catch (error) {
-            //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-            //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-            // }
+            try {
+                // Bridge to WinForms for desktop notification
+                if (!contextMenuImage.chatMsg?.content?.body?.url) return;
+                if ((window as any).chrome?.webview) {
+                    (window as any).chrome.webview.postMessage({
+                        type: 'COPY_IMAGE',
+                        url: contextMenuImage.chatMsg?.content?.body?.url,
+                    });
+
+                    console.log("Berada di WinForms. Menyalin gambar...");
+                } else {
+                    // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
+                    console.log("Tidak berada di WinForms. Fallback copy URL...");
+                    navigator.clipboard.writeText(contextMenuImage.chatMsg?.content?.body?.url);
+                }
+            } catch (error) {
+                console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
+                navigator.clipboard.writeText(contextMenuImage.chatMsg?.content?.body?.url || ''); // Fallback copy URL
+            }
         };
     
         // Fungsi Download Gambar
         const handleDownload = async () => {
-            // try {
-            //     // Bridge to WinForms for desktop notification
-            //     if (!contextMenuImage.chatMsg?.file_path) return;
-            //     if ((window as any).chrome?.webview) {
-            //         (window as any).chrome.webview.postMessage({
-            //             type: 'SAVE_IMAGE',
-            //             url: contextMenuImage.chatMsg?.file_path,
-            //         });
-            //     } else {
-            //         // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
-            //         console.log("Tidak berada di WinForms. Fallback copy URL...");
-            //         navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path);
-            //     }
-            // } catch (error) {
-            //     console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
-            //     navigator.clipboard.writeText(contextMenuImage.chatMsg?.file_path || ''); // Fallback copy URL
-            // }
+            try {
+                // Bridge to WinForms for desktop notification
+                if (!contextMenuImage.chatMsg?.content?.body?.url) return;
+                if ((window as any).chrome?.webview) {
+                    (window as any).chrome.webview.postMessage({
+                        type: 'SAVE_IMAGE',
+                        url: contextMenuImage.chatMsg?.content?.body?.url,
+                    });
+                } else {
+                    // Fallback jika dibuka di browser biasa (Chrome/Edge biasa)
+                    console.log("Tidak berada di WinForms. Fallback copy URL...");
+                    navigator.clipboard.writeText(contextMenuImage.chatMsg?.content?.body?.url);
+                }
+            } catch (error) {
+                console.error('Gagal menyalin gambar. Menyalin URL sebagai gantinya.', error);
+                navigator.clipboard.writeText(contextMenuImage.chatMsg?.content?.body?.url || ''); // Fallback copy URL
+            }
     
         };
     

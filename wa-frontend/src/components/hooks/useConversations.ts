@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { getConversations, getPhoneNumbers } from '../../services/chatService';
-import type { Conversation, PhoneNumber, Bubble } from '../../types/chat';
-import { PayloadConversationUpdate } from '@/types/wsEvent';
+import { getConversations } from '../../services/chatService';
+import type { Conversation,  Bubble } from '../../types/chat';
 
 interface UseConversationsProps {
     activeAppId: string | null;

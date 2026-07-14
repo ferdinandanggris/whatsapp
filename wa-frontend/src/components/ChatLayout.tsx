@@ -94,7 +94,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     const { messages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
         activeConversation, debouncedMessageSearchTerm, connection, setConversations, setActiveConversation
     });
-    const { handleCopy,handleDownload,handleResendMessage } = useExternalActions({ totalUnread });
+    const { handleCopy,handleDownload,handleResendMessage } = useExternalActions({ totalUnread, contextMenuImage });
     const { handleGlobalRefresh } =  useGlobal({
         fetchConversations : fetchConvs,
         fetchPhoneNumbers,
@@ -222,13 +222,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
     // Global Handlers
     const handleLogout = () => { localStorage.removeItem('wm_user'); window.location.reload(); };
 
-    const handleConversationUpdated = (updatedConv: Conversation) => {
-        setConversations(prev => prev.map(c => c.id === updatedConv.id ? updatedConv : c));
-        if (activeConversation && activeConversation.id === updatedConv.id) {
-            setActiveConversation(updatedConv);
-        }
-    };
-
     const handleEmojiClick = (emojiData: EmojiClickData) => {
         if (emojiTarget === 'input') {
             setInputText(prev => prev + emojiData.emoji);
@@ -354,7 +347,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
                 <ContactSidebar
                     conversation={activeConversation}
                     onClose={() => setShowContactSidebar(false)}
-                    onConversationUpdated={handleConversationUpdated}
                 />
             )}
 

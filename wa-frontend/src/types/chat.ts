@@ -64,6 +64,7 @@ export interface SendTemplateRequest {
 
 export interface SendMediaResponse {
     id : string;
+    media_url : string;
 }
 
 export interface SendTemplateResponse {
@@ -119,7 +120,7 @@ export interface ContentMsg {
     format?: string;
     text?: string;
     url?: string;
-    filename?: string;
+    file_name?: string;
 }
 
 export interface ButtonMsg {

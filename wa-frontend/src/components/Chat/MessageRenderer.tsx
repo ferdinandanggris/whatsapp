@@ -37,7 +37,7 @@ export const renderDocumentMessage = (msg: Bubble, onImageClick?: (msg: Bubble) 
                 {msg.content?.body?.url?.includes('pdf') ? 'PDF' : 'DOC'}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{msg.content?.body?.filename || 'Document'}</p>
+                <p className="text-sm font-semibold truncate">{msg.content?.body?.file_name || 'Document'}</p>
                 <p className="text-[10px] opacity-50 uppercase font-bold">{msg.content?.body?.url?.split('.').pop()}</p>
             </div>
         </a>

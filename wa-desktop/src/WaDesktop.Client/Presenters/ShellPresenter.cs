@@ -47,7 +47,7 @@ namespace WaDesktop.Client.Presenters
             view.AppSettingsClicked += (s, e) => OpenAppSettings();
             view.LogoutClicked += OnLogout;
 
-            bool isAgent = _state.Role == "agent";
+            bool isAgent = _state.Role == "cs";
             view.AppSettingsVisible = _auth.IsSuperAdmin;
             view.SidebarCollapsed = isAgent;
             view.CompanyVisible = !isAgent;
