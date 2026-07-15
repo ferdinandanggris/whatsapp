@@ -14,15 +14,15 @@ namespace WaDesktop.Client.Views.ManagementViews
         private static readonly Dictionary<string, string> RoleMap = new Dictionary<string, string>()
         {
             ["super_admin"] = "super_admin",
-            ["company_admin"] = "admin",
-            ["cs"] = "agent"
+            ["admin"] = "admin",
+            ["cs"] = "cs"
         };
 
         private static readonly Dictionary<string, string> RoleReverseMap = new Dictionary<string, string>()
         {
             ["super_admin"] = "super_admin",
-            ["admin"] = "company_admin",
-            ["agent"] = "cs"
+            ["admin"] = "admin",
+            ["cs"] = "cs"
         };
 
         private readonly HashSet<string> _deletedIds = new HashSet<string>();
@@ -117,7 +117,9 @@ namespace WaDesktop.Client.Views.ManagementViews
             var list = new List<User>();
             foreach (DataGridViewRow row in dataGridView.Rows)
             {
+
                 if (row.IsNewRow) continue;
+                //if (row.Cells["Id"].Value != null || row.Cells["Id"].Value != "") continue;
                 if (row.Tag != null && (bool)row.Tag)
                 {
                     string displayRole = row.Cells["Role"].Value?.ToString() ?? "";
@@ -125,9 +127,9 @@ namespace WaDesktop.Client.Views.ManagementViews
 
                     list.Add(new User
                     {
-                        Id = row.Cells["Id"].Value?.ToString() ?? "",
-                        Username = row.Cells["Email"].Value?.ToString() ?? "",
-                        DisplayName = row.Cells["Name"].Value?.ToString() ?? "",
+                        Id = row.Cells["DgvId"].Value?.ToString() ?? "",
+                        Username = row.Cells["DgvUsername"].Value?.ToString() ?? "",
+                        DisplayName = row.Cells["DgvName"].Value?.ToString() ?? "",
                         Role = backendRole,
                         CompanyId = row.Cells["Company"].Value?.ToString() ?? "",
                         IsActive = row.Cells["Status"].Value as bool? ?? false
@@ -170,7 +172,7 @@ namespace WaDesktop.Client.Views.ManagementViews
             if (e.ColumnIndex < 0 || e.RowIndex < 0) return;
             if (dataGridView.Columns[e.ColumnIndex].Name != "Reset") return;
 
-            var userId = dataGridView.Rows[e.RowIndex].Cells["Id"].Value?.ToString();
+            var userId = dataGridView.Rows[e.RowIndex].Cells["dgvId"].Value?.ToString();
             if (string.IsNullOrEmpty(userId)) return;
 
             ResetPasswordClicked?.Invoke(this, userId);

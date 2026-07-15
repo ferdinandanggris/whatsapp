@@ -11,7 +11,9 @@ export const useExternalActions  = ({
     , contextMenuImage
 } : UseExternalActionsProps
 ) => {
+    
      useEffect(() => {
+        console.log("totalUnread", totalUnread);
         if ((window as any).chrome?.webview) {
             (window as any).chrome.webview.postMessage({
                 type: 'SET_BADGE',
@@ -105,7 +107,7 @@ export const useExternalActions  = ({
         };
 
 
-         return { totalUnread, handleCopy, handleDownload, handleResendMessage };
+         return { handleCopy, handleDownload, handleResendMessage };
 }
 
    

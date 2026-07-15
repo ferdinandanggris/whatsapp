@@ -205,6 +205,10 @@ namespace WaDesktop.Client.Presenters
                 _loginSub?.Dispose();
                 _tokenRefreshSub?.Dispose();
                 _http?.Dispose();
+
+                // destroy webview resources if needed
+                _view.DestroyWebView();
+
                 _disposed = true;
             }
         }

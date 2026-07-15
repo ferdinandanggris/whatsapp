@@ -58,8 +58,8 @@ namespace WaDesktop.Client.Views
             this.dashboardToolStripMenuItem,
             this.companyToolStripMenuItem,
             this.usersToolStripMenuItem,
-            this.phoneNumbersToolStripMenuItem,
             this.wabaToolStripMenuItem,
+            this.phoneNumbersToolStripMenuItem,
             this.templatesToolStripMenuItem,
             this.appSettingsToolStripMenuItem,
             this.logoutToolStripMenuItem});
@@ -72,38 +72,38 @@ namespace WaDesktop.Client.Views
             // dashboardToolStripMenuItem
             // 
             this.dashboardToolStripMenuItem.Name = "dashboardToolStripMenuItem";
-            this.dashboardToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
+            this.dashboardToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
             this.dashboardToolStripMenuItem.Text = "Messages";
             this.dashboardToolStripMenuItem.Click += new System.EventHandler(this.dashboardToolStripMenuItem_Click);
             // 
             // companyToolStripMenuItem
             // 
             this.companyToolStripMenuItem.Name = "companyToolStripMenuItem";
-            this.companyToolStripMenuItem.Size = new System.Drawing.Size(71, 20);
-            this.companyToolStripMenuItem.Text = "Company";
+            this.companyToolStripMenuItem.Size = new System.Drawing.Size(51, 20);
+            this.companyToolStripMenuItem.Text = "Server";
             this.companyToolStripMenuItem.Click += new System.EventHandler(this.companyToolStripMenuItem_Click);
             // 
             // usersToolStripMenuItem
-            //
+            // 
             this.usersToolStripMenuItem.Name = "usersToolStripMenuItem";
             this.usersToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.usersToolStripMenuItem.Text = "Users";
             this.usersToolStripMenuItem.Click += new System.EventHandler(this.usersToolStripMenuItem_Click);
-            //
+            // 
             // phoneNumbersToolStripMenuItem
-            //
+            // 
             this.phoneNumbersToolStripMenuItem.Name = "phoneNumbersToolStripMenuItem";
-            this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(73, 20);
+            this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
             this.phoneNumbersToolStripMenuItem.Text = "Nomor HP";
             this.phoneNumbersToolStripMenuItem.Click += new System.EventHandler(this.phoneNumbersToolStripMenuItem_Click);
-            //
+            // 
             // wabaToolStripMenuItem
-            //
+            // 
             this.wabaToolStripMenuItem.Name = "wabaToolStripMenuItem";
-            this.wabaToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.wabaToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
             this.wabaToolStripMenuItem.Text = "WABA";
             this.wabaToolStripMenuItem.Click += new System.EventHandler(this.wabaToolStripMenuItem_Click);
-            //
+            // 
             // templatesToolStripMenuItem
             // 
             this.templatesToolStripMenuItem.Name = "templatesToolStripMenuItem";
@@ -124,6 +124,7 @@ namespace WaDesktop.Client.Views
             this.logoutToolStripMenuItem.Name = "logoutToolStripMenuItem";
             this.logoutToolStripMenuItem.Size = new System.Drawing.Size(57, 20);
             this.logoutToolStripMenuItem.Text = "Logout";
+            this.logoutToolStripMenuItem.Visible = false;
             this.logoutToolStripMenuItem.Click += new System.EventHandler(this.logoutToolStripMenuItem_Click);
             // 
             // splitContainer

@@ -24,6 +24,8 @@ namespace WaDesktop.Domain.Interfaces
 
         /// <summary>Show native SaveFileDialog. Returns selected path or null if cancelled.</summary>
         string ShowSaveFileDialog(string defaultFileName, string filter);
+
+        void DestroyWebView(); // untuk cleanup sebelum dispose, karena WebView2 tidak bisa di-dispose di thread selain UI thread
     }
 
     public class WebMessageReceivedEventArgs : EventArgs

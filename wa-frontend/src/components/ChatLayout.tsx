@@ -86,11 +86,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({ user, enableLogin }) => {
 
     // --- Hooks Integration ---
     const { connectionStatus, connection, handleRetryConnection, handleFindServer } = useChatConnection();
-    const { fetchPhoneNumbers ,phoneNumbers, totalUnread } = usePhoneNumber();
-
+    
     const { conversations, messageConversations, messageHasMore, setConversations, isLoading: isConvLoading, hasMoreConvs, isFetchingMoreConvs, handleLoadMoreConversations, fetchConvs } = useConversations({
-        activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation, fetchPhoneNumbers
+        activeAppId, debouncedSearchTerm, convFilter, connection, activeConversation, setActiveConversation
     });
+    const { fetchPhoneNumbers ,phoneNumbers, totalUnread } = usePhoneNumber({conversations});
     const { messages, setMessages, isLoading, hasMore: hasMoreMsg, isFetchingMore: isFetchingMoreMsg, handleLoadMore } = useMessages({
         activeConversation, debouncedMessageSearchTerm, connection, setConversations, setActiveConversation
     });

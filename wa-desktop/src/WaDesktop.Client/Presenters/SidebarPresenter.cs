@@ -23,7 +23,6 @@ namespace WaDesktop.Client.Presenters
             _bus = bus;
 
             _view.PhoneNumberSelected += OnPhoneNumberSelected;
-            _view.SyncFromMetaRequested += OnSyncFromMetaRequested;
             _view.RefreshRequested += OnRefreshRequested;
         }
 
@@ -38,25 +37,6 @@ namespace WaDesktop.Client.Presenters
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load phone numbers: {ex.Message}");
-            }
-            finally
-            {
-                _view.IsLoading = false;
-            }
-        }
-
-        private async void OnSyncFromMetaRequested(object sender, EventArgs e)
-        {
-            _view.IsLoading = true;
-            try
-            {
-                await Task.Run(() => _api.SyncPhoneNumbersFromMetaAsync());
-                await LoadDataAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Gagal sinkron dari Meta: {ex.Message}", "Sinkron Gagal",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             finally
             {
@@ -90,7 +70,6 @@ namespace WaDesktop.Client.Presenters
             if (!_disposed)
             {
                 _view.PhoneNumberSelected -= OnPhoneNumberSelected;
-                _view.SyncFromMetaRequested -= OnSyncFromMetaRequested;
                 _view.RefreshRequested -= OnRefreshRequested;
                 _disposed = true;
             }

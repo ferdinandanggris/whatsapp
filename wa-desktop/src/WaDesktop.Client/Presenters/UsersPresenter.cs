@@ -59,9 +59,22 @@ namespace WaDesktop.Client.Presenters
                 foreach (User u in _view.GetModifiedRows())
                 {
                     if (string.IsNullOrEmpty(u.Id))
-                        await Task.Run(() => _api.CreateUserAsync(u.Username, DefaultPassword, u.DisplayName, u.Role, u.CompanyId));
+                    {
+                        // User Baru: Jika DgvPassword kosong, gunakan DefaultPassword
+                        string pw = string.IsNullOrEmpty(u.NewPassword) ? DefaultPassword : u.NewPassword;
+                        await Task.Run(() => _api.CreateUserAsync(u.Username, pw, u.DisplayName, u.Role, u.CompanyId));
+                    }
                     else
+                    {
+                        // User Lama: Update data biasa
                         await Task.Run(() => _api.UpdateUserAsync(u.Id, u.DisplayName, u.Role, u.CompanyId, u.IsActive));
+                        
+                        // Eksekusi ganti password jika ada inputan di DgvPassword
+                        if (!string.IsNullOrEmpty(u.NewPassword))
+                        {
+                            await Task.Run(() => _api.ResetPasswordAsync(u.Id, u.NewPassword));
+                        }
+                    }
                 }
 
                 await LoadDataAsync();

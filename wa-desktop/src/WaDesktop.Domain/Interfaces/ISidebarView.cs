@@ -12,9 +12,6 @@ namespace WaDesktop.Domain.Interfaces
         /// <summary>Event: node di tree diklik. Kirim wa_id + phone_number_id.</summary>
         event EventHandler<PhoneNumberSelectedEventArgs> PhoneNumberSelected;
 
-        /// <summary>Event: user pilih "Sinkron Meta" dari context menu root node.</summary>
-        event EventHandler SyncFromMetaRequested;
-
         /// <summary>Event: user pilih "Refresh" dari context menu root node.</summary>
         event EventHandler RefreshRequested;
 

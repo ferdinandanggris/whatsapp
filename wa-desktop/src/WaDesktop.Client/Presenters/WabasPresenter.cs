@@ -25,6 +25,7 @@ namespace WaDesktop.Client.Presenters
             _view.EditClicked += OnEdit;
             _view.DeleteClicked += OnDelete;
             _view.SaveClicked += OnSave;
+            _view.SyncClicked += OnSync;
         }
 
         public async void LoadData(string search = null) => await LoadDataAsync(search);
@@ -93,7 +94,12 @@ namespace WaDesktop.Client.Presenters
 
         private void OnAdd(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Sync WABA from Meta?", "Add", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            MessageBox.Show("Tambah WABA — implement form dialog.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void OnSync(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Sinkronisasi WABA dari Meta?", "Sinkronisasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 _view.IsLoading = true;
@@ -103,11 +109,11 @@ namespace WaDesktop.Client.Presenters
                     {
                         await _api.SyncWabasFromMetaAsync();
                         await LoadDataAsync();
-                        MessageBox.Show("Sync complete.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Sinkronisasi selesai.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Sync failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Sinkronisasi gagal: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     finally
                     {
@@ -139,6 +145,7 @@ namespace WaDesktop.Client.Presenters
                 _view.EditClicked -= null;
                 _view.DeleteClicked -= null;
                 _view.SaveClicked -= null;
+                _view.SyncClicked -= null;
                 _disposed = true;
             }
         }

@@ -57,8 +57,17 @@ namespace WaDesktop.Client.Views.ManagementViews
         {
             get
             {
-                if (SelectedIndex < 0) return null;
-                return dataGridView.Rows[SelectedIndex].Cells["WabaId"].Value?.ToString();
+                try
+                {
+
+                    if (SelectedIndex < 0) return null;
+                    return dataGridView.Rows[SelectedIndex].Cells["WabaId"].Value?.ToString();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error getting selected WABA ID: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return null;
+                }
             }
         }
         public string SelectedCompanyId
@@ -79,6 +88,7 @@ namespace WaDesktop.Client.Views.ManagementViews
         public event EventHandler EditClicked;
         public event EventHandler DeleteClicked;
         public event EventHandler SaveClicked;
+        public event EventHandler SyncClicked;
 
         private void MarkDirty(DataGridViewRow row)
         {
@@ -120,6 +130,7 @@ namespace WaDesktop.Client.Views.ManagementViews
         private void btnAdd_Click(object sender, EventArgs e) => AddClicked?.Invoke(this, EventArgs.Empty);
         private void btnEdit_Click(object sender, EventArgs e) => EditClicked?.Invoke(this, EventArgs.Empty);
         private void btnDelete_Click(object sender, EventArgs e) => DeleteClicked?.Invoke(this, EventArgs.Empty);
+        private void btnSync_Click(object sender, EventArgs e) => SyncClicked?.Invoke(this, EventArgs.Empty);
         private void BtnSave_Click(object sender, EventArgs e)
         {
             dataGridView.EndEdit();

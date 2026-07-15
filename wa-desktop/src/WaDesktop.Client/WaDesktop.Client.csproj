@@ -155,8 +155,14 @@
     <EmbeddedResource Include="Views\ManagementViews\PhoneNumberDetailView.resx">
       <DependentUpon>PhoneNumberDetailView.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Views\ManagementViews\PhoneNumberView.resx">
+      <DependentUpon>PhoneNumberView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Views\ManagementViews\UsersView.resx">
       <DependentUpon>UsersView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Views\ManagementViews\WabaView.resx">
+      <DependentUpon>WabaView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Views\ShellView.resx">
       <DependentUpon>ShellView.cs</DependentUpon>

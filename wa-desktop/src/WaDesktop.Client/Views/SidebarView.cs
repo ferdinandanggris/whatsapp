@@ -16,7 +16,6 @@ namespace WaDesktop.Client.Views
             InitializeComponent();
 
             _phoneContextMenu = new ContextMenuStrip();
-            _phoneContextMenu.Items.Add("Sinkron Meta", null, (s, e) => SyncFromMetaRequested?.Invoke(this, EventArgs.Empty));
             _phoneContextMenu.Items.Add("Refresh", null, (s, e) => RefreshRequested?.Invoke(this, EventArgs.Empty));
 
             treeView.NodeMouseClick += TreeView_NodeMouseClick;
@@ -31,7 +30,6 @@ namespace WaDesktop.Client.Views
         }
 
         public event EventHandler<PhoneNumberSelectedEventArgs> PhoneNumberSelected;
-        public event EventHandler SyncFromMetaRequested;
         public event EventHandler RefreshRequested;
 
         public void LoadPhoneNumbers(IList<PhoneNumberNode> nodes)

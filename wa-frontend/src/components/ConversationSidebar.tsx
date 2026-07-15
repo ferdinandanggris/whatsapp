@@ -214,7 +214,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                             </div>
                             <div className="px-3 py-2 text-[11px] font-semibold text-[#667781] uppercase tracking-wider">Pesan</div>
                             {messageConversations.map(conv => (
-                                <div key={`msg-${conv.matched_message_id}`} className="mx-2 my-2 border border-slate-100 rounded-xl shadow-sm bg-white overflow-hidden">
+                                <div key={`msg-${conv.matched_message_id}`} className="mx-2 my-1 border border-slate-100 rounded-xl bg-white overflow-hidden">
                                     <ConversationItem
                                         conv={conv}
                                         isActive={activeConversation?.id === conv.id}

@@ -23,18 +23,19 @@ namespace WaDesktop.Client.Views.ManagementViews
         private void InitializeComponent()
         {
             this.dataGridView = new System.Windows.Forms.DataGridView();
-            this.Role = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.Status = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.Company = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.Reset = new System.Windows.Forms.DataGridViewButtonColumn();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnSearch = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.panelToolbar = new System.Windows.Forms.Panel();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.DgvId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.DgvUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.DgvName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Role = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.Status = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.Company = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.DgvPassword = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Reset = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView)).BeginInit();
             this.panelToolbar.SuspendLayout();
             this.SuspendLayout();
@@ -43,12 +44,13 @@ namespace WaDesktop.Client.Views.ManagementViews
             // 
             this.dataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.dataGridViewTextBoxColumn1,
-            this.dataGridViewTextBoxColumn2,
-            this.dataGridViewTextBoxColumn3,
+            this.DgvId,
+            this.DgvUsername,
+            this.DgvName,
             this.Role,
             this.Status,
             this.Company,
+            this.DgvPassword,
             this.Reset});
             this.dataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
@@ -62,35 +64,6 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.dataGridView.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView_CellEndEdit);
             this.dataGridView.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.DataGridView_DataError);
             this.dataGridView.UserDeletingRow += new System.Windows.Forms.DataGridViewRowCancelEventHandler(this.DataGridView_UserDeletingRow);
-            // 
-            // Role
-            // 
-            this.Role.HeaderText = "Role";
-            this.Role.Items.AddRange(new object[] {
-            "super_admin",
-            "admin",
-            "agent"});
-            this.Role.Name = "Role";
-            // 
-            // Status
-            // 
-            this.Status.FalseValue = false;
-            this.Status.HeaderText = "Active";
-            this.Status.Name = "Status";
-            this.Status.TrueValue = true;
-            // 
-            // Company
-            // 
-            this.Company.HeaderText = "Company";
-            this.Company.Name = "Company";
-            // 
-            // Reset
-            // 
-            this.Reset.HeaderText = "Reset";
-            this.Reset.Name = "Reset";
-            this.Reset.ReadOnly = true;
-            this.Reset.Text = "Reset";
-            this.Reset.UseColumnTextForButtonValue = true;
             // 
             // txtSearch
             // 
@@ -143,20 +116,59 @@ namespace WaDesktop.Client.Views.ManagementViews
             this.panelToolbar.Size = new System.Drawing.Size(1000, 40);
             this.panelToolbar.TabIndex = 1;
             // 
-            // dataGridViewTextBoxColumn1
+            // DgvId
             // 
-            this.dataGridViewTextBoxColumn1.HeaderText = "ID";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.DgvId.DataPropertyName = "Id";
+            this.DgvId.HeaderText = "ID";
+            this.DgvId.Name = "DgvId";
             // 
-            // dataGridViewTextBoxColumn2
+            // DgvUsername
             // 
-            this.dataGridViewTextBoxColumn2.HeaderText = "Username";
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            this.DgvUsername.DataPropertyName = "Username";
+            this.DgvUsername.HeaderText = "Username";
+            this.DgvUsername.Name = "DgvUsername";
             // 
-            // dataGridViewTextBoxColumn3
+            // DgvName
             // 
-            this.dataGridViewTextBoxColumn3.HeaderText = "Name";
-            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            this.DgvName.DataPropertyName = "Name";
+            this.DgvName.HeaderText = "Name";
+            this.DgvName.Name = "DgvName";
+            // 
+            // Role
+            // 
+            this.Role.HeaderText = "Role";
+            this.Role.Items.AddRange(new object[] {
+            "super_admin",
+            "admin",
+            "cs"});
+            this.Role.Name = "Role";
+            // 
+            // Status
+            // 
+            this.Status.FalseValue = false;
+            this.Status.HeaderText = "Active";
+            this.Status.Name = "Status";
+            this.Status.TrueValue = true;
+            // 
+            // Company
+            // 
+            this.Company.HeaderText = "Server";
+            this.Company.Name = "Company";
+            // 
+            // DgvPassword
+            // 
+            this.DgvPassword.DataPropertyName = "password";
+            this.DgvPassword.HeaderText = "Password";
+            this.DgvPassword.Name = "DgvPassword";
+            // 
+            // Reset
+            // 
+            this.Reset.HeaderText = "Reset";
+            this.Reset.Name = "Reset";
+            this.Reset.ReadOnly = true;
+            this.Reset.Text = "Reset";
+            this.Reset.UseColumnTextForButtonValue = true;
+            this.Reset.Visible = false;
             // 
             // UsersView
             // 
@@ -173,12 +185,13 @@ namespace WaDesktop.Client.Views.ManagementViews
 
         }
 
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DgvId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DgvUsername;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DgvName;
         private System.Windows.Forms.DataGridViewComboBoxColumn Role;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Status;
         private System.Windows.Forms.DataGridViewComboBoxColumn Company;
+        private System.Windows.Forms.DataGridViewTextBoxColumn DgvPassword;
         private System.Windows.Forms.DataGridViewButtonColumn Reset;
     }
 }

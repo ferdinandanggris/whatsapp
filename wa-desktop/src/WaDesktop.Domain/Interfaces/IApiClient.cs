@@ -20,7 +20,7 @@ namespace WaDesktop.Domain.Interfaces
         Task LogoutAsync();
 
         Task<List<PhoneNumberNode>> GetPhoneNumbersAsync();
-        Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync();
+        Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync(string wabaId = null);
         Task<List<Company>> GetCompaniesAsync(string search = null);
         Task<Company> CreateCompanyAsync(string name);
         Task<Company> UpdateCompanyAsync(string id, string name);
@@ -37,7 +37,7 @@ namespace WaDesktop.Domain.Interfaces
         Task<PhoneNumberDetail> GetPhoneDetailAsync(string phoneNumberId);
         Task<SavePhoneResult> SavePhoneDetailAsync(string phoneNumberId, string displayName, string description, string email, string about, string address, string vertical, List<string> websites);
         Task<PhoneNumberDetail> SyncPhoneProfileAsync(string phoneNumberId);
-        Task SyncPhoneNumbersFromMetaAsync();
+        Task SyncPhoneNumbersFromMetaAsync(string wabaId);
         Task<PhoneNumberDetail> UploadPhonePictureAsync(string phoneNumberId, string filePath);
         Task<List<Waba>> GetWabasAsync();
         Task UpdateWabaAsync(string wabaId, string companyId);

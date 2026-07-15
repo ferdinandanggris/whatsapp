@@ -10,7 +10,6 @@ interface UseConversationsProps {
     connection: any;
     activeConversation: Conversation | null;
     setActiveConversation: (conv: Conversation | null) => void;
-    fetchPhoneNumbers: () => Promise<void>;
 }
 
 export const useConversations = ({
@@ -20,7 +19,6 @@ export const useConversations = ({
     connection, 
     activeConversation,
     setActiveConversation,
-    fetchPhoneNumbers
 }: UseConversationsProps) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [messageConversations, setMessageConversations] = useState<Conversation[]>([]);
@@ -103,7 +101,7 @@ export const useConversations = ({
         const handleUpdateConversation = (conv: any) => {
             console.log(`[WS] UpdateConversation`, conv);   
             var res: Conversation = conv;
-            fetchPhoneNumbers();
+            // fetchPhoneNumbers();
 
             // if (activeAppIdRef.current !== null && conv.app_id !== activeAppIdRef.current) return;
 
@@ -115,7 +113,6 @@ export const useConversations = ({
                     unread_count: activeConversationRef.current.unread_count === 0 ? 0 : conv.unread_count
                 });
             }
-
 
             setConversations(prev => {
                 const index = prev.findIndex(c => c.id === conv.id || (c.wa_id === conv.wa_id && c.phone_number_id === conv.phone_number_id));
@@ -182,7 +179,7 @@ export const useConversations = ({
                         
 
                         // Refresh app badges in sidebar
-                        fetchPhoneNumbers();
+                        // fetchPhoneNumbers();
                     }
 
                     // const activeConv = activeConversationRef.current;

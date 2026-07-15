@@ -48,16 +48,24 @@ namespace WaDesktop.Client.Presenters
             view.LogoutClicked += OnLogout;
 
             bool isAgent = _state.Role == "cs";
-            view.AppSettingsVisible = _auth.IsSuperAdmin;
-            view.SidebarCollapsed = isAgent;
+            //view.AppSettingsVisible = _auth.IsSuperAdmin;
+            view.SidebarCollapsed = true;
+            //view.SidebarCollapsed = isAgent;
             view.CompanyVisible = !isAgent;
             view.UsersVisible = !isAgent;
             view.PhoneNumbersVisible = !isAgent;
-            view.WabaVisible = !isAgent;
+            view.WabaVisible = auth.IsSuperAdmin;
             view.TemplatesVisible = !isAgent;
             view.StatusText = $"Logged in as {_auth.DisplayName}";
 
+            if (isAgent)
+            {
                 OpenMessages();
+            }
+            else
+            {
+                OpenPhoneNumbers();
+            }
         }
 
         private void OnRequestOpenTab(RequestOpenTabMessage msg)

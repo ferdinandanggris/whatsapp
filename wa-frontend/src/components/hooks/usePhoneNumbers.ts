@@ -1,12 +1,14 @@
 import { getPhoneNumbers } from "@/services/chatService";
-import { PhoneNumber } from "@/types/chat";
+import { Conversation, PhoneNumber } from "@/types/chat";
 import { useEffect, useState } from "react";
 
 interface PhoneNumberProps {
-    
+    conversations : Conversation[]
 }
 
-export const usePhoneNumber = () => {
+export const usePhoneNumber = ({
+    conversations
+}: PhoneNumberProps) => {
       const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]); 
       const [totalUnread, setTotalUnread] = useState(0);
 
@@ -20,9 +22,14 @@ export const usePhoneNumber = () => {
     };
     
     useEffect(() => {
-        phoneNumbers.reduce((acc, app) => acc + (app.unread_count || 0), 0);
+        phoneNumbers.map((phone) => {
+            const conversationUnreadCount = conversations.filter((c) => c.phone_number_id === phone.id).reduce((acc, c) => acc + (c.unread_count || 0), 0);
+            phone.unread_count = conversationUnreadCount;
+        })
+
+        const totalUnread = phoneNumbers.reduce((acc, app) => acc + (app.unread_count || 0), 0);
         setTotalUnread(totalUnread);
-    }, [phoneNumbers]);
+    }, [phoneNumbers,fetchPhoneNumbers]);
 
     return {
         phoneNumbers,

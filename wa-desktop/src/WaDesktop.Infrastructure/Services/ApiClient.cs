@@ -91,9 +91,14 @@ namespace WaDesktop.Infrastructure.Services
             public string DisplayPhone { get; set; }
         }
 
-        public async Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync()
+        public async Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync(string wabaId = null)
         {
-            return await GetListAsync<PhoneNumberDetail>("/api/v1/phone-numbers");
+            var url = "/api/v1/phone-numbers";
+            if (!string.IsNullOrEmpty(wabaId))
+            {
+                url += $"?waba_id={wabaId}";
+            }
+            return await GetListAsync<PhoneNumberDetail>(url);
         }
 
         // ── Companies ──
@@ -182,16 +187,7 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task UpdateUserAsync(string id, string displayName, string role, string companyId, bool? isActive = null)
         {
-            var payload = new Dictionary<string, object>
-            {
-                ["name"] = displayName,
-                ["role"] = role,
-                ["company_id"] = companyId
-            };
-            if (isActive.HasValue)
-                payload["is_active"] = isActive.Value;
-
-            var body = JsonConvert.SerializeObject(payload);
+            var body = JsonConvert.SerializeObject(new {name = displayName, role, company_id = companyId, is_active = isActive });
             var res = await SendWithRefreshAsync(() =>
                 _http.PutAsync($"{_baseUrl}/api/v1/users/{id}",
                     new StringContent(body, Encoding.UTF8, "application/json")));
@@ -306,7 +302,8 @@ namespace WaDesktop.Infrastructure.Services
 
         public async Task<byte[]> GetPhoneProfilePictureAsync(string url)
         {
-            var res = await SendWithRefreshAsync(() => _http.GetAsync($"{_baseUrl}{url}"));
+            var absoluteUrl = url.StartsWith("http://") || url.StartsWith("https://") ? url : $"{_baseUrl}{url}";
+            var res = await SendWithRefreshAsync(() => _http.GetAsync(absoluteUrl));
             if (res.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return null;
             if (!res.IsSuccessStatusCode)
@@ -369,10 +366,15 @@ namespace WaDesktop.Infrastructure.Services
             return UnwrapData<PhoneNumberDetail>(json);
         }
 
-        public async Task SyncPhoneNumbersFromMetaAsync()
+        public async Task SyncPhoneNumbersFromMetaAsync(string wabaId)
         {
+            var content = new StringContent(
+                JsonConvert.SerializeObject(new { waba_id = wabaId }),
+                Encoding.UTF8,
+                "application/json");
+
             var res = await SendWithRefreshAsync(() =>
-                _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/sync", null));
+                _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/sync", content));
 
             if (!res.IsSuccessStatusCode)
             {
@@ -387,7 +389,11 @@ namespace WaDesktop.Infrastructure.Services
             var fileName = System.IO.Path.GetFileName(filePath);
             using (var form = new System.Net.Http.MultipartFormDataContent())
             {
-                form.Add(new System.Net.Http.ByteArrayContent(bytes), "photo", fileName);
+                // Harus bernama "file" agar sesuai dengan backend Golang
+                var fileContent = new System.Net.Http.ByteArrayContent(bytes);
+                // Tambahkan content type manual jika diperlukan, tapi ini biasanya otomatis dideteksi
+                form.Add(fileContent, "file", fileName);
+                
                 var res = await SendWithRefreshAsync(() =>
                     _http.PostAsync($"{_baseUrl}/api/v1/phone-numbers/{phoneNumberId}/profile-picture", form));
 

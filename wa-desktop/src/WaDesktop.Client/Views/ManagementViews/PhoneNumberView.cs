@@ -35,6 +35,58 @@ namespace WaDesktop.Client.Views.ManagementViews
         public event EventHandler AddClicked;
         public event EventHandler EditClicked;
         public event EventHandler DeleteClicked;
+        public event EventHandler SaveClicked; // dummy for IManagementView constraint if any
+        public event EventHandler SyncClicked;
+        public event EventHandler<string> WabaFilterChanged;
+
+        // Dummy SaveClicked handler (tidak terpakai, tapi wajib ada jika IManagementView punya SaveClicked)
+        private void btnSave_Click(object sender, EventArgs e) => SaveClicked?.Invoke(this, EventArgs.Empty);
+
+        public void SetWabaSyncDataSource(IList<Waba> wabas)
+        {
+            this.InvokeIfRequired(() =>
+            {
+                // Gunakan cmbWabaSync (pastikan Anda membuatnya di Visual Studio Designer)
+                if (Controls.Find("cmbWabaSync", true).Length > 0)
+                {
+                    var cb = Controls.Find("cmbWabaSync", true)[0] as ComboBox;
+                    if (cb != null)
+                    {
+                        // Temporarily detach event to prevent triggering during load
+                        cb.SelectedIndexChanged -= CmbWabaSync_SelectedIndexChanged;
+
+                        cb.DataSource = wabas;
+                        cb.DisplayMember = "Name";
+                        cb.ValueMember = "WabaId";
+                        if (wabas != null && wabas.Count > 0) cb.SelectedIndex = 0;
+
+                        // Attach event back
+                        cb.SelectedIndexChanged += CmbWabaSync_SelectedIndexChanged;
+                    }
+                }
+            });
+        }
+
+        private void CmbWabaSync_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var cb = sender as ComboBox;
+            WabaFilterChanged?.Invoke(this, cb?.SelectedValue?.ToString());
+        }
+
+        public string SelectedWabaForSyncId
+        {
+            get
+            {
+                if (Controls.Find("cmbWabaSync", true).Length > 0)
+                {
+                    var cb = Controls.Find("cmbWabaSync", true)[0] as ComboBox;
+                    return cb?.SelectedValue?.ToString();
+                }
+                return null;
+            }
+        }
+
+        private void btnSync_Click(object sender, EventArgs e) => SyncClicked?.Invoke(this, EventArgs.Empty);
 
         private void btnSearch_Click(object sender, EventArgs e) => SearchClicked?.Invoke(this, txtSearch.Text);
         private void btnRefresh_Click(object sender, EventArgs e) => RefreshClicked?.Invoke(this, EventArgs.Empty);

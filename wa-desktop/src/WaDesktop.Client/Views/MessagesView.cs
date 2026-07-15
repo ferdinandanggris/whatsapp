@@ -123,5 +123,15 @@ namespace WaDesktop.Client.Views
         {
             MessageReceived?.Invoke(this, new WebMessageReceivedEventArgs(e.WebMessageAsJson));
         }
+
+        // destroy webview2 control properly to avoid memory leaks
+        public void DestroyWebView()
+        {
+            if (webView != null)
+            {
+                webView.Dispose();
+                webView = null;
+            }
+        }
     }
 }
