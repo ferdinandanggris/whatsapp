@@ -135,6 +135,7 @@ namespace WaDesktop.Infrastructure.Services
         }
 
         public async Task<Company> UpdateCompanyAsync(string id, string name, int? limitMarketing = null, int? limitUtility = null, int? limitAuth = null, int? limitService = null)
+        {
             var body = JsonConvert.SerializeObject(new { 
                 name,
                 limit_marketing = limitMarketing,
