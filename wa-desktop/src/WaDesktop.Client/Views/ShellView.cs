@@ -19,7 +19,7 @@ namespace WaDesktop.Client.Views
             InitializeComponent();
             notifyIcon.Icon = this.Icon;
 
-            // Enable double-buffering on TabControl to eliminate flicker
+            // Enable double-buffering on TabControl to eliminate flicker   
             typeof(TabControl).GetProperty("DoubleBuffered",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.SetValue(tabWorkspace, true, null);

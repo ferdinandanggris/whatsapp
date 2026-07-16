@@ -33,8 +33,8 @@ namespace WaDesktop.Client.Views
             this.dashboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.companyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.phoneNumbersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.wabaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.phoneNumbersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.templatesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.appSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logoutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -90,19 +90,19 @@ namespace WaDesktop.Client.Views
             this.usersToolStripMenuItem.Text = "Users";
             this.usersToolStripMenuItem.Click += new System.EventHandler(this.usersToolStripMenuItem_Click);
             // 
-            // phoneNumbersToolStripMenuItem
-            // 
-            this.phoneNumbersToolStripMenuItem.Name = "phoneNumbersToolStripMenuItem";
-            this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
-            this.phoneNumbersToolStripMenuItem.Text = "Nomor HP";
-            this.phoneNumbersToolStripMenuItem.Click += new System.EventHandler(this.phoneNumbersToolStripMenuItem_Click);
-            // 
             // wabaToolStripMenuItem
             // 
             this.wabaToolStripMenuItem.Name = "wabaToolStripMenuItem";
             this.wabaToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
             this.wabaToolStripMenuItem.Text = "WABA";
             this.wabaToolStripMenuItem.Click += new System.EventHandler(this.wabaToolStripMenuItem_Click);
+            // 
+            // phoneNumbersToolStripMenuItem
+            // 
+            this.phoneNumbersToolStripMenuItem.Name = "phoneNumbersToolStripMenuItem";
+            this.phoneNumbersToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
+            this.phoneNumbersToolStripMenuItem.Text = "Nomor HP";
+            this.phoneNumbersToolStripMenuItem.Click += new System.EventHandler(this.phoneNumbersToolStripMenuItem_Click);
             // 
             // templatesToolStripMenuItem
             // 
@@ -141,7 +141,7 @@ namespace WaDesktop.Client.Views
             // 
             this.splitContainer.Panel2.Controls.Add(this.tabWorkspace);
             this.splitContainer.Size = new System.Drawing.Size(1284, 706);
-            this.splitContainer.SplitterDistance = 204;
+            this.splitContainer.SplitterDistance = 237;
             this.splitContainer.TabIndex = 1;
             // 
             // panelSidebar
@@ -149,7 +149,7 @@ namespace WaDesktop.Client.Views
             this.panelSidebar.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSidebar.Location = new System.Drawing.Point(0, 0);
             this.panelSidebar.Name = "panelSidebar";
-            this.panelSidebar.Size = new System.Drawing.Size(204, 706);
+            this.panelSidebar.Size = new System.Drawing.Size(237, 706);
             this.panelSidebar.TabIndex = 0;
             // 
             // tabWorkspace
@@ -160,7 +160,7 @@ namespace WaDesktop.Client.Views
             this.tabWorkspace.Name = "tabWorkspace";
             this.tabWorkspace.Padding = new System.Drawing.Point(22, 5);
             this.tabWorkspace.SelectedIndex = 0;
-            this.tabWorkspace.Size = new System.Drawing.Size(1076, 706);
+            this.tabWorkspace.Size = new System.Drawing.Size(1043, 706);
             this.tabWorkspace.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.tabWorkspace.TabIndex = 0;
             this.tabWorkspace.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.TabWorkspace_DrawItem);

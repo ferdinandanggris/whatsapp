@@ -28,11 +28,19 @@ namespace WaDesktop.Client.Views.ManagementViews
                 {
                     _originalValues.Clear();
                     dataGridView.Rows.Clear();
+
+                    // Ensure columns exist
+                    if (dataGridView.Columns.Count == 4)
+                    {
+                    }
+
                     foreach (var w in value)
                     {
-                        int idx = dataGridView.Rows.Add(w.WabaId, w.Name, w.CompanyId, w.CreatedAt);
+                        int idx = dataGridView.Rows.Add(
+                            w.WabaId, w.Name, w.CompanyId, w.CreatedAt
+                        );
                         dataGridView.Rows[idx].DefaultCellStyle.BackColor = Color.White;
-                        dataGridView.Rows[idx].Tag = null;
+                        dataGridView.Rows[idx].Tag = w; // Store the object
                     }
                 });
             }
@@ -114,7 +122,9 @@ namespace WaDesktop.Client.Views.ManagementViews
             _originalValues.Remove(key);
 
             if (changed)
+            {
                 MarkDirty(dataGridView.Rows[e.RowIndex]);
+            }
         }
 
         private void DataGridView_DataError(object sender, DataGridViewDataErrorEventArgs e)

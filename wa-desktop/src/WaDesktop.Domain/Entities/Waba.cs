@@ -12,6 +12,7 @@ namespace WaDesktop.Domain.Entities
         public string CompanyName { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
+        
         [JsonProperty("created_at")]
         public string CreatedAt { get; set; }
     }

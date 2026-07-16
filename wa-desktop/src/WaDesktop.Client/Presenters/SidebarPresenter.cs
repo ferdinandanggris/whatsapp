@@ -33,10 +33,13 @@ namespace WaDesktop.Client.Presenters
             {
                 var phones = await Task.Run(() => _api.GetPhoneNumbersAsync());
                 _view.LoadPhoneNumbers(BuildTree(phones));
+
+                var analytics = await Task.Run(() => _api.GetBillingAnalyticsAsync());
+                _view.UpdateUsageSummary(analytics);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load phone numbers: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Failed to load sidebar data: {ex.Message}");
             }
             finally
             {

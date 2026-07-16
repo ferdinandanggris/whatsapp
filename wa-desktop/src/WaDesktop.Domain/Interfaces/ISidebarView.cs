@@ -8,6 +8,7 @@ namespace WaDesktop.Domain.Interfaces
     {
         /// <summary>Set data tree dari WA Phone Numbers.</summary>
         void LoadPhoneNumbers(IList<PhoneNumberNode> nodes);
+        void UpdateUsageSummary(Company company);
 
         /// <summary>Event: node di tree diklik. Kirim wa_id + phone_number_id.</summary>
         event EventHandler<PhoneNumberSelectedEventArgs> PhoneNumberSelected;

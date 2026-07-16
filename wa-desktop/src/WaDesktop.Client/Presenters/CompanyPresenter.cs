@@ -49,7 +49,7 @@ namespace WaDesktop.Client.Presenters
             try
             {
                 // Delete rows that user removed via Delete key
-                foreach (long id in _view.GetDeletedIds())
+                foreach (string id in _view.GetDeletedIds())
                     await Task.Run(() => _api.DeleteCompanyAsync(id));
 
                 // Create new / update existing
@@ -58,7 +58,7 @@ namespace WaDesktop.Client.Presenters
                     if (string.IsNullOrEmpty(c.Id))
                         await Task.Run(() => _api.CreateCompanyAsync(c.Name));
                     else
-                        await Task.Run(() => _api.UpdateCompanyAsync(c.Id, c.Name));
+                        await Task.Run(() => _api.UpdateCompanyAsync(c.Id, c.Name, c.LimitMarketing, c.LimitUtility, c.LimitAuthentication, c.LimitService));
                 }
 
                 await LoadDataAsync();

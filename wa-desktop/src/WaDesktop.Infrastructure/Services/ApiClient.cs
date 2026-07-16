@@ -128,9 +128,20 @@ namespace WaDesktop.Infrastructure.Services
             return UnwrapData<Company>(json);
         }
 
-        public async Task<Company> UpdateCompanyAsync(string id, string name)
+        public async Task<Company> GetBillingAnalyticsAsync()
         {
-            var body = JsonConvert.SerializeObject(new { name });
+            var json = await GetStringAsync("/api/v1/analytics/billing");
+            return UnwrapData<Company>(json);
+        }
+
+        public async Task<Company> UpdateCompanyAsync(string id, string name, int? limitMarketing = null, int? limitUtility = null, int? limitAuth = null, int? limitService = null)
+            var body = JsonConvert.SerializeObject(new { 
+                name,
+                limit_marketing = limitMarketing,
+                limit_utility = limitUtility,
+                limit_authentication = limitAuth,
+                limit_service = limitService
+            });
             var res = await SendWithRefreshAsync(() =>
                 _http.PutAsync($"{_baseUrl}/api/v1/companies/{id}",
                     new StringContent(body, Encoding.UTF8, "application/json")));
@@ -144,7 +155,7 @@ namespace WaDesktop.Infrastructure.Services
             return null;
         }
 
-        public async Task DeleteCompanyAsync(long id)
+        public async Task DeleteCompanyAsync(string id)
         {
             var res = await SendWithRefreshAsync(() =>
                 _http.DeleteAsync($"{_baseUrl}/api/v1/companies/{id}"));

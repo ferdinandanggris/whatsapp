@@ -17,16 +17,13 @@ namespace WaDesktop.Client.Views
 
             _phoneContextMenu = new ContextMenuStrip();
             _phoneContextMenu.Items.Add("Refresh", null, (s, e) => RefreshRequested?.Invoke(this, EventArgs.Empty));
-
-            treeView.NodeMouseClick += TreeView_NodeMouseClick;
-            treeView.NodeMouseDoubleClick += TreeView_NodeMouseDoubleClick;
         }
 
         // ── ISidebarView ──
 
         public bool IsLoading
         {
-            set { this.InvokeIfRequired(() => { treeView.Enabled = !value; Cursor = value ? Cursors.WaitCursor : Cursors.Default; }); }
+            set { this.InvokeIfRequired(() => { }); }
         }
 
         public event EventHandler<PhoneNumberSelectedEventArgs> PhoneNumberSelected;
@@ -36,12 +33,26 @@ namespace WaDesktop.Client.Views
         {
             this.InvokeIfRequired(() =>
             {
-                treeView.Nodes.Clear();
-                foreach (var node in nodes)
-                {
-                    treeView.Nodes.Add(BuildTreeNode(node));
-                }
-                treeView.ExpandAll();
+            });
+        }
+
+        public void UpdateUsageSummary(Company company)
+        {
+            this.InvokeIfRequired(() =>
+            {
+                if (company == null) return;
+
+                string FormatLimit(int? limit) => limit.HasValue ? limit.Value.ToString() : "~";
+
+                tbMarketingCount.Text = $"{company.UsageMarketing} / {FormatLimit(company.LimitMarketing)}";
+                tbUtilityCount.Text = $"{company.UsageUtility} / {FormatLimit(company.LimitUtility)}";
+                tbAuthenticationCount.Text = $"{company.UsageAuthentication} / {FormatLimit(company.LimitAuthentication)}";
+                tbServiceCount.Text = $"{company.UsageService} / {FormatLimit(company.LimitService)}";
+
+                var idId = new System.Globalization.CultureInfo("id-ID");
+                tbBillMeta.Text = company.CurrentCost.ToString("C2", idId);
+                tbMaxCost.Text = company.MetaCost.ToString("C2", idId);
+                textBox1.Text = company.MaxEstimatedCost.HasValue ? company.MaxEstimatedCost.Value.ToString("C2", idId) : "~";
             });
         }
 
@@ -65,13 +76,7 @@ namespace WaDesktop.Client.Views
         private void TreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Button != MouseButtons.Right || e.Node == null) return;
-            treeView.SelectedNode = e.Node;
-
-            // Only show context menu on root "Phone Numbers" node
-            if (e.Node.Parent == null && e.Node.Tag is PhoneNumberNode pn && string.IsNullOrEmpty(pn.PhoneNumberId))
-            {
-                _phoneContextMenu.Show(treeView, e.Location);
-            }
+    
         }
 
         private void TreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)

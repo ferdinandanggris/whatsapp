@@ -67,6 +67,7 @@ export const useChatActions = ({
 
          const id = Guid.newGuid().toString();
         const newBubble : Bubble = {
+            id : id,
             wa_id: currentConv.wa_id,
             conversation_id: currentConv.id,
             phone_number_id: currentConv.phone_number_id,

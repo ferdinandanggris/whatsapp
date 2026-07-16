@@ -23,8 +23,9 @@ namespace WaDesktop.Domain.Interfaces
         Task<List<PhoneNumberDetail>> GetPhoneNumberListAsync(string wabaId = null);
         Task<List<Company>> GetCompaniesAsync(string search = null);
         Task<Company> CreateCompanyAsync(string name);
-        Task<Company> UpdateCompanyAsync(string id, string name);
-        Task DeleteCompanyAsync(long id);
+        Task<Company> UpdateCompanyAsync(string id, string name, int? limitMarketing = null, int? limitUtility = null, int? limitAuth = null, int? limitService = null);
+        Task<Company> GetBillingAnalyticsAsync();
+        Task DeleteCompanyAsync(string id);
         Task<List<User>> GetUsersAsync(string search = null);
         Task<User> CreateUserAsync(string email, string password, string displayName, string role, string companyId);
         Task UpdateUserAsync(string id, string displayName, string role, string companyId, bool? isActive = null);

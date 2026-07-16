@@ -49,7 +49,7 @@ namespace WaDesktop.Client.Presenters
 
             bool isAgent = _state.Role == "cs";
             //view.AppSettingsVisible = _auth.IsSuperAdmin;
-            view.SidebarCollapsed = true;
+            view.SidebarCollapsed = false;
             //view.SidebarCollapsed = isAgent;
             view.CompanyVisible = !isAgent;
             view.UsersVisible = !isAgent;
@@ -140,7 +140,7 @@ namespace WaDesktop.Client.Presenters
         }
 
         private void OpenMessages() => OnRequestOpenTab(new RequestOpenTabMessage("dashboard", "Messages"));
-        private void OpenCompany() => OnRequestOpenTab(new RequestOpenTabMessage("company", "Company"));
+        private void OpenCompany() => OnRequestOpenTab(new RequestOpenTabMessage("company", "Server"));
         private void OpenUsers() => OnRequestOpenTab(new RequestOpenTabMessage("users", "Users"));
         private void OpenPhoneNumbers() => OnRequestOpenTab(new RequestOpenTabMessage("phonenumbers", "Nomor HP"));
         private void OpenWaba() => OnRequestOpenTab(new RequestOpenTabMessage("waba", "WABA"));
